@@ -26,8 +26,9 @@ def componer_mensaje_vista(request):
             initial_data['destinatario'] = mensaje_original.remitente
             asunto_original = mensaje_original.asunto
             initial_data['asunto'] = f"Re: {asunto_original}" if not asunto_original.startswith('Re: ') else asunto_original
-            cita = (f"\n\n\n--- El {mensaje_original.fecha_envio.strftime('%d/%m/%Y a las %H:%M')} {mensaje_original.remitente.get_full_name()} escribió: ---\n"
-                    f"> {strip_tags(mensaje_original.cuerpo).replace('\\n', '\\n> ')}")
+            cuerpo_citado = strip_tags(mensaje_original.cuerpo).replace('\n', '\n> ')
+            cita = (f"\n\n\n-- El {mensaje_original.fecha_envio.strftime('%d/%m/%Y a las %H:%M')} {mensaje_original.remitente.get_full_name()} escribió: ---\n"
+            f"> {cuerpo_citado}")
             initial_data['cuerpo'] = cita
         except (ValueError, Mensaje.DoesNotExist, PermissionDenied):
             messages.error(request, "No se pudo encontrar el mensaje original para responder.")
