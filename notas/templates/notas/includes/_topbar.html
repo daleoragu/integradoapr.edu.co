@@ -1,0 +1,50 @@
+{% load static %}
+{% load nota_filters %}
+
+<header class="topbar">
+    <div class="page-title"><h1>{% block page_title %}{% endblock %}</h1></div>
+    <div class="user-info">
+        
+        <div class="notification-bell">
+            <i class="fas fa-bell" id="notification-icon"></i>
+            <span class="badge" id="notification-badge" style="display: none;">0</span>
+            <div id="notificaciones-dropdown" class="notificaciones-dropdown">
+                <div class="dropdown-header">
+                    <strong>Notificaciones</strong>
+                </div>
+                <ul id="notificaciones-lista">
+                    <li class="no-notificaciones"><p>Cargando...</p></li>
+                </ul>
+                <div class="dropdown-footer">
+                    <a href="{% url 'lista_notificaciones' %}">Ver todas</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="user-details">
+            <strong>{{ user.get_full_name|default:user.username }}</strong>
+            {% if user.is_superuser %}<span>Superusuario</span>
+            {% elif user|has_group:"Docentes" %}<span>Docente</span>
+            {% elif user|has_group:"Estudiantes" %}<span>Estudiante</span>
+            {% else %}<span>Usuario</span>
+            {% endif %}
+        </div>
+        
+        {# --- INICIO DE LA CORRECCIÓN DEL AVATAR --- #}
+        {% comment %}
+            Se busca la ficha del estudiante a través de la relación inversa 'estudiante'.
+            Si existe y tiene una foto, se muestra. Si no, se usan las iniciales.
+            NOTA: Esto asume que tienes un related_name='estudiante' en el OneToOneField del modelo Estudiante.
+        {% endcomment %}
+        {# Se corrige la sintaxis del if para que sea compatible con Django Templates #}
+        {% if user.estudiante.fichaestudiante.foto %}
+            <img src="{{ user.estudiante.fichaestudiante.foto.url }}" alt="Foto de Perfil" class="user-photo">
+        {% else %}
+            {# Si no hay foto, usamos el nuevo filtro para las iniciales #}
+            <img src="https://placehold.co/100x100/eeeeee/333333?text={{ user|get_initials }}" alt="Foto de Perfil" class="user-photo">
+        {% endif %}
+        {# --- FIN DE LA CORRECCIÓN DEL AVATAR --- #}
+
+        <a href="{% url 'logout' %}" class="logout-link">Salir</a>
+    </div>
+</header>

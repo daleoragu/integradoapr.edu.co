@@ -1,0 +1,45 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    {% include "notas/includes/_head.html" %}
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    {% comment %}
+    VERSIÓN CORREGIDA Y FINAL:
+    Este es el esqueleto para la aplicación INTERNA (usuarios autenticados).
+    Se ha eliminado el bloque {% else %} que causaba el error de 'block content' duplicado.
+    Esta plantilla asume que 'user.is_authenticated' siempre será verdadero cuando se use.
+    {% endcomment %}
+    
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <img src="{% static 'img/logo_colegio.png' %}" alt="Logo del Colegio">
+            <h2>I.E.T. Alfonso Palacio Rudas</h2>
+        </div>
+        {% include "notas/includes/_sidebar.html" %}
+    </aside>
+
+    <div class="page-wrapper">
+        {% include "notas/includes/_topbar.html" %}
+        <main class="content-area">
+            <div class="page-header mb-4">
+                {% block page_title %}{% endblock %}
+            </div>
+            {% if messages %}
+                <ul class="messages list-unstyled">
+                    {% for message in messages %}<li class="alert alert-{{ message.tags }}">{{ message }}</li>{% endfor %}
+                </ul>
+            {% endif %}
+            
+            {% block content %}{% endblock %}
+        </main>
+        {% include "notas/includes/_footer.html" %}
+    </div>
+
+    {% include "notas/includes/_scripts.html" %}
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,50 @@
+{% extends "notas/base.html" %}
+
+{% block page_title %}
+    <h1>{{ accion }} Noticia</h1>
+{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-header">
+        <h5 class="mb-0">Formulario de Noticia</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="mb-3">
+                <label for="{{ form.titulo.id_for_label }}" class="form-label">{{ form.titulo.label }}</label>
+                {{ form.titulo }}
+            </div>
+            
+            <div class="mb-3">
+                <label for="{{ form.resumen.id_for_label }}" class="form-label">{{ form.resumen.label }}</label>
+                {{ form.resumen }}
+                <div class="form-text">{{ form.resumen.help_text }}</div>
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ form.cuerpo.id_for_label }}" class="form-label">{{ form.cuerpo.label }}</label>
+                {{ form.cuerpo }}
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ form.imagen_portada.id_for_label }}" class="form-label">{{ form.imagen_portada.label }}</label>
+                {{ form.imagen_portada }}
+                {% if form.instance.imagen_portada %}
+                    <div class="mt-2">
+                        <small>Imagen actual: <a href="{{ form.instance.imagen_portada.url }}" target="_blank">{{ form.instance.imagen_portada.name }}</a></small>
+                    </div>
+                {% endif %}
+            </div>
+
+            <hr>
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-save me-2"></i>Guardar {{ accion }}
+            </button>
+            <a href="{% url 'gestion_noticias' %}" class="btn btn-secondary">Cancelar</a>
+        </form>
+    </div>
+</div>
+{% endblock %}
