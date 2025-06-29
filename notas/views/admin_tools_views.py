@@ -171,11 +171,3 @@ def panel_control_promocion_vista(request):
     }
     return render(request, 'notas/admin_tools/panel_control_promocion.html', context)
 
-def crear_super_usuario(request):
-    User = get_user_model()
-    if not User.objects.filter(username='admin').exists():
-        User.objects.create_superuser('admin', 'admin@tucolegio.com', 'renderpassword123')
-        mensaje = "<h1>Superusuario 'admin' creado con éxito.</h1><p>Contraseña: renderpassword123</p><p><strong>Por favor, inicia sesión y cámbiala inmediatamente por seguridad.</strong></p>"
-    else:
-        mensaje = "<h1>El superusuario 'admin' ya existe.</h1>"
-    return HttpResponse(mensaje)
