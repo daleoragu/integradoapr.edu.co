@@ -28,3 +28,4 @@ from . import estudiante_boletin_views
 from . import portal_views
 from . import portal_admin_views
 from . import admin_crud_views
+from . import impersonation_views

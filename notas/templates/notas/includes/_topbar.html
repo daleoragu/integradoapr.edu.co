@@ -2,6 +2,11 @@
 {% load nota_filters %}
 
 <header class="topbar">
+    
+    <a href="{% url 'dashboard' %}" class="home-link" title="Ir a la página de Inicio">
+        <i class="fas fa-home"></i>
+    </a>
+
     <div class="page-title"><h1>{% block page_title %}{% endblock %}</h1></div>
     <div class="user-info">
         
@@ -30,21 +35,27 @@
             {% endif %}
         </div>
         
-        {# --- INICIO DE LA CORRECCIÓN DEL AVATAR --- #}
-        {% comment %}
-            Se busca la ficha del estudiante a través de la relación inversa 'estudiante'.
-            Si existe y tiene una foto, se muestra. Si no, se usan las iniciales.
-            NOTA: Esto asume que tienes un related_name='estudiante' en el OneToOneField del modelo Estudiante.
-        {% endcomment %}
-        {# Se corrige la sintaxis del if para que sea compatible con Django Templates #}
         {% if user.estudiante.fichaestudiante.foto %}
             <img src="{{ user.estudiante.fichaestudiante.foto.url }}" alt="Foto de Perfil" class="user-photo">
         {% else %}
-            {# Si no hay foto, usamos el nuevo filtro para las iniciales #}
             <img src="https://placehold.co/100x100/eeeeee/333333?text={{ user|get_initials }}" alt="Foto de Perfil" class="user-photo">
         {% endif %}
-        {# --- FIN DE LA CORRECCIÓN DEL AVATAR --- #}
 
         <a href="{% url 'logout' %}" class="logout-link">Salir</a>
     </div>
 </header>
+
+{# Estilo simple para el nuevo botón de inicio. Puedes moverlo a tu archivo CSS principal si lo prefieres. #}
+<style>
+    .topbar .home-link {
+        font-size: 1.5rem;
+        color: white;
+        text-decoration: none;
+        margin-left: 15px;
+        margin-right: 15px;
+        transition: color 0.2s;
+    }
+    .topbar .home-link:hover {
+        color: #d4d4d4;
+    }
+</style>

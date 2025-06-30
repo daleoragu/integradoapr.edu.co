@@ -26,6 +26,7 @@ from .views import (
     portal_views,
     portal_admin_views,
     admin_crud_views,
+    impersonation_views
 )
 
 urlpatterns = [
@@ -130,14 +131,35 @@ urlpatterns = [
     path('ajax/obtener-notificaciones/', notificaciones_views.obtener_notificaciones_dropdown_ajax, name='obtener_notificaciones_dropdown'),
     path('ajax/marcar-leida/', notificaciones_views.marcar_notificacion_leida_ajax, name='marcar_notificacion_leida'),
 
-    # --- RUTAS PARA CRUDs Y GESTIÓN DE DATOS ---
-    # Estudiantes
+    # ===============================================================
+    # RUTAS PARA CRUDs Y GESTIÓN DE DATOS (ACTUALIZADO)
+    # ===============================================================
+
+    # --- Panel Principal de Asignación Académica ---
+    path('panel-administrador/asignacion-academica/', admin_crud_views.gestion_asignacion_academica_vista, name='gestion_asignacion_academica'),
+    path('panel-administrador/asignacion/crear/', admin_crud_views.crear_asignacion_vista, name='crear_asignacion'),
+    path('panel-administrador/asignacion/eliminar/<int:asignacion_id>/', admin_crud_views.eliminar_asignacion_vista, name='eliminar_asignacion'),
+
+    # --- Gestión de Docentes (Simple) ---
+    path('panel-administrador/gestion-docentes/', admin_crud_views.gestion_docentes_vista, name='gestion_docentes'),
+    path('panel-administrador/gestion-docentes/crear/', admin_crud_views.crear_docente_vista, name='crear_docente'),
+    path('panel-administrador/gestion-docentes/eliminar/<int:docente_id>/', admin_crud_views.eliminar_docente_vista, name='eliminar_docente'),
+    path('panel-administrador/gestion-docentes/editar/<int:docente_id>/', admin_crud_views.editar_docente_vista, name='editar_docente'),
+    path('panel-administrador/gestion-docentes/eliminar/<int:docente_id>/', admin_crud_views.eliminar_docente_vista, name='eliminar_docente'),
+
+    # --- Gestión de Cursos / Grados ---
+    path('panel-administrador/gestion-cursos/', admin_crud_views.gestion_cursos_vista, name='gestion_cursos'),
+    path('panel-administrador/gestion-cursos/crear/', admin_crud_views.crear_curso_vista, name='crear_curso'),
+    path('panel-administrador/gestion-cursos/editar/<int:curso_id>/', admin_crud_views.editar_curso_vista, name='editar_curso'),
+    path('panel-administrador/gestion-cursos/eliminar/<int:curso_id>/', admin_crud_views.eliminar_curso_vista, name='eliminar_curso'),
+    
+    # --- Gestión de Estudiantes ---
     path('panel-administrador/gestion-estudiantes/', admin_crud_views.gestion_estudiantes_vista, name='gestion_estudiantes'),
     path('panel-administrador/gestion-estudiantes/crear/', admin_crud_views.crear_estudiante_vista, name='crear_estudiante'),
     path('panel-administrador/gestion-estudiantes/editar/<int:estudiante_id>/', admin_crud_views.editar_estudiante_vista, name='editar_estudiante'),
     path('panel-administrador/gestion-estudiantes/eliminar/<int:estudiante_id>/', admin_crud_views.eliminar_estudiante_vista, name='eliminar_estudiante'),
     
-    # Materias y Áreas
+    # --- Gestión de Materias y Áreas ---
     path('panel-administrador/gestion-materias/', admin_crud_views.gestion_materias_vista, name='gestion_materias'),
     path('panel-administrador/gestion-materias/crear/', admin_crud_views.crear_materia_vista, name='crear_materia'),
     path('panel-administrador/gestion-materias/editar/<int:materia_id>/', admin_crud_views.editar_materia_vista, name='editar_materia'),
@@ -152,6 +174,24 @@ urlpatterns = [
     path('panel-administrador/exportar-estudiantes/', export_views.exportar_estudiantes_excel, name='exportar_estudiantes_excel'),
     path('panel-administrador/descargar-plantilla-estudiantes/', export_views.descargar_plantilla_estudiantes, name='descargar_plantilla_estudiantes'),
     path('panel-administrador/exportar-materias/', export_views.exportar_materias_excel, name='exportar_materias_excel'),
-    path('panel-administrador/descargar-plantilla-materias/', export_views.descargar_plantilla_materias, name='descargar_plantilla_materias'),
+    path('panel-administrador/descargar-plantilla-materias/', export_views.descargar_plantilla_materias, name='descargar_plantilla_docentes'),
+
+    # CORRECCIÓN: Se añade la ruta que faltaba para descargar la plantilla de materias
+    # =================================================================
+    path('panel-administrador/descargar-plantilla-materias/', export_views.descargar_plantilla_materias, name='descargar_plantilla_materias'),    
     path('panel-administrador/descargar-plantilla-docentes/', export_views.descargar_plantilla_docentes, name='descargar_plantilla_docentes'),
+
+    # NUEVO: RUTAS PARA SUPLANTACIÓN DE IDENTIDAD
+    # ===============================================================
+    path('suplantar/iniciar/<int:user_id>/', impersonation_views.iniciar_suplantacion, name='iniciar_suplantacion'),
+    path('suplantar/detener/', impersonation_views.detener_suplantacion, name='detener_suplantacion'),
+
+    # --- RUTAS PARA CRUDs Y GESTIÓN DE DATOS ---
+    path('panel-administrador/asignacion-academica/', admin_crud_views.gestion_asignacion_academica_vista, name='gestion_asignacion_academica'),
+    path('panel-administrador/asignacion/crear/', admin_crud_views.crear_asignacion_vista, name='crear_asignacion'),
+    path('panel-administrador/asignacion/eliminar/<int:asignacion_id>/', admin_crud_views.eliminar_asignacion_vista, name='eliminar_asignacion'),
+
+   
+ 
+# ...
 ]

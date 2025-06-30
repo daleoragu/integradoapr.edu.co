@@ -30,20 +30,21 @@
                             {{ form.nombre.label_tag }}
                             {{ form.nombre }}
                         </div>
+                        
+                        <!-- ============================================= -->
+                        <!-- CORRECCIÓN: Se elimina el campo que no existe -->
+                        <!-- ============================================= -->
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 {{ form.abreviatura.label_tag }}
                                 {{ form.abreviatura }}
                             </div>
                             <div class="col-md-6 mb-3">
-                                {{ form.intensidad_horaria.label_tag }}
-                                {{ form.intensidad_horaria }}
+                                {{ form.area.label_tag }}
+                                {{ form.area }}
                             </div>
                         </div>
-                        <div class="mb-3">
-                            {{ form.area.label_tag }}
-                            {{ form.area }}
-                        </div>
+
                         <hr>
                         <div class="d-flex justify-content-end">
                             <a href="{% url 'gestion_materias' %}" class="btn btn-secondary me-2">Cancelar</a>

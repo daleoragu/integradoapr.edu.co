@@ -5,10 +5,16 @@ from django.contrib import messages
 
 # Se importan todos los modelos y formularios necesarios para el panel
 from notas.models.portal_models import DocumentoPublico, FotoGaleria, Noticia, ImagenCarrusel
-# CORRECCIÓN: Nos aseguramos de que todos los formularios, incluyendo ImagenCarruselForm, estén en esta línea.
-from ..forms import DocumentoPublicoForm, FotoGaleriaForm, NoticiaForm, ImagenCarruselForm
+
+# ===================================================================
+# CAMBIO: Se actualiza la importación para usar la nueva estructura de formularios.
+# Ahora se importa directamente desde 'notas.forms.portal_forms'.
+# ===================================================================
+from ..forms.portal_forms import DocumentoPublicoForm, FotoGaleriaForm, NoticiaForm, ImagenCarruselForm
 
 def es_admin_o_docente(user):
+    # Esta función permite el acceso a Superusuarios y a miembros del grupo 'Docentes'
+    # Ajusta el nombre del grupo si es diferente en tu base de datos.
     return user.is_superuser or user.groups.filter(name='Docentes').exists()
 
 @user_passes_test(es_admin_o_docente)
