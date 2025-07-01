@@ -98,4 +98,41 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="importarModal" tabindex="-1" aria-labelledby="importarModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="importarModalLabel">Importación Masiva de Estudiantes</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{% url 'importacion_datos' %}" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p>Sigue estos pasos para la importación masiva:</p>
+                    <ol>
+                        <li>Descarga la plantilla oficial para asegurarte de que el formato es correcto.</li>
+                        <li>Rellena el archivo Excel con los datos de los estudiantes.</li>
+                        <li>Guarda el archivo y súbelo en el siguiente formulario.</li>
+                    </ol>
+                    <a href="{% url 'descargar_plantilla_estudiantes' %}" class="btn btn-link">
+                       <i class="fas fa-download me-1"></i> Descargar plantilla de importación (.xlsx)
+                    </a>
+                    <hr>
+                    <div class="mb-3">
+                        <label for="archivo_importacion_estudiantes" class="form-label"><strong>Selecciona el archivo Excel (.xlsx):</strong></label>
+                        <input type="hidden" name="tipo_importacion" value="estudiantes">
+                        <input class="form-control" type="file" name="archivo_importacion" id="archivo_importacion_estudiantes" accept=".xlsx" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-upload me-2"></i>Iniciar Importación
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}
