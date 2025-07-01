@@ -5,7 +5,7 @@ Ejecuta el comando para que Django prepare las "instrucciones" de los cambios:
 python manage.py makemigrations notas
 
 Aplica las "instrucciones" a la base de datos:
-python manage.py makemigrations
+python manage.py migrate
 
 Encender el Servidor de Desarrollo de Django
 python manage.py runserver
