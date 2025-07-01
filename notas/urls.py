@@ -1,5 +1,6 @@
 # notas/urls.py
 from django.urls import path
+# --- Se actualizan las importaciones de las vistas ---
 from .views import (
     auth_views,
     dashboard_views,
@@ -25,8 +26,11 @@ from .views import (
     estudiante_boletin_views,
     portal_views,
     portal_admin_views,
-    admin_crud_views,
-    impersonation_views
+    impersonation_views,
+    # Se añaden los nuevos módulos de vistas de gestión
+    gestion_docentes_views,
+    gestion_estudiantes_views,
+    gestion_academica_views,
 )
 
 urlpatterns = [
@@ -35,6 +39,7 @@ urlpatterns = [
     path('logout/', auth_views.logout_vista, name='logout'),
     path('logout/confirmacion/', auth_views.logout_confirmacion_vista, name='logout_confirmacion'),
     path('dashboard/', dashboard_views.dashboard_vista, name='dashboard'),
+    path('perfil/cambiar-password/', auth_views.cambiar_password_vista, name='cambiar_password'),
 
     # --- Rutas de Paneles de Usuario ---
     path('panel-administrador/', dashboard_views.admin_dashboard_vista, name='admin_dashboard'),
@@ -61,9 +66,7 @@ urlpatterns = [
     path('panel-administrador/publicar-noticia/<int:pk>/', portal_admin_views.publicar_noticia_vista, name='publicar_noticia'),
     path('panel-administrador/gestion-carrusel/', portal_admin_views.gestion_carrusel_vista, name='gestion_carrusel'),
     path('panel-administrador/eliminar-imagen-carrusel/<int:pk>/', portal_admin_views.eliminar_imagen_carrusel_vista, name='eliminar_imagen_carrusel'),
-    path('ajax/noticias/', portal_views.noticias_json, name='ajax_noticias'),
-    path('ajax/carrusel/', portal_views.carrusel_imagenes_json, name='ajax_carrusel'),
-
+    
     # --- Rutas del Panel Docente ---
     path('docente/ingresar-notas/', ingreso_notas_views.ingresar_notas_periodo_vista, name='ingresar_notas_periodo'),
     path('docente/reporte-parcial/', reporte_parcial_views.reporte_parcial_vista, name='reporte_parcial'),
@@ -88,7 +91,12 @@ urlpatterns = [
     path('ajax/obtener-meses/', reporte_views.obtener_meses_periodo_ajax, name='ajax_obtener_meses'),
     path('ajax/guardar-asistencia/', asistencia_views.guardar_inasistencia_ajax, name='guardar_inasistencia_ajax'),
     path('ajax/datos-graficos/', estadisticas_views.datos_graficos_ajax, name='datos_graficos_ajax'),
-
+    path('ajax/directorio-docentes/', portal_views.directorio_docentes_json, name='ajax_directorio_docentes'),
+    path('ajax/documentos-publicos/', portal_views.documentos_publicos_json, name='ajax_documentos_publicos'),
+    path('ajax/galeria-fotos/', portal_views.galeria_fotos_json, name='ajax_galeria_fotos'),
+    path('ajax/noticias/', portal_views.noticias_json, name='ajax_noticias'),
+    path('ajax/carrusel/', portal_views.carrusel_imagenes_json, name='ajax_carrusel'),
+    
     # --- Rutas de Boletines y Sábanas ---
     path('docente/selector-boletines/', boletin_views.selector_boletin_vista, name='selector_boletines'),
     path('docente/generar-boletin/', boletin_views.generar_boletin_vista, name='generar_boletin'),
@@ -119,12 +127,6 @@ urlpatterns = [
     path('estudiante/panel/', dashboard_views.estudiante_dashboard_vista, name='panel_estudiante'),
     path('estudiante/mi-observador/', estudiante_observador_views.mi_observador_vista, name='mi_observador'),
     path('estudiante/mis-boletines/', estudiante_boletin_views.mis_boletines_vista, name='mi_boletin'),
-
-    # --- URLs para Lógica AJAX del Portal ---
-    path('ajax/directorio-docentes/', portal_views.directorio_docentes_json, name='ajax_directorio_docentes'),
-    path('ajax/documentos-publicos/', portal_views.documentos_publicos_json, name='ajax_documentos_publicos'),
-    path('ajax/galeria-fotos/', portal_views.galeria_fotos_json, name='ajax_galeria_fotos'),
-    path('ajax/noticias/', portal_views.noticias_json, name='ajax_noticias'),
     
     # --- URLs para el Sistema de Notificaciones ---
     path('notificaciones/', notificaciones_views.lista_notificaciones_vista, name='lista_notificaciones'),
@@ -132,66 +134,53 @@ urlpatterns = [
     path('ajax/marcar-leida/', notificaciones_views.marcar_notificacion_leida_ajax, name='marcar_notificacion_leida'),
 
     # ===============================================================
-    # RUTAS PARA CRUDs Y GESTIÓN DE DATOS (ACTUALIZADO)
+    # RUTAS ACTUALIZADAS APUNTANDO A LOS NUEVOS ARCHIVOS DE VISTAS
     # ===============================================================
 
-    # --- Panel Principal de Asignación Académica ---
-    path('panel-administrador/asignacion-academica/', admin_crud_views.gestion_asignacion_academica_vista, name='gestion_asignacion_academica'),
-    path('panel-administrador/asignacion/crear/', admin_crud_views.crear_asignacion_vista, name='crear_asignacion'),
-    path('panel-administrador/asignacion/eliminar/<int:asignacion_id>/', admin_crud_views.eliminar_asignacion_vista, name='eliminar_asignacion'),
+    # --- Rutas de Suplantación ---
+    path('suplantar/iniciar/<int:user_id>/', impersonation_views.iniciar_suplantacion, name='iniciar_suplantacion'),
+    path('suplantar/detener/', impersonation_views.detener_suplantacion, name='detener_suplantacion'),
 
-    # --- Gestión de Docentes (Simple) ---
-    path('panel-administrador/gestion-docentes/', admin_crud_views.gestion_docentes_vista, name='gestion_docentes'),
-    path('panel-administrador/gestion-docentes/crear/', admin_crud_views.crear_docente_vista, name='crear_docente'),
-    path('panel-administrador/gestion-docentes/eliminar/<int:docente_id>/', admin_crud_views.eliminar_docente_vista, name='eliminar_docente'),
-    path('panel-administrador/gestion-docentes/editar/<int:docente_id>/', admin_crud_views.editar_docente_vista, name='editar_docente'),
-    path('panel-administrador/gestion-docentes/eliminar/<int:docente_id>/', admin_crud_views.eliminar_docente_vista, name='eliminar_docente'),
+    # --- Panel Principal de Asignación Académica ---
+    path('panel-administrador/asignacion-academica/', gestion_academica_views.gestion_asignacion_academica_vista, name='gestion_asignacion_academica'),
+    path('panel-administrador/asignacion/crear/', gestion_academica_views.crear_asignacion_vista, name='crear_asignacion'),
+    path('panel-administrador/asignacion/eliminar/<int:asignacion_id>/', gestion_academica_views.eliminar_asignacion_vista, name='eliminar_asignacion'),
+
+    # --- Gestión de Docentes ---
+    path('panel-administrador/gestion-docentes/', gestion_docentes_views.gestion_docentes_vista, name='gestion_docentes'),
+    path('panel-administrador/gestion-docentes/crear/', gestion_docentes_views.crear_docente_vista, name='crear_docente'),
+    path('panel-administrador/gestion-docentes/editar/<int:docente_id>/', gestion_docentes_views.editar_docente_vista, name='editar_docente'),
+    path('panel-administrador/gestion-docentes/eliminar/<int:docente_id>/', gestion_docentes_views.eliminar_docente_vista, name='eliminar_docente'),
 
     # --- Gestión de Cursos / Grados ---
-    path('panel-administrador/gestion-cursos/', admin_crud_views.gestion_cursos_vista, name='gestion_cursos'),
-    path('panel-administrador/gestion-cursos/crear/', admin_crud_views.crear_curso_vista, name='crear_curso'),
-    path('panel-administrador/gestion-cursos/editar/<int:curso_id>/', admin_crud_views.editar_curso_vista, name='editar_curso'),
-    path('panel-administrador/gestion-cursos/eliminar/<int:curso_id>/', admin_crud_views.eliminar_curso_vista, name='eliminar_curso'),
+    path('panel-administrador/gestion-cursos/', gestion_academica_views.gestion_cursos_vista, name='gestion_cursos'),
+    path('panel-administrador/gestion-cursos/crear/', gestion_academica_views.crear_curso_vista, name='crear_curso'),
+    path('panel-administrador/gestion-cursos/editar/<int:curso_id>/', gestion_academica_views.editar_curso_vista, name='editar_curso'),
+    path('panel-administrador/gestion-cursos/eliminar/<int:curso_id>/', gestion_academica_views.eliminar_curso_vista, name='eliminar_curso'),
     
     # --- Gestión de Estudiantes ---
-    path('panel-administrador/gestion-estudiantes/', admin_crud_views.gestion_estudiantes_vista, name='gestion_estudiantes'),
-    path('panel-administrador/gestion-estudiantes/crear/', admin_crud_views.crear_estudiante_vista, name='crear_estudiante'),
-    path('panel-administrador/gestion-estudiantes/editar/<int:estudiante_id>/', admin_crud_views.editar_estudiante_vista, name='editar_estudiante'),
-    path('panel-administrador/gestion-estudiantes/eliminar/<int:estudiante_id>/', admin_crud_views.eliminar_estudiante_vista, name='eliminar_estudiante'),
+    path('panel-administrador/gestion-estudiantes/', gestion_estudiantes_views.gestion_estudiantes_vista, name='gestion_estudiantes'),
+    path('panel-administrador/gestion-estudiantes/crear/', gestion_estudiantes_views.crear_estudiante_vista, name='crear_estudiante'),
+    path('panel-administrador/gestion-estudiantes/editar/<int:estudiante_id>/', gestion_estudiantes_views.editar_estudiante_vista, name='editar_estudiante'),
+    path('panel-administrador/gestion-estudiantes/eliminar/<int:estudiante_id>/', gestion_estudiantes_views.eliminar_estudiante_vista, name='eliminar_estudiante'),
     
     # --- Gestión de Materias y Áreas ---
-    path('panel-administrador/gestion-materias/', admin_crud_views.gestion_materias_vista, name='gestion_materias'),
-    path('panel-administrador/gestion-materias/crear/', admin_crud_views.crear_materia_vista, name='crear_materia'),
-    path('panel-administrador/gestion-materias/editar/<int:materia_id>/', admin_crud_views.editar_materia_vista, name='editar_materia'),
-    path('panel-administrador/gestion-materias/eliminar/<int:materia_id>/', admin_crud_views.eliminar_materia_vista, name='eliminar_materia'),
-    path('panel-administrador/gestion-areas/', admin_crud_views.gestion_areas_vista, name='gestion_areas'),
-    path('panel-administrador/gestion-areas/crear/', admin_crud_views.crear_area_vista, name='crear_area'),
-    path('panel-administrador/gestion-areas/editar/<int:area_id>/', admin_crud_views.editar_area_vista, name='editar_area'),
-    path('panel-administrador/gestion-areas/eliminar/<int:area_id>/', admin_crud_views.eliminar_area_vista, name='eliminar_area'),
+    path('panel-administrador/gestion-materias/', gestion_academica_views.gestion_materias_vista, name='gestion_materias'),
+    path('panel-administrador/gestion-materias/crear/', gestion_academica_views.crear_materia_vista, name='crear_materia'),
+    path('panel-administrador/gestion-materias/editar/<int:materia_id>/', gestion_academica_views.editar_materia_vista, name='editar_materia'),
+    path('panel-administrador/gestion-materias/eliminar/<int:materia_id>/', gestion_academica_views.eliminar_materia_vista, name='eliminar_materia'),
+    path('panel-administrador/gestion-areas/', gestion_academica_views.gestion_areas_vista, name='gestion_areas'),
+    path('panel-administrador/gestion-areas/crear/', gestion_academica_views.crear_area_vista, name='crear_area'),
+    path('panel-administrador/gestion-areas/editar/<int:area_id>/', gestion_academica_views.editar_area_vista, name='editar_area'),
+    path('panel-administrador/gestion-areas/eliminar/<int:area_id>/', gestion_academica_views.eliminar_area_vista, name='eliminar_area'),
 
     # --- RUTAS PARA IMPORTACIÓN Y EXPORTACIÓN MASIVA ---
     path('panel-administrador/importar/', import_views.importacion_vista, name='importacion_datos'),
     path('panel-administrador/exportar-estudiantes/', export_views.exportar_estudiantes_excel, name='exportar_estudiantes_excel'),
     path('panel-administrador/descargar-plantilla-estudiantes/', export_views.descargar_plantilla_estudiantes, name='descargar_plantilla_estudiantes'),
     path('panel-administrador/exportar-materias/', export_views.exportar_materias_excel, name='exportar_materias_excel'),
-    path('panel-administrador/descargar-plantilla-materias/', export_views.descargar_plantilla_materias, name='descargar_plantilla_docentes'),
-
-    # CORRECCIÓN: Se añade la ruta que faltaba para descargar la plantilla de materias
-    # =================================================================
-    path('panel-administrador/descargar-plantilla-materias/', export_views.descargar_plantilla_materias, name='descargar_plantilla_materias'),    
-    path('panel-administrador/descargar-plantilla-docentes/', export_views.descargar_plantilla_docentes, name='descargar_plantilla_docentes'),
-
-    # NUEVO: RUTAS PARA SUPLANTACIÓN DE IDENTIDAD
-    # ===============================================================
-    path('suplantar/iniciar/<int:user_id>/', impersonation_views.iniciar_suplantacion, name='iniciar_suplantacion'),
-    path('suplantar/detener/', impersonation_views.detener_suplantacion, name='detener_suplantacion'),
-
-    # --- RUTAS PARA CRUDs Y GESTIÓN DE DATOS ---
-    path('panel-administrador/asignacion-academica/', admin_crud_views.gestion_asignacion_academica_vista, name='gestion_asignacion_academica'),
-    path('panel-administrador/asignacion/crear/', admin_crud_views.crear_asignacion_vista, name='crear_asignacion'),
-    path('panel-administrador/asignacion/eliminar/<int:asignacion_id>/', admin_crud_views.eliminar_asignacion_vista, name='eliminar_asignacion'),
-
-   
- 
-# ...
+    path('panel-administrador/descargar-plantilla-materias/', export_views.descargar_plantilla_materias, name='descargar_plantilla_materias'),
+    path('panel-administrador/descargar-plantilla-docentes/', export_views.descargar_plantilla_docentes, name='descargar_plantilla_docentes'),   
+       
 ]
+

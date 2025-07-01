@@ -1,61 +1,126 @@
 {% load static %}
 {% load nota_filters %}
 
-<header class="topbar">
-    
-    <a href="{% url 'dashboard' %}" class="home-link" title="Ir a la página de Inicio">
-        <i class="fas fa-home"></i>
-    </a>
+<header class="topbar-new">
+    <div class="topbar-section left">
+        <button class="btn btn-link btn-sm order-1 order-lg-0 me-2 text-white" id="sidebarToggle" href="#!"><i class="fas fa-bars"></i></button>
+        <a class="navbar-brand" href="{% url 'dashboard' %}">
+            <img src="{% static 'img/logo_colegio.png' %}" alt="Escudo del Colegio" class="topbar-logo">
+        </a>
+    </div>
 
-    <div class="page-title"><h1>{% block page_title %}{% endblock %}</h1></div>
-    <div class="user-info">
-        
-        <div class="notification-bell">
-            <i class="fas fa-bell" id="notification-icon"></i>
-            <span class="badge" id="notification-badge" style="display: none;">0</span>
-            <div id="notificaciones-dropdown" class="notificaciones-dropdown">
-                <div class="dropdown-header">
-                    <strong>Notificaciones</strong>
-                </div>
-                <ul id="notificaciones-lista">
-                    <li class="no-notificaciones"><p>Cargando...</p></li>
-                </ul>
-                <div class="dropdown-footer">
-                    <a href="{% url 'lista_notificaciones' %}">Ver todas</a>
-                </div>
-            </div>
+    <div class="topbar-section center">
+        <div class="page-title-container">
+            <h1>{% block page_title %}{% endblock %}</h1>
+            <span class="school-name">I.E.T. Alfonso Palacio Rudas</span>
         </div>
+    </div>
 
-        <div class="user-details">
-            <strong>{{ user.get_full_name|default:user.username }}</strong>
-            {% if user.is_superuser %}<span>Superusuario</span>
-            {% elif user|has_group:"Docentes" %}<span>Docente</span>
-            {% elif user|has_group:"Estudiantes" %}<span>Estudiante</span>
-            {% else %}<span>Usuario</span>
-            {% endif %}
+    <div class="topbar-section right">
+        <a href="{% url 'dashboard' %}" class="topbar-icon-link d-none d-md-block" title="Ir al Inicio">
+            <i class="fas fa-home fa-lg"></i>
+        </a>
+        <div class="notification-bell ms-2">
+            <a href="#" class="topbar-icon-link" id="notification-icon-link" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-bell fa-lg"></i>
+                {% get_unread_notification_count user as unread_count %}
+                {% if unread_count > 0 %}
+                    <span class="badge bg-danger rounded-pill notification-badge-abs">{{ unread_count }}</span>
+                {% endif %}
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notification-icon-link">
+                 {% include "notas/includes/_notificaciones_dropdown.html" %}
+            </ul>
         </div>
+ 
         
-        {% if user.estudiante.fichaestudiante.foto %}
-            <img src="{{ user.estudiante.fichaestudiante.foto.url }}" alt="Foto de Perfil" class="user-photo">
-        {% else %}
+        <div class="user-info dropdown ms-3">
+            <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
+            {% if user|has_group:"Docentes" and user.docente.ficha and user.docente.ficha.foto %}
+            <img src="{{ user.docente.ficha.foto.url }}" alt="Foto de Perfil" class="user-photo">
+            {% elif user|has_group:"Estudiantes" and user.estudiante.ficha and user.estudiante.ficha.foto %}
+             <img src="{{ user.estudiante.ficha.foto.url }}" alt="Foto de Perfil" class="user-photo">
+            {% else %}
             <img src="https://placehold.co/100x100/eeeeee/333333?text={{ user|get_initials }}" alt="Foto de Perfil" class="user-photo">
-        {% endif %}
-
-        <a href="{% url 'logout' %}" class="logout-link">Salir</a>
+            </a>
+            {% endif %}
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
+                <li><h6 class="dropdown-header">{{ user.get_full_name|default:user.username }}</h6></li>
+                {% if user|has_group:"Estudiantes" %}
+                    <li><a class="dropdown-item" href="{% url 'editar_estudiante' user.estudiante.id %}"><i class="fas fa-camera fa-fw me-2 text-muted"></i>Mi Ficha / Foto</a></li>
+                {% elif user|has_group:"Docentes" %}
+                     <li><a class="dropdown-item" href="{% url 'editar_docente' user.docente.id %}"><i class="fas fa-id-card fa-fw me-2 text-muted"></i>Mi Ficha</a></li>
+                {% endif %}
+                <li><a class="dropdown-item" href="{% url 'cambiar_password' %}"><i class="fas fa-key fa-fw me-2 text-muted"></i>Cambiar Contraseña</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item text-danger" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt fa-fw me-2"></i>Salir</a></li>
+            </ul>
+        </div>
+  
     </div>
 </header>
 
-{# Estilo simple para el nuevo botón de inicio. Puedes moverlo a tu archivo CSS principal si lo prefieres. #}
 <style>
-    .topbar .home-link {
-        font-size: 1.5rem;
-        color: white;
-        text-decoration: none;
-        margin-left: 15px;
-        margin-right: 15px;
-        transition: color 0.2s;
+    .topbar-new {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 1rem; 
+        background-color: #198754; 
+        border-bottom: none;
+        color: white; 
     }
-    .topbar .home-link:hover {
-        color: #d4d4d4;
+    .topbar-section {
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+    }
+    .topbar-section.center {
+        flex-grow: 1;
+        justify-content: center;
+    }
+    .topbar-logo {
+        height: 70px;
+        width: auto;
+    }
+    .page-title-container {
+        text-align: center;
+    }
+    .page-title-container h1 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin: 0;
+        color: white;
+    }
+    .school-name {
+        font-size: 1.75rem;
+        color: rgba(255, 255, 255, 0.8);
+        display: block;
+    }
+    .topbar-icon-link {
+        color: white;
+        font-size: 1.25rem;
+    }
+    .notification-bell { position: relative; }
+    .notification-badge-abs {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        font-size: 0.6em;
+        line-height: 1;
+        padding: .25em .4em;
+    }
+    .user-photo {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid rgba(255, 255, 255, 0.5);
+    }
+    .dropdown-toggle::after { 
+        display: none !important;
+    }
+    #sidebarToggle {
+        color: white;
     }
 </style>

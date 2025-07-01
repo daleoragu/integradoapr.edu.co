@@ -78,3 +78,17 @@ def coma_decimal(value):
         # Si el valor no puede ser convertido a número, se devuelve como está.
         return value
 # --- FIN DEL NUEVO FILTRO --
+@register.simple_tag
+def get_unread_notification_count(user):
+    """
+    Este es un 'simple_tag' que cuenta las notificaciones no leídas
+    para un usuario específico.
+    """
+    if not user.is_authenticated:
+        return 0
+    try:
+        # Cuenta las notificaciones para el usuario que no han sido leídas
+        return Notificacion.objects.filter(destinatario=user, leido=False).count()
+    except:
+        # Si hay algún error, simplemente retorna 0 para no romper la página.
+        return 0

@@ -8,5 +8,7 @@ from .mensajeria_forms import *
 from .observador_forms import *
 from .admin_crud_forms import *
 from .asignacion_forms import *
+from .auth_forms import *
+
 
 # Puedes añadir más archivos de formularios aquí en el futuro.

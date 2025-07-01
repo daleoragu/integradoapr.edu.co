@@ -11,6 +11,11 @@ from django.conf import settings
 import json
 from datetime import datetime
 from ..models import Docente, AsignacionDocente, Estudiante, Asistencia
+from ..forms.auth_forms import CustomPasswordChangeForm
+from django.contrib.auth import update_session_auth_hash
+
+
+
 
 def _enviar_correo_inasistencia(estudiante, asignacion, fecha):
     """
@@ -139,3 +144,20 @@ def guardar_inasistencia_ajax(request):
         return JsonResponse({'status': 'success', 'message': 'Asistencia guardada.'})
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+    @login_required
+    def cambiar_password_vista(request):
+        if request.method == 'POST':
+            form = CustomPasswordChangeForm(request.user, request.POST)
+            if form.is_valid():
+                user = form.save()
+                update_session_auth_hash(request, user)  # ¡Importante para mantener al usuario logueado!
+                messages.success(request, '¡Tu contraseña ha sido actualizada exitosamente!')
+                return redirect('dashboard')
+            else:
+                messages.error(request, 'Por favor corrige los errores a continuación.')
+        else:
+            form = CustomPasswordChangeForm(request.user)
+        return render(request, 'registration/cambiar_password.html', {
+            'form': form
+        })

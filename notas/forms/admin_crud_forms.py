@@ -1,7 +1,9 @@
 # notas/forms/admin_crud_forms.py
 from django import forms
 from django.contrib.auth.models import User
-from ..models import Estudiante, FichaEstudiante, Curso, Docente, AreaConocimiento, Materia, FichaDocente
+from ..models import (
+    Estudiante, FichaEstudiante, Curso, Docente, AreaConocimiento, Materia, FichaDocente
+)
 
 # --- Formularios para Cursos / Grados ---
 class CursoForm(forms.ModelForm):
@@ -22,19 +24,13 @@ class AdminCrearDocenteForm(forms.Form):
     nombres = forms.CharField(label="Nombres Completos", max_length=150, widget=forms.TextInput(attrs={'class': 'form-control'}))
     apellidos = forms.CharField(label="Apellidos Completos", max_length=150, widget=forms.TextInput(attrs={'class': 'form-control'}))
     email = forms.EmailField(label="Correo Electrónico (Opcional)", required=False, widget=forms.EmailInput(attrs={'class': 'form-control'}))
-    numero_documento = forms.CharField(label="Número de Documento", max_length=20, help_text="Este será el nombre de usuario y la contraseña inicial.", widget=forms.TextInput(attrs={'class': 'form-control'}))
+    numero_documento = forms.CharField(label="Número de Documento (Opcional)", required=False, max_length=20, widget=forms.TextInput(attrs={'class': 'form-control'}))
 
     def clean_nombres(self):
         return self.cleaned_data.get('nombres', '').strip().upper()
 
     def clean_apellidos(self):
         return self.cleaned_data.get('apellidos', '').strip().upper()
-
-    def clean_numero_documento(self):
-        numero = self.cleaned_data.get('numero_documento')
-        if User.objects.filter(username=numero).exists():
-            raise forms.ValidationError("Ya existe un usuario con este número de documento.")
-        return numero
 
 class AdminEditarDocenteForm(forms.ModelForm):
     first_name = forms.CharField(label="Nombres", widget=forms.TextInput(attrs={'class': 'form-control'}))
@@ -44,11 +40,13 @@ class AdminEditarDocenteForm(forms.ModelForm):
     
     class Meta:
         model = FichaDocente
-        fields = ['telefono', 'direccion', 'titulo_profesional']
+        fields = ['numero_documento', 'telefono', 'direccion', 'titulo_profesional', 'foto']
         widgets = {
+            'numero_documento': forms.TextInput(attrs={'class': 'form-control'}),
             'telefono': forms.TextInput(attrs={'class': 'form-control'}),
             'direccion': forms.TextInput(attrs={'class': 'form-control'}),
             'titulo_profesional': forms.TextInput(attrs={'class': 'form-control'}),
+            'foto': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -72,27 +70,57 @@ class AdminEditarDocenteForm(forms.ModelForm):
             ficha.save()
         return ficha
 
-# --- Formularios para Estudiantes ---
+# ===============================================================
+# FORMULARIOS PARA GESTIÓN DE ESTUDIANTES (ACTUALIZADOS)
+# ===============================================================
+
 class AdminCrearEstudianteForm(forms.Form):
     nombres = forms.CharField(label="Nombres Completos", max_length=150, widget=forms.TextInput(attrs={'class': 'form-control'}))
     apellidos = forms.CharField(label="Apellidos Completos", max_length=150, widget=forms.TextInput(attrs={'class': 'form-control'}))
-    tipo_documento = forms.ChoiceField(label="Tipo de Documento", choices=FichaEstudiante.TIPO_DOCUMENTO_CHOICES, widget=forms.Select(attrs={'class': 'form-select'}))
-    numero_documento = forms.CharField(label="Número de Documento", max_length=20, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Este será el usuario y contraseña inicial'}))
+    # --- CAMBIO: El número de documento ahora es opcional ---
+    tipo_documento = forms.ChoiceField(label="Tipo de Documento (Opcional)", required=False, choices=FichaEstudiante.TIPO_DOCUMENTO_CHOICES, widget=forms.Select(attrs={'class': 'form-select'}))
+    numero_documento = forms.CharField(label="Número de Documento (Opcional)", required=False, max_length=20, widget=forms.TextInput(attrs={'class': 'form-control'}))
     curso = forms.ModelChoiceField(label="Asignar al Curso", queryset=Curso.objects.all(), widget=forms.Select(attrs={'class': 'form-select'}))
-    def clean_numero_documento(self):
-        numero = self.cleaned_data.get('numero_documento')
-        if User.objects.filter(username=numero).exists(): raise forms.ValidationError("Ya existe un usuario con este número de documento.")
-        return numero
+    
+    def clean_nombres(self):
+        return self.cleaned_data.get('nombres', '').upper()
+
+    def clean_apellidos(self):
+        return self.cleaned_data.get('apellidos', '').upper()
 
 class AdminEditarEstudianteForm(forms.ModelForm):
     first_name = forms.CharField(label="Nombres", widget=forms.TextInput(attrs={'class': 'form-control'}))
     last_name = forms.CharField(label="Apellidos", widget=forms.TextInput(attrs={'class': 'form-control'}))
     curso = forms.ModelChoiceField(queryset=Curso.objects.all(), label="Curso", widget=forms.Select(attrs={'class': 'form-select'}))
     is_active = forms.BooleanField(required=False, label="¿Estudiante Activo?", widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}))
+    
     class Meta:
         model = FichaEstudiante
         fields = '__all__'
         exclude = ['estudiante']
+        widgets = {
+            'tipo_documento': forms.Select(attrs={'class': 'form-select'}),
+            'numero_documento': forms.TextInput(attrs={'class': 'form-control'}),
+            'grupo_sanguineo': forms.Select(attrs={'class': 'form-select'}),
+            'foto': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'lugar_nacimiento': forms.TextInput(attrs={'class': 'form-control'}),
+            'fecha_nacimiento': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'eps': forms.TextInput(attrs={'class': 'form-control'}),
+            'enfermedades_alergias': forms.Textarea(attrs={'rows': 2, 'class': 'form-control'}),
+            'nombre_padre': forms.TextInput(attrs={'class': 'form-control'}),
+            'celular_padre': forms.TextInput(attrs={'class': 'form-control'}),
+            'nombre_madre': forms.TextInput(attrs={'class': 'form-control'}),
+            'celular_madre': forms.TextInput(attrs={'class': 'form-control'}),
+            'nombre_acudiente': forms.TextInput(attrs={'class': 'form-control'}),
+            'celular_acudiente': forms.TextInput(attrs={'class': 'form-control'}),
+            'email_acudiente': forms.EmailInput(attrs={'class': 'form-control'}),
+            'espera_en_porteria': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'colegio_anterior': forms.TextInput(attrs={'class': 'form-control'}),
+            'grado_anterior': forms.TextInput(attrs={'class': 'form-control'}),
+            'compromiso_padre': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+            'compromiso_estudiante': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+        }
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk:
@@ -101,18 +129,23 @@ class AdminEditarEstudianteForm(forms.ModelForm):
             self.fields['last_name'].initial = estudiante_profile.user.last_name
             self.fields['curso'].initial = estudiante_profile.curso
             self.fields['is_active'].initial = estudiante_profile.is_active
+
     def save(self, commit=True):
         ficha = super().save(commit=False)
         estudiante_profile = ficha.estudiante
         user = estudiante_profile.user
-        user.first_name = self.cleaned_data['first_name']
-        user.last_name = self.cleaned_data['last_name']
+        
+        user.first_name = self.cleaned_data['first_name'].upper()
+        user.last_name = self.cleaned_data['last_name'].upper()
+        
         estudiante_profile.curso = self.cleaned_data['curso']
         estudiante_profile.is_active = self.cleaned_data['is_active']
+        
         if commit:
             user.save()
             estudiante_profile.save()
             ficha.save()
+            
         return ficha
 
 # --- Formularios para Materias y Áreas ---
@@ -120,7 +153,9 @@ class AreaConocimientoForm(forms.ModelForm):
     class Meta:
         model = AreaConocimiento
         fields = ['nombre']
+
 class MateriaForm(forms.ModelForm):
     class Meta:
         model = Materia
         fields = ['nombre', 'abreviatura', 'area']
+

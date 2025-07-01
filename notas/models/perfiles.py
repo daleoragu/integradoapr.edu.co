@@ -74,18 +74,20 @@ class FichaEstudiante(models.Model):
     def __str__(self):
         return f"Ficha de {self.estudiante.user.get_full_name()}"
 
-# ... (al final del archivo, después de la clase FichaEstudiante)
-
+# ===============================================================
+# ¡NUEVO! - Modelo para la Ficha del Docente
+# ===============================================================
 class FichaDocente(models.Model):
     docente = models.OneToOneField(Docente, on_delete=models.CASCADE, primary_key=True, related_name="ficha")
+    numero_documento = models.CharField(max_length=20, unique=True, null=True, blank=True, verbose_name="Número de Documento")
     telefono = models.CharField(max_length=20, blank=True, verbose_name="Teléfono de Contacto")
     direccion = models.CharField(max_length=255, blank=True, verbose_name="Dirección de Residencia")
     titulo_profesional = models.CharField(max_length=200, blank=True, verbose_name="Título Profesional")
-    # Puedes añadir más campos opcionales aquí en el futuro
-
+    foto = models.ImageField(upload_to='docentes/fotos/', blank=True, null=True)
     def __str__(self):
         return f"Ficha de {self.docente.user.get_full_name()}"
     
     class Meta:
         verbose_name = "Ficha del Docente"
         verbose_name_plural = "Fichas de Docentes"
+        

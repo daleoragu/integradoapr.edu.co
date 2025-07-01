@@ -27,5 +27,7 @@ from . import publicacion_views
 from . import estudiante_boletin_views
 from . import portal_views
 from . import portal_admin_views
-from . import admin_crud_views
 from . import impersonation_views
+from . import gestion_docentes_views
+from . import gestion_estudiantes_views
+from . import gestion_academica_views
