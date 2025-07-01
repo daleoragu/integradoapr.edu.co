@@ -16,7 +16,7 @@ SECRET_KEY = 'django-insecure-+_&+y!#9kx@(e1x#8+m$^9hve&98r9j61jxb0^x6hi*&+)_odf
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['www.integradoarp.edu.co', 'integradoarp.edu.co', '127.0.0.1', 'integradoarp-edu-co.onrender.com', 'localhost']
+ALLOWED_HOSTS = ['www.integradoapr.edu.co', 'integradoapr.edu.co', '127.0.0.1', 'integradoarp-edu-co.onrender.com', 'localhost']
 
 # Application definition
 
