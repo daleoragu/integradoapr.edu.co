@@ -1,17 +1,25 @@
 # config/urls.py
+
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 from django.conf import settings
-from django.conf.urls.static import static
+from django.views.static import serve # Importa la vista 'serve'
 
 urlpatterns = [
-    # Volvemos a usar el admin por defecto de Django
     path('admin/', admin.site.urls),
-    
-    # Esta línea conecta con todas las URLs de tu aplicación 'notas'
+    # Esta línea asume que todas las URLs de tu app están en 'notas.urls'
     path('', include('notas.urls')),
 
-    
+    # --- INICIO DE LA CORRECCIÓN PARA PRODUCCIÓN ---
+    # La siguiente línea es necesaria para que Django pueda "servir" (mostrar)
+    # los archivos que los usuarios suben (imágenes, documentos) cuando
+    # la aplicación está en producción (DEBUG=False).
+    re_path(r'^media/(?P<path>.*)$', serve, {
+        'document_root': settings.MEDIA_ROOT,
+    }),
+    # --- FIN DE LA CORRECCIÓN ---
 ]
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# NOTA: Se elimina la condición `if settings.DEBUG:` porque necesitamos
+# que esta ruta para los archivos de medios funcione siempre,
+# especialmente en producción.
