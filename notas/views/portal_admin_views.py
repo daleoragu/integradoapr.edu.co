@@ -4,21 +4,18 @@ from django.contrib.auth.decorators import user_passes_test
 from django.contrib import messages
 
 # Se importan todos los modelos y formularios necesarios para el panel
-from notas.models.portal_models import DocumentoPublico, FotoGaleria, Noticia, ImagenCarrusel
-
-# ===================================================================
-# CAMBIO: Se actualiza la importación para usar la nueva estructura de formularios.
-# Ahora se importa directamente desde 'notas.forms.portal_forms'.
-# ===================================================================
-from ..forms.portal_forms import DocumentoPublicoForm, FotoGaleriaForm, NoticiaForm, ImagenCarruselForm
+from ..models import DocumentoPublico, FotoGaleria, Noticia, ImagenCarrusel
+from ..forms import DocumentoPublicoForm, FotoGaleriaForm, NoticiaForm, ImagenCarruselForm
 
 def es_admin_o_docente(user):
     # Esta función permite el acceso a Superusuarios y a miembros del grupo 'Docentes'
-    # Ajusta el nombre del grupo si es diferente en tu base de datos.
     return user.is_superuser or user.groups.filter(name='Docentes').exists()
 
 @user_passes_test(es_admin_o_docente)
 def configuracion_portal_vista(request):
+    """
+    Esta es la vista que faltaba. Carga el panel principal de configuración del portal.
+    """
     return render(request, 'notas/admin_portal/configuracion_portal.html')
 
 # --- VISTAS PARA DOCUMENTOS ---
@@ -33,7 +30,7 @@ def gestion_documentos_vista(request):
     else:
         form = DocumentoPublicoForm()
     documentos = DocumentoPublico.objects.all()
-    context = {'form': form, 'documentos': documentos}
+    context = {'form': form, 'documentos': documentos, 'page_title': 'Gestionar Documentos'}
     return render(request, 'notas/admin_portal/gestion_documentos.html', context)
 
 @user_passes_test(es_admin_o_docente)
@@ -56,7 +53,7 @@ def gestion_galeria_vista(request):
     else:
         form = FotoGaleriaForm()
     fotos = FotoGaleria.objects.all()
-    context = {'form': form, 'fotos': fotos}
+    context = {'form': form, 'fotos': fotos, 'page_title': 'Gestionar Galería'}
     return render(request, 'notas/admin_portal/gestion_galeria.html', context)
 
 @user_passes_test(es_admin_o_docente)
@@ -71,7 +68,8 @@ def eliminar_foto_vista(request, pk):
 @user_passes_test(es_admin_o_docente)
 def gestion_noticias_vista(request):
     noticias = Noticia.objects.all()
-    return render(request, 'notas/admin_portal/gestion_noticias.html', {'noticias': noticias})
+    context = {'noticias': noticias, 'page_title': 'Gestionar Noticias'}
+    return render(request, 'notas/admin_portal/gestion_noticias.html', context)
 
 @user_passes_test(es_admin_o_docente)
 def crear_noticia_vista(request):
@@ -81,11 +79,12 @@ def crear_noticia_vista(request):
             noticia = form.save(commit=False)
             noticia.autor = request.user
             noticia.save()
-            messages.success(request, 'Noticia creada exitosamente.')
+            messages.success(request, 'Noticia creada como BORRADOR. Ahora puedes publicarla desde la lista.')
             return redirect('gestion_noticias')
     else:
         form = NoticiaForm()
-    return render(request, 'notas/admin_portal/formulario_noticia.html', {'form': form, 'accion': 'Crear'})
+    context = {'form': form, 'accion': 'Crear', 'page_title': 'Crear Noticia'}
+    return render(request, 'notas/admin_portal/formulario_noticia.html', context)
 
 @user_passes_test(es_admin_o_docente)
 def editar_noticia_vista(request, pk):
@@ -98,7 +97,8 @@ def editar_noticia_vista(request, pk):
             return redirect('gestion_noticias')
     else:
         form = NoticiaForm(instance=noticia)
-    return render(request, 'notas/admin_portal/formulario_noticia.html', {'form': form, 'accion': 'Editar'})
+    context = {'form': form, 'accion': 'Editar', 'page_title': f'Editando: {noticia.titulo}'}
+    return render(request, 'notas/admin_portal/formulario_noticia.html', context)
 
 @user_passes_test(es_admin_o_docente)
 def eliminar_noticia_vista(request, pk):
@@ -134,7 +134,7 @@ def gestion_carrusel_vista(request):
         form = ImagenCarruselForm()
     
     imagenes = ImagenCarrusel.objects.all()
-    context = { 'form': form, 'imagenes': imagenes }
+    context = { 'form': form, 'imagenes': imagenes, 'page_title': 'Gestionar Carrusel' }
     return render(request, 'notas/admin_portal/gestion_carrusel.html', context)
 
 @user_passes_test(es_admin_o_docente)
