@@ -7,7 +7,7 @@ from django.views.static import serve # Importa la vista 'serve'
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # Esta línea asume que todas las URLs de tu app están en 'notas.urls'
+    # Esta línea conecta con todas las URLs de tu aplicación 'notas'
     path('', include('notas.urls')),
 
     # --- INICIO DE LA CORRECCIÓN PARA PRODUCCIÓN ---
@@ -19,7 +19,3 @@ urlpatterns = [
     }),
     # --- FIN DE LA CORRECCIÓN ---
 ]
-
-# NOTA: Se elimina la condición `if settings.DEBUG:` porque necesitamos
-# que esta ruta para los archivos de medios funcione siempre,
-# especialmente en producción.

@@ -7,14 +7,13 @@ import dj_database_url
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
+# --- LECTURA DE VARIABLES DE ENTORNO ---
+# Las claves secretas ahora se leen desde el entorno de Render, no se escriben en el código.
+SECRET_KEY = os.environ.get('SECRET_KEY')
+DATABASE_URL = os.environ.get('DATABASE_URL')
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-+_&+y!#9kx@(e1x#8+m$^9hve&98r9j61jxb0^x6hi*&+)_odf'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+# En desarrollo local, DEBUG puede ser True, pero en Render siempre será False.
+DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
 ALLOWED_HOSTS = ['www.integradoapr.edu.co', 'integradoapr.edu.co', '127.0.0.1', 'integradoarp-edu-co.onrender.com', 'localhost']
 
@@ -28,11 +27,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'notas.apps.NotasConfig',
+    'storages',  # App para la gestión de almacenamiento en S3
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # <--- CORRECCIÓN #1: AÑADIDO WHITENOISE MIDDLEWARE
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -65,18 +65,12 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 
 # Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
 DATABASES = {
-    'default': dj_database_url.config(
-        default='sqlite:///' + os.path.join(BASE_DIR, 'db.sqlite3')
-    )
+    'default': dj_database_url.config(default=DATABASE_URL, conn_max_age=600)
 }
 
 
 # Password validation
-# https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -86,8 +80,6 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 # Internationalization
-# https://docs.djangoproject.com/en/5.2/topics/i18n/
-
 LANGUAGE_CODE = 'es-co'
 TIME_ZONE = 'America/Bogota'
 USE_I18N = True
@@ -95,8 +87,6 @@ USE_TZ = True
 
 
 # Default primary key field type
-# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
@@ -105,28 +95,29 @@ LOGIN_URL = 'portal'
 LOGIN_REDIRECT_URL = 'dashboard'
 
 
-# Configuración para envío de correo electrónico (modo de desarrollo)
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-DEFAULT_FROM_EMAIL = 'davidlrg89@gmail.com'
+# --- CONFIGURACIÓN DE ARCHIVOS ESTÁTICOS (STATIC) Y MULTIMEDIA (MEDIA) ---
 
-
-# --- CONFIGURACIÓN DE ARCHIVOS ESTÁTICOS Y MULTIMEDIA PARA PRODUCCIÓN ---
-
-# Archivos subidos por los usuarios (MEDIA)
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
-
-# Archivos del sitio (CSS, JS, Imágenes) (STATIC)
+# Archivos del sitio (CSS, JS) - Servidos por WhiteNoise
 STATIC_URL = '/static/'
-
-# Directorio donde tu app 'notas' guarda sus archivos estáticos. Django los encontrará aquí.
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'notas/static'),
-]
-
-# Directorio donde `collectstatic` juntará TODOS los archivos estáticos para producción.
-# WhiteNoise usará esta carpeta para servir los archivos.
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-
-# CORRECCIÓN #2: AÑADIDO EL SISTEMA DE ALMACENAMIENTO DE WHITENOISE
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# --- INICIO DE LA CONFIGURACIÓN DE AMAZON S3 PARA ARCHIVOS MULTIMEDIA ---
+
+# Credenciales de AWS (leídas desde las variables de entorno de Render)
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
+AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME', 'us-east-2') # us-east-1 como default
+
+# Configuración para que los archivos no se sobreescriban si tienen el mismo nombre
+AWS_S3_FILE_OVERWRITE = False
+AWS_DEFAULT_ACL = 'public-read' # Permite que los archivos subidos sean públicos
+
+# Clase que Django usará para gestionar los archivos subidos
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
+# URL base para los archivos de medios (apuntará a tu bucket de S3)
+MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com/'
+
+# --- FIN DE LA CONFIGURACIÓN DE S3 ---
