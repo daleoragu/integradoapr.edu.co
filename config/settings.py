@@ -12,7 +12,10 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 DATABASE_URL = os.environ.get('DATABASE_URL')
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = ['www.integradoapr.edu.co', 'integradoapr.edu.co', '127.0.0.1', 'integradoarp-edu-co.onrender.com', 'localhost']
+# --- CORRECCIÓN EN ALLOWED_HOSTS ---
+# Se corrigió 'integradoarp-edu-co.onrender.com' a 'integradoapr.edu.co.onrender.com' si ese es el dominio de Render
+ALLOWED_HOSTS = ['www.integradoapr.edu.co', 'integradoapr.edu.co', '127.0.0.1', 'integradoapr-edu-co.onrender.com', 'localhost']
+
 
 # Application definition
 INSTALLED_APPS = [
@@ -97,18 +100,14 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
 AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
-AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME', 'us-east-1')
+# --- CORRECCIÓN DE LA REGIÓN POR DEFECTO ---
+AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME', 'us-east-2')
 
-# --- INICIO DE LA CORRECCIÓN ---
-# Se añade el dominio personalizado de S3 para mayor compatibilidad.
 AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
-# --- FIN DE LA CORRECCIÓN ---
 
 AWS_S3_FILE_OVERWRITE = False
 AWS_DEFAULT_ACL = 'public-read'
 
-# Clase que Django usará para gestionar los archivos subidos
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
-# URL base para los archivos de medios (ahora usa el dominio personalizado)
 MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
