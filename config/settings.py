@@ -109,21 +109,18 @@ AWS_S3_SIGNATURE_VERSION = 's3v4'
 
 AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com'
 
-# S3 opcionales y recomendados
-AWS_S3_FILE_OVERWRITE = False
-AWS_DEFAULT_ACL = 'public-read'
-AWS_QUERYSTRING_AUTH = False
+AWS_DEFAULT_ACL = None
+
 AWS_S3_OBJECT_PARAMETERS = {
-    'CacheControl': 'max-age=86400',
     'ACL': 'public-read',
+    'CacheControl': 'max-age=86400',
 }
 
 DEFAULT_FILE_STORAGE = 'notas.storage_backends.PublicMediaStorage'
 
-
 MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
 
-# --- LOGGING TEMPORAL PARA DIAGNÓSTICO (puedes quitar luego) ---
+# --- LOGGING OPCIONAL PARA DIAGNÓSTICO ---
 logging.getLogger("django").setLevel(logging.DEBUG)
 logging.getLogger("boto3").setLevel(logging.DEBUG)
 logging.getLogger("botocore").setLevel(logging.DEBUG)
