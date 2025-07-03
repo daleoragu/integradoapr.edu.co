@@ -12,8 +12,6 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 DATABASE_URL = os.environ.get('DATABASE_URL')
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
-# --- CORRECCIÓN EN ALLOWED_HOSTS ---
-# Se corrigió 'integradoarp-edu-co.onrender.com' a 'integradoapr.edu.co.onrender.com' si ese es el dominio de Render
 ALLOWED_HOSTS = ['www.integradoapr.edu.co', 'integradoapr.edu.co', '127.0.0.1', 'integradoapr-edu-co.onrender.com', 'localhost']
 
 
@@ -100,10 +98,14 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
 AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
-# --- CORRECCIÓN DE LA REGIÓN POR DEFECTO ---
 AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME', 'us-east-2')
+AWS_S3_SIGNATURE_VERSION = 's3v4' # Añadido para mayor compatibilidad
 
-AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+# --- INICIO DE LA CORRECCIÓN DEFINITIVA ---
+# Se corrige el formato de la URL para que incluya la región, lo cual es necesario
+# para buckets que no están en us-east-1.
+AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com'
+# --- FIN DE LA CORRECCIÓN DEFINITIVA ---
 
 AWS_S3_FILE_OVERWRITE = False
 AWS_DEFAULT_ACL = 'public-read'
