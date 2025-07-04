@@ -3,15 +3,15 @@ from pathlib import Path
 import dj_database_url
 from dotenv import load_dotenv
 
-# Cargar .env si existe
+# Cargar variables de entorno desde .env
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-ROOT_URLCONF = 'config.urls'
 
 # --- VARIABLES DE ENTORNO ---
-SECRET_KEY = os.environ.get('SECRET_KEY', 'tu_clave_secreta_de_desarollo')
+SECRET_KEY = os.environ.get('SECRET_KEY', 'clave_insegura_para_desarrollo')
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
+USE_S3 = os.environ.get('USE_S3') == 'true'
 
 ALLOWED_HOSTS = [
     'www.integradoapr.edu.co',
@@ -61,16 +61,13 @@ else:
         }
     }
 
-# --- STATIC Y MEDIA ---
+# --- ARCHIVOS ESTÁTICOS ---
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
-
-# --- AWS S3 STORAGE CONFIG (solo si usas AWS en producción) ---
-if os.environ.get("USE_S3") == 'True':
+# --- ARCHIVOS MEDIA ---
+if USE_S3:
     DEFAULT_FILE_STORAGE = 'config.storage_backends.MediaStorage'
     AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
     AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
@@ -81,6 +78,9 @@ if os.environ.get("USE_S3") == 'True':
     AWS_DEFAULT_ACL = None
     AWS_QUERYSTRING_AUTH = False
     MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
+else:
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = BASE_DIR / 'media'
 
 # --- TEMPLATES Y CONTEXTO ---
 TEMPLATES = [
@@ -102,24 +102,19 @@ TEMPLATES = [
 
 # --- AUTENTICACIÓN ---
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
+# --- CONFIGURACIÓN GENERAL ---
 LANGUAGE_CODE = 'es-co'
 TIME_ZONE = 'America/Bogota'
 USE_I18N = True
 USE_TZ = True
-
-# --- ARCHIVOS ESTÁTICOS Y MEDIA ---
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# --- ROOT URL Y WSGI ---
+ROOT_URLCONF = 'config.urls'
+WSGI_APPLICATION = 'config.wsgi.application'
