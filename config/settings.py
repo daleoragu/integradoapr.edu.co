@@ -1,17 +1,17 @@
 import os
 from pathlib import Path
-import dj_database_url
 from dotenv import load_dotenv
+import dj_database_url
 
-# Cargar variables de entorno desde .env
-load_dotenv()
-
+# Ruta base del proyecto
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# --- VARIABLES DE ENTORNO ---
-SECRET_KEY = os.environ.get('SECRET_KEY', 'clave_insegura_para_desarrollo')
+# Cargar archivo .env desde la raíz del proyecto
+load_dotenv(BASE_DIR / '.env')
+
+# Variables de entorno
+SECRET_KEY = os.environ['SECRET_KEY']
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
-USE_S3 = os.environ.get('USE_S3') == 'true'
 
 ALLOWED_HOSTS = [
     'www.integradoapr.edu.co',
@@ -19,10 +19,9 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     'localhost',
     'integradoapr-edu-co.onrender.com',
-    'integradoarp-edu-co.onrender.com',
 ]
 
-# --- APLICACIONES INSTALADAS ---
+# Aplicaciones instaladas
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -30,11 +29,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'notas.apps.NotasConfig',
     'storages',
+    'notas',
 ]
 
-# --- MIDDLEWARE ---
+# Middleware
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -46,43 +45,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# --- BASE DE DATOS ---
-DATABASE_URL = os.environ.get('DATABASE_URL')
+ROOT_URLCONF = 'config.urls'
 
-if DATABASE_URL:
-    DATABASES = {
-        'default': dj_database_url.config(default=DATABASE_URL, conn_max_age=600)
-    }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
-
-# --- ARCHIVOS ESTÁTICOS ---
-STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-
-# --- ARCHIVOS MEDIA ---
-if USE_S3:
-    DEFAULT_FILE_STORAGE = 'config.storage_backends.MediaStorage'
-    AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
-    AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
-    AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
-    AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME', 'us-east-2')
-    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
-    AWS_S3_FILE_OVERWRITE = False
-    AWS_DEFAULT_ACL = None
-    AWS_QUERYSTRING_AUTH = False
-    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
-else:
-    MEDIA_URL = '/media/'
-    MEDIA_ROOT = BASE_DIR / 'media'
-
-# --- TEMPLATES Y CONTEXTO ---
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -100,21 +64,70 @@ TEMPLATES = [
     },
 ]
 
-# --- AUTENTICACIÓN ---
-AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
-]
+WSGI_APPLICATION = 'config.wsgi.application'
 
-# --- CONFIGURACIÓN GENERAL ---
+# Base de datos
+DATABASES = {
+    'default': dj_database_url.parse(
+        os.environ['DATABASE_URL'],
+        conn_max_age=600,
+        ssl_require=True
+    )
+}
+
+# Configuración para Amazon S3
+USE_S3 = os.environ.get('USE_S3', 'False').lower() == 'true'
+if USE_S3:
+    AWS_ACCESS_KEY_ID = os.environ['AWS_ACCESS_KEY_ID']
+    AWS_SECRET_ACCESS_KEY = os.environ['AWS_SECRET_ACCESS_KEY']
+    AWS_STORAGE_BUCKET_NAME = os.environ['AWS_STORAGE_BUCKET_NAME']
+    AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME', None)
+    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+    AWS_S3_FILE_OVERWRITE = False
+    AWS_DEFAULT_ACL = None
+    AWS_QUERYSTRING_AUTH = False
+
+    STATICFILES_LOCATION = 'static'
+    MEDIAFILES_LOCATION = 'media'
+
+    STATICFILES_STORAGE = 'config.storage_backends.StaticStorage'
+    DEFAULT_FILE_STORAGE = 'config.storage_backends.MediaStorage'
+
+    STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{STATICFILES_LOCATION}/'
+    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{MEDIAFILES_LOCATION}/'
+else:
+    STATIC_URL = '/static/'
+    MEDIA_URL = '/media/'
+    STATICFILES_DIRS = [BASE_DIR / 'static']
+    STATIC_ROOT = BASE_DIR / 'staticfiles'
+    MEDIA_ROOT = BASE_DIR / 'media'
+
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Autenticación
+LOGIN_URL = '/accounts/login/'
+
+# Internacionalización
 LANGUAGE_CODE = 'es-co'
 TIME_ZONE = 'America/Bogota'
 USE_I18N = True
+USE_L10N = True
 USE_TZ = True
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# --- ROOT URL Y WSGI ---
-ROOT_URLCONF = 'config.urls'
-WSGI_APPLICATION = 'config.wsgi.application'
+# Validadores de contraseñas
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
+]
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
