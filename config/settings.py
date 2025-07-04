@@ -19,7 +19,6 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     'localhost',
     'integradoapr-edu-co.onrender.com',
-    'integradoarp-edu-co.onrender.com',
 ]
 
 
@@ -69,16 +68,31 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# Base de datos
-# Render establece la variable DATABASE_URL automáticamente.
-DATABASES = {
-    'default': dj_database_url.config(
-        conn_max_age=600,
-        ssl_require=os.environ.get('DATABASE_SSL_REQUIRE', 'True').lower() == 'true'
-    )
-}
+# --- SECCIÓN DE BASE DE DATOS CORREGIDA ---
+# Lee la URL de la base de datos desde el archivo .env
+DATABASE_URL = os.environ.get('DATABASE_URL')
 
-# --- SECCIÓN DE ARCHIVOS ESTÁTICOS Y MEDIA CORREGIDA ---
+# Configuración inteligente de la base de datos
+if DATABASE_URL and 'sqlite' in DATABASE_URL:
+    # Configuración para desarrollo local con SQLite
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+else:
+    # Configuración para producción con PostgreSQL (Render)
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=True
+        )
+    }
+
+
+# --- SECCIÓN DE ARCHIVOS ESTÁTICOS Y MEDIA ---
 
 # Lógica para cambiar el almacenamiento en producción (S3) vs desarrollo/whitenoise
 USE_S3 = os.environ.get('USE_S3', 'False').lower() == 'true'
@@ -91,32 +105,27 @@ if USE_S3:
     AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME', 'us-east-1')
     AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
     AWS_S3_FILE_OVERWRITE = False
-    AWS_DEFAULT_ACL = None
+    AWS_DEFAULT_ACL = 'public-read'
     AWS_QUERYSTRING_AUTH = False
 
-    # Ubicaciones dentro del bucket de S3
     STATICFILES_LOCATION = 'static'
     MEDIAFILES_LOCATION = 'media'
 
-    # Almacenamiento para estáticos (collectstatic los subirá a S3) y media (archivos de usuario)
     STATICFILES_STORAGE = 'config.storage_backends.StaticStorage'
     DEFAULT_FILE_STORAGE = 'config.storage_backends.MediaStorage'
     
-    # URLs para S3
     STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{STATICFILES_LOCATION}/'
     MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{MEDIAFILES_LOCATION}/'
 
 else:
-    # Configuración para desarrollo o despliegue con Whitenoise (como en Render sin S3)
+    # Configuración para desarrollo o despliegue con Whitenoise
     STATIC_URL = '/static/'
     MEDIA_URL = '/media/'
     MEDIA_ROOT = BASE_DIR / 'media'
-    # Whitenoise se encarga de servir los archivos desde la carpeta definida en STATIC_ROOT.
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Directorio donde `collectstatic` reunirá todos los archivos estáticos para producción.
-# Esta configuración es AHORA GLOBAL y siempre está definida, solucionando el error.
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_DIRS = [BASE_DIR / 'static']
 
 
 # Autenticación
