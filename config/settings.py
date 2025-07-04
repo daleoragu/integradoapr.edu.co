@@ -87,9 +87,10 @@ TIME_ZONE = 'America/Bogota'
 USE_I18N = True
 USE_TZ = True
 
-USE_S3 = os.environ.get('USE_S3', 'False') == 'True'
+USE_S3 = os.environ.get('USE_S3', '').lower() in ('true', '1', 'yes')
 
 if USE_S3:
+    
     AWS_ACCESS_KEY_ID = os.environ['AWS_ACCESS_KEY_ID']
     AWS_SECRET_ACCESS_KEY = os.environ['AWS_SECRET_ACCESS_KEY']
     AWS_STORAGE_BUCKET_NAME = os.environ['AWS_STORAGE_BUCKET_NAME']
@@ -108,7 +109,7 @@ else:
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
     STATIC_URL = '/static/'
     MEDIA_URL = '/media/'
-
+print("⚠️ STORAGE BACKEND ACTIVADO: S3" if USE_S3 else "⚠️ STORAGE BACKEND: LOCAL")
 # ✅ Siempre define STATIC_ROOT y MEDIA_ROOT
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_ROOT = BASE_DIR / 'media'
