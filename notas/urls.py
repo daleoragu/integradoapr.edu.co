@@ -97,6 +97,12 @@ urlpatterns = [
     path('ajax/noticias/', portal_views.noticias_json, name='ajax_noticias'),
     path('ajax/carrusel/', portal_views.carrusel_imagenes_json, name='ajax_carrusel'),
     
+    # --- INICIO: NUEVAS RUTAS AJAX PARA SECCIONES DEL COLEGIO ---
+    path('ajax/historia/', portal_views.ajax_historia, name='ajax_historia'),
+    path('ajax/mision-vision/', portal_views.ajax_mision_vision, name='ajax_mision_vision'),
+    path('ajax/modelo-pedagogico/', portal_views.ajax_modelo_pedagogico, name='ajax_modelo_pedagogico'),
+    # --- FIN: NUEVAS RUTAS AJAX ---
+
     # --- Rutas de Boletines y Sábanas ---
     path('docente/selector-boletines/', boletin_views.selector_boletin_vista, name='selector_boletines'),
     path('docente/generar-boletin/', boletin_views.generar_boletin_vista, name='generar_boletin'),
@@ -181,6 +187,10 @@ urlpatterns = [
     path('panel-administrador/exportar-materias/', export_views.exportar_materias_excel, name='exportar_materias_excel'),
     path('panel-administrador/descargar-plantilla-materias/', export_views.descargar_plantilla_materias, name='descargar_plantilla_materias'),
     path('panel-administrador/descargar-plantilla-docentes/', export_views.descargar_plantilla_docentes, name='descargar_plantilla_docentes'),   
+
+     # --- INICIO: NUEVAS RUTAS AJAX PARA COMUNIDAD ---
+    path('ajax/recursos-educativos/', portal_views.ajax_recursos_educativos, name='ajax_recursos_educativos'),
+    path('ajax/redes-sociales/', portal_views.ajax_redes_sociales, name='ajax_redes_sociales'),
+    # --- FIN: NUEVAS RUTAS AJAX ---
        
 ]
-

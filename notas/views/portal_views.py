@@ -158,9 +158,46 @@ def noticia_detalle_vista(request, pk):
     return render(request, 'notas/portal_components/noticia_detalle.html', context)
 
 def carrusel_imagenes_json(request):
+    """
+    Devuelve las imágenes del carrusel principal en formato JSON.
+    """
     try:
         imagenes = ImagenCarrusel.objects.filter(visible=True).order_by('orden')
         data = [{'url_imagen': img.imagen.url, 'titulo': img.titulo, 'subtitulo': img.subtitulo} for img in imagenes]
         return JsonResponse(data, safe=False)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+# --- Vistas para las secciones del Colegio ---
+
+def ajax_historia(request):
+    """
+    Renderiza y devuelve el contenido parcial de la sección 'Historia'.
+    """
+    return render(request, 'notas/portal_components/_contenido_historia.html')
+
+def ajax_mision_vision(request):
+    """
+    Renderiza y devuelve el contenido parcial de la sección 'Misión y Visión'.
+    """
+    return render(request, 'notas/portal_components/_contenido_mision_vision.html')
+
+def ajax_modelo_pedagogico(request):
+    """
+    Renderiza y devuelve el contenido parcial de la sección 'Modelo Pedagógico'.
+    """
+    return render(request, 'notas/portal_components/_contenido_modelo.html')
+
+# --- Vistas para secciones de Comunidad ---
+
+def ajax_recursos_educativos(request):
+    """
+    Renderiza y devuelve el contenido parcial de la sección 'Recursos Educativos'.
+    """
+    return render(request, 'notas/portal_components/_contenido_recursos_educativos.html')
+
+def ajax_redes_sociales(request):
+    """
+    Renderiza y devuelve el contenido parcial de la sección 'Redes Sociales'.
+    """
+    return render(request, 'notas/portal_components/_contenido_redes_sociales.html')
