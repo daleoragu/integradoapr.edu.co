@@ -22,4 +22,5 @@ __pycache__/
 .DS_Store
 
 ingresoplataforma.txt
-.env
+.env".env" 
+".env" 
