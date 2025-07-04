@@ -13,7 +13,14 @@ load_dotenv(BASE_DIR / '.env')
 SECRET_KEY = os.environ['SECRET_KEY']
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
+ALLOWED_HOSTS = [
+    'www.integradoapr.edu.co',
+    'integradoapr.edu.co',
+    '127.0.0.1',
+    'localhost',
+    'integradoapr-edu-co.onrender.com',
+    'integradoarp-edu-co.onrender.com',
+]
 
 
 # Aplicaciones instaladas
@@ -73,18 +80,6 @@ DATABASES = {
 
 # --- SECCIÓN DE ARCHIVOS ESTÁTICOS Y MEDIA CORREGIDA ---
 
-# URL para referenciar archivos estáticos en las plantillas (CSS, JavaScript, Imágenes)
-STATIC_URL = '/static/'
-# Directorio donde `collectstatic` reunirá todos los archivos estáticos para producción.
-# Esta configuración es AHORA GLOBAL y siempre está definida, solucionando el error.
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-
-# URL para manejar los archivos subidos por los usuarios.
-MEDIA_URL = '/media/'
-# Directorio donde se guardarán los archivos subidos por los usuarios en desarrollo.
-MEDIA_ROOT = BASE_DIR / 'media'
-
-
 # Lógica para cambiar el almacenamiento en producción (S3) vs desarrollo/whitenoise
 USE_S3 = os.environ.get('USE_S3', 'False').lower() == 'true'
 
@@ -99,13 +94,29 @@ if USE_S3:
     AWS_DEFAULT_ACL = None
     AWS_QUERYSTRING_AUTH = False
 
+    # Ubicaciones dentro del bucket de S3
+    STATICFILES_LOCATION = 'static'
+    MEDIAFILES_LOCATION = 'media'
+
     # Almacenamiento para estáticos (collectstatic los subirá a S3) y media (archivos de usuario)
     STATICFILES_STORAGE = 'config.storage_backends.StaticStorage'
     DEFAULT_FILE_STORAGE = 'config.storage_backends.MediaStorage'
+    
+    # URLs para S3
+    STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{STATICFILES_LOCATION}/'
+    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{MEDIAFILES_LOCATION}/'
+
 else:
     # Configuración para desarrollo o despliegue con Whitenoise (como en Render sin S3)
+    STATIC_URL = '/static/'
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = BASE_DIR / 'media'
     # Whitenoise se encarga de servir los archivos desde la carpeta definida en STATIC_ROOT.
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Directorio donde `collectstatic` reunirá todos los archivos estáticos para producción.
+# Esta configuración es AHORA GLOBAL y siempre está definida, solucionando el error.
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 
 # Autenticación
