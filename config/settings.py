@@ -13,13 +13,8 @@ load_dotenv(BASE_DIR / '.env')
 SECRET_KEY = os.environ['SECRET_KEY']
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = [
-    'www.integradoapr.edu.co',
-    'integradoapr.edu.co',
-    '127.0.0.1',
-    'localhost',
-    'integradoapr-edu-co.onrender.com',
-]
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
+
 
 # Aplicaciones instaladas
 INSTALLED_APPS = [
@@ -28,6 +23,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'whitenoise.runserver_nostatic', # Para que whitenoise funcione bien en desarrollo
     'django.contrib.staticfiles',
     'storages',
     'notas',
@@ -36,7 +32,7 @@ INSTALLED_APPS = [
 # Middleware
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware', # Debe ir justo después de SecurityMiddleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -67,42 +63,50 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 # Base de datos
+# Render establece la variable DATABASE_URL automáticamente.
 DATABASES = {
-    'default': dj_database_url.parse(
-        os.environ['DATABASE_URL'],
+    'default': dj_database_url.config(
         conn_max_age=600,
-        ssl_require=True
+        ssl_require=os.environ.get('DATABASE_SSL_REQUIRE', 'True').lower() == 'true'
     )
 }
 
-# Configuración para Amazon S3
+# --- SECCIÓN DE ARCHIVOS ESTÁTICOS Y MEDIA CORREGIDA ---
+
+# URL para referenciar archivos estáticos en las plantillas (CSS, JavaScript, Imágenes)
+STATIC_URL = '/static/'
+# Directorio donde `collectstatic` reunirá todos los archivos estáticos para producción.
+# Esta configuración es AHORA GLOBAL y siempre está definida, solucionando el error.
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# URL para manejar los archivos subidos por los usuarios.
+MEDIA_URL = '/media/'
+# Directorio donde se guardarán los archivos subidos por los usuarios en desarrollo.
+MEDIA_ROOT = BASE_DIR / 'media'
+
+
+# Lógica para cambiar el almacenamiento en producción (S3) vs desarrollo/whitenoise
 USE_S3 = os.environ.get('USE_S3', 'False').lower() == 'true'
+
 if USE_S3:
+    # Configuración para producción con Amazon S3
     AWS_ACCESS_KEY_ID = os.environ['AWS_ACCESS_KEY_ID']
     AWS_SECRET_ACCESS_KEY = os.environ['AWS_SECRET_ACCESS_KEY']
     AWS_STORAGE_BUCKET_NAME = os.environ['AWS_STORAGE_BUCKET_NAME']
-    AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME', None)
+    AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME', 'us-east-1')
     AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
     AWS_S3_FILE_OVERWRITE = False
     AWS_DEFAULT_ACL = None
     AWS_QUERYSTRING_AUTH = False
 
-    STATICFILES_LOCATION = 'static'
-    MEDIAFILES_LOCATION = 'media'
-
+    # Almacenamiento para estáticos (collectstatic los subirá a S3) y media (archivos de usuario)
     STATICFILES_STORAGE = 'config.storage_backends.StaticStorage'
     DEFAULT_FILE_STORAGE = 'config.storage_backends.MediaStorage'
-
-    STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{STATICFILES_LOCATION}/'
-    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{MEDIAFILES_LOCATION}/'
 else:
-    STATIC_URL = '/static/'
-    MEDIA_URL = '/media/'
-    STATICFILES_DIRS = [BASE_DIR / 'static']
-    STATIC_ROOT = BASE_DIR / 'staticfiles'
-    MEDIA_ROOT = BASE_DIR / 'media'
-
+    # Configuración para desarrollo o despliegue con Whitenoise (como en Render sin S3)
+    # Whitenoise se encarga de servir los archivos desde la carpeta definida en STATIC_ROOT.
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 
 # Autenticación
 LOGIN_URL = '/accounts/login/'
@@ -111,23 +115,14 @@ LOGIN_URL = '/accounts/login/'
 LANGUAGE_CODE = 'es-co'
 TIME_ZONE = 'America/Bogota'
 USE_I18N = True
-USE_L10N = True
 USE_TZ = True
 
 # Validadores de contraseñas
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    { 'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator', },
+    { 'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', },
+    { 'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator', },
+    { 'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator', },
 ]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
