@@ -134,13 +134,20 @@ def gestion_carrusel_vista(request):
         form = ImagenCarruselForm()
     
     imagenes = ImagenCarrusel.objects.all()
-    context = { 'form': form, 'imagenes': imagenes, 'page_title': 'Gestionar Carrusel' }
-    return render(request, 'notas/admin_portal/gestion_carrusel.html', context)
 
-@user_passes_test(es_admin_o_docente)
-def eliminar_imagen_carrusel_vista(request, pk):
-    imagen = get_object_or_404(ImagenCarrusel, pk=pk)
-    if request.method == 'POST':
-        imagen.delete()
-        messages.success(request, 'Imagen eliminada del carrusel.')
-    return redirect('gestion_carrusel')
+    # --- INICIO DEL CÓDIGO DE DEPURACIÓN ---
+    # Recolectamos las variables tal como las ve esta vista
+    debug_context = {
+        'b2_bucket_name_in_view': os.getenv("B2_BUCKET_NAME"),
+        'b2_region_in_view': os.getenv("B2_REGION"),
+        'b2_key_id_in_view': os.getenv("B2_APPLICATION_KEY_ID"),
+    }
+    # --- FIN DEL CÓDIGO DE DEPURACIÓN ---
+
+    context = { 
+        'form': form, 
+        'imagenes': imagenes, 
+        'page_title': 'Gestionar Carrusel',
+        **debug_context # Añadimos las variables de depuración al contexto
+    }
+    return render(request, 'notas/admin_portal/gestion_carrusel.html', context)

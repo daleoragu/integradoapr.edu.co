@@ -6,6 +6,16 @@
 {% endblock %}
 
 {% block content %}
+{# --- INICIO DEL BLOQUE DE DEPURACIÓN --- #}
+<div class="alert alert-danger">
+    <h4 class="alert-heading">Información de Depuración (¡BORRAR ESTO DESPUÉS!)</h4>
+    <p>Estas son las variables que el servidor está viendo AHORA MISMO:</p>
+    <ul>
+        <li><strong>B2_BUCKET_NAME:</strong> <code>{{ b2_bucket_name_in_view }}</code></li>
+        <li><strong>B2_REGION:</strong> <code>{{ b2_region_in_view }}</code></li>
+        <li><strong>B2_APPLICATION_KEY_ID:</strong> <code>{{ b2_key_id_in_view }}</code></li>
+    </ul>
+</div>
 <div class="row">
     <div class="col-lg-4">
         <div class="card">
