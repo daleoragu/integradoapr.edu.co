@@ -6,7 +6,7 @@
 {% endblock %}
 
 {% block content %}
-{# --- INICIO DEL BLOQUE DE DEPURACIÓN --- #}
+{# --- INICIO DEL BLOQUE DE DEPURACIÓN DE VARIABLES --- #}
 <div class="alert alert-danger">
     <h4 class="alert-heading">Información de Depuración (¡BORRAR ESTO DESPUÉS!)</h4>
     <p>Estas son las variables que el servidor está viendo AHORA MISMO:</p>
@@ -26,45 +26,17 @@
                 <form method="POST" enctype="multipart/form-data">
                     {% csrf_token %}
 
-                    {# Muestra errores generales del formulario (si los hay) #}
-                    {% if form.non_field_errors %}
-                        <div class="alert alert-danger">
-                            {% for error in form.non_field_errors %}
-                                <p class="mb-0">{{ error }}</p>
-                            {% endfor %}
+                    {# --- INICIO DEL BLOQUE PARA MOSTRAR ERRORES OCULTOS --- #}
+                    {% if form.errors %}
+                        <div class="alert alert-warning">
+                            <strong>El formulario no es válido por los siguientes motivos:</strong>
+                            {{ form.errors }}
                         </div>
                     {% endif %}
+                    {# --- FIN DEL BLOQUE --- #}
                     
-                    {# Renderiza cada campo individualmente para mostrar sus errores específicos #}
-                    <div class="mb-3">
-                        <label for="{{ form.titulo.id_for_label }}" class="form-label">{{ form.titulo.label }}</label>
-                        {{ form.titulo }}
-                        {% if form.titulo.errors %}<div class="text-danger small mt-1">{{ form.titulo.errors.as_text }}</div>{% endif %}
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="{{ form.subtitulo.id_for_label }}" class="form-label">{{ form.subtitulo.label }}</label>
-                        {{ form.subtitulo }}
-                        {% if form.subtitulo.errors %}<div class="text-danger small mt-1">{{ form.subtitulo.errors.as_text }}</div>{% endif %}
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="{{ form.imagen.id_for_label }}" class="form-label">{{ form.imagen.label }}</label>
-                        {{ form.imagen }}
-                        {% if form.imagen.errors %}<div class="text-danger small mt-1">{{ form.imagen.errors.as_text }}</div>{% endif %}
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="{{ form.orden.id_for_label }}" class="form-label">{{ form.orden.label }}</label>
-                        {{ form.orden }}
-                        {% if form.orden.errors %}<div class="text-danger small mt-1">{{ form.orden.errors.as_text }}</div>{% endif %}
-                    </div>
-
-                    <div class="mb-3 form-check">
-                        {{ form.visible }}
-                        <label for="{{ form.visible.id_for_label }}" class="form-check-label">{{ form.visible.label }}</label>
-                        {% if form.visible.errors %}<div class="text-danger small mt-1">{{ form.visible.errors.as_text }}</div>{% endif %}
-                    </div>
+                    {# Renderizamos el formulario como párrafos para mantenerlo simple #}
+                    {{ form.as_p }}
 
                     <button type="submit" class="btn btn-success w-100 mt-3">Guardar Imagen</button>
                 </form>
