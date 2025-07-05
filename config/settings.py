@@ -1,55 +1,41 @@
 import os
 from pathlib import Path
-import dj_database_url # Importar la librería para la URL de la base de datos
+import dj_database_url
 
-# Se utiliza python-dotenv para cargar las variables desde el archivo .env
 from dotenv import load_dotenv
-
-# Carga las variables de entorno del archivo .env al inicio.
 load_dotenv()
 
-# --- Configuración Base del Proyecto ---
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# --- Configuración de Seguridad ---
 SECRET_KEY = os.getenv('SECRET_KEY', 'configuracion-insegura-solo-para-desarrollo')
 DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 't')
 
-# --- CORRECCIÓN DE ALLOWED_HOSTS ---
-# Se leen los hosts desde la variable de entorno de Render.
-# Si no existe, se usa una lista segura que incluye tus dominios.
 ALLOWED_HOSTS_str = os.getenv('ALLOWED_HOSTS', '')
 ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS_str.split(',') if host.strip()]
 
-# Añadimos los dominios de Render y el tuyo por defecto para asegurar que siempre funcionen.
-# Render usa un dominio .onrender.com para sus servicios.
 if not DEBUG:
     ALLOWED_HOSTS.extend([
         'integradoapr.edu.co',
         'www.integradoapr.edu.co',
-        os.getenv('RENDER_EXTERNAL_HOSTNAME') # Añade el dominio de Render automáticamente
+        os.getenv('RENDER_EXTERNAL_HOSTNAME')
     ])
-    # Eliminar None si RENDER_EXTERNAL_HOSTNAME no está definido
     ALLOWED_HOSTS = [host for host in ALLOWED_HOSTS if host]
 
-
-# --- Aplicaciones de Django ---
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'whitenoise.runserver_nostatic', # Para que WhiteNoise sirva estáticos en desarrollo
+    'whitenoise.runserver_nostatic',
     'django.contrib.staticfiles',
     'notas.apps.NotasConfig',
     'storages',
 ]
 
-# --- Middleware ---
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', # WhiteNoise debe estar aquí
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -58,11 +44,9 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# --- Configuración de URLs y WSGI ---
 ROOT_URLCONF = 'config.urls'
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# --- Plantillas (Templates) ---
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -79,7 +63,6 @@ TEMPLATES = [
     },
 ]
 
-# --- Base de Datos (Estrategia Mixta) ---
 if DEBUG:
     print("✅ MODO DEBUG: Usando base de datos SQLite local.")
     DATABASES = {
@@ -97,7 +80,6 @@ else:
         )
     }
 
-# --- Validación de Contraseñas ---
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -105,19 +87,16 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# --- Internacionalización ---
 LANGUAGE_CODE = 'es-co'
 TIME_ZONE = 'America/Bogota'
 USE_I18N = True
 USE_TZ = True
 
-# --- Archivos Estáticos (CSS, JavaScript, Imágenes de la plantilla) ---
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# --- Almacenamiento de Archivos Multimedia (Subidos por usuarios) ---
 USE_B2 = os.getenv("USE_B2", "false").lower() in ("true", "1", "yes")
 
 if USE_B2:
@@ -150,10 +129,8 @@ else:
     MEDIA_URL = '/media/'
     MEDIA_ROOT = BASE_DIR / 'media'
 
-# --- Clave Primaria por Defecto ---
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# --- Configuraciones de Seguridad para Producción ---
 if not DEBUG:
     print("🚀 APLICANDO CONFIGURACIONES DE SEGURIDAD ADICIONALES PARA PRODUCCIÓN.")
     SESSION_COOKIE_SECURE = True
@@ -162,3 +139,18 @@ if not DEBUG:
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
+
+# --- CONFIGURACIÓN DE LOGGING ---
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+}

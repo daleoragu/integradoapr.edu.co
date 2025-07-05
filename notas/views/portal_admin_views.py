@@ -123,66 +123,36 @@ def publicar_noticia_vista(request, pk):
     return redirect('gestion_noticias')
 
 # --- VISTAS PARA GESTIONAR EL CARRUSEL ---
-# notas/views/portal_admin_views.py
-import os
-import logging # Importar logging
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import user_passes_test
-from django.contrib import messages
-
-from ..models import DocumentoPublico, FotoGaleria, Noticia, ImagenCarrusel
-from ..forms import DocumentoPublicoForm, FotoGaleriaForm, NoticiaForm, ImagenCarruselForm
-
-# Configurar el logger para este archivo
-logger = logging.getLogger(__name__)
-
-def es_admin_o_docente(user):
-    return user.is_superuser or user.groups.filter(name='Docentes').exists()
-
-@user_passes_test(es_admin_o_docente)
-def configuracion_portal_vista(request):
-    return render(request, 'notas/admin_portal/configuracion_portal.html')
-
-# ... (tus otras vistas no cambian) ...
-
-# --- VISTAS PARA GESTIONAR EL CARRUSEL (CON LOGGING DETALLADO) ---
 @user_passes_test(es_admin_o_docente)
 def gestion_carrusel_vista(request):
-    logger.info("--- Iniciando gestion_carrusel_vista ---")
     if request.method == 'POST':
-        logger.info("Petición POST recibida para el carrusel.")
         form = ImagenCarruselForm(request.POST, request.FILES)
         if form.is_valid():
-            logger.info("El formulario es válido. Procediendo a guardar.")
-            try:
-                # Guardamos el formulario sin hacer commit a la base de datos todavía
-                nueva_imagen = form.save(commit=False)
-                logger.info("Objeto del modelo creado en memoria.")
-                
-                # Ahora guardamos el objeto completo en la base de datos.
-                # El guardado del archivo en B2 ocurre aquí, dentro de form.save().
-                nueva_imagen.save()
-                logger.info(f"form.save() completado. Objeto guardado en DB. Ruta de imagen: {nueva_imagen.imagen.name}")
-                
-                messages.success(request, f'Formulario procesado. La imagen debería estar en: {nueva_imagen.imagen.name}')
-                return redirect('gestion_carrusel')
-
-            except Exception as e:
-                # Si algo falla durante la subida, lo registraremos
-                logger.error(f"¡EXCEPCIÓN ATRAPADA DURANTE EL GUARDADO! Error: {e}", exc_info=True)
-                messages.error(request, f'ERROR AL PROCESAR EL FORMULARIO: {e}')
-        else:
-            # Si el formulario no es válido, lo registramos
-            logger.warning(f"El formulario no es válido. Errores: {form.errors.as_json()}")
-            messages.warning(request, f'El formulario no es válido: {form.errors.as_json()}')
+            form.save()
+            messages.success(request, 'Imagen añadida al carrusel.')
+            return redirect('gestion_carrusel')
     else:
         form = ImagenCarruselForm()
     
     imagenes = ImagenCarrusel.objects.all()
-    context = { 'form': form, 'imagenes': imagenes, 'page_title': 'Gestionar Carrusel' }
+
+    # --- INICIO DEL CÓDIGO DE DEPURACIÓN ---
+    # Recolectamos las variables tal como las ve esta vista
+    debug_context = {
+        'b2_bucket_name_in_view': os.getenv("B2_BUCKET_NAME"),
+        'b2_region_in_view': os.getenv("B2_REGION"),
+        'b2_key_id_in_view': os.getenv("B2_APPLICATION_KEY_ID"),
+    }
+    # --- FIN DEL CÓDIGO DE DEPURACIÓN ---
+
+    context = { 
+        'form': form, 
+        'imagenes': imagenes, 
+        'page_title': 'Gestionar Carrusel',
+        **debug_context # Añadimos las variables de depuración al contexto
+    }
     return render(request, 'notas/admin_portal/gestion_carrusel.html', context)
 
-# ... (el resto de tus vistas no cambian) ...
 @user_passes_test(es_admin_o_docente)
 def eliminar_imagen_carrusel_vista(request, pk):
     imagen = get_object_or_404(ImagenCarrusel, pk=pk)
@@ -190,5 +160,3 @@ def eliminar_imagen_carrusel_vista(request, pk):
         imagen.delete()
         messages.success(request, 'Imagen eliminada del carrusel.')
     return redirect('gestion_carrusel')
-
-# ... (y el resto de tus vistas) ...
