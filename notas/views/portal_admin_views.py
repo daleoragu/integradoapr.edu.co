@@ -1,4 +1,5 @@
 # notas/views/portal_admin_views.py
+import os # Asegúrate de que os esté importado al principio del archivo
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib import messages
@@ -14,7 +15,7 @@ def es_admin_o_docente(user):
 @user_passes_test(es_admin_o_docente)
 def configuracion_portal_vista(request):
     """
-    Esta es la vista que faltaba. Carga el panel principal de configuración del portal.
+    Carga el panel principal de configuración del portal.
     """
     return render(request, 'notas/admin_portal/configuracion_portal.html')
 
@@ -151,3 +152,11 @@ def gestion_carrusel_vista(request):
         **debug_context # Añadimos las variables de depuración al contexto
     }
     return render(request, 'notas/admin_portal/gestion_carrusel.html', context)
+
+@user_passes_test(es_admin_o_docente)
+def eliminar_imagen_carrusel_vista(request, pk):
+    imagen = get_object_or_404(ImagenCarrusel, pk=pk)
+    if request.method == 'POST':
+        imagen.delete()
+        messages.success(request, 'Imagen eliminada del carrusel.')
+    return redirect('gestion_carrusel')
