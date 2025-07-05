@@ -1,26 +1,21 @@
 import os
 from pathlib import Path
-from dotenv import load_dotenv
-import dj_database_url
 
+# Se utiliza python-dotenv para cargar las variables desde el archivo .env
+from dotenv import load_dotenv
+
+# Carga las variables de entorno del archivo .env al inicio.
 load_dotenv()
 
+# --- Configuración Base del Proyecto ---
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-key')
+# --- Configuración de Seguridad ---
+SECRET_KEY = os.getenv('SECRET_KEY', 'configuracion-insegura-solo-para-desarrollo')
+DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 't')
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost 127.0.0.1 integradoapr.edu.co www.integradoapr.edu.co').split()
 
-DEBUG = os.environ.get('DEBUG', 'False') == 'True'
-
-ALLOWED_HOSTS = [
-    'www.integradoapr.edu.co',
-    'integradoapr.edu.co',
-    '127.0.0.1',
-    'localhost',
-    'integradoapr-edu-co.onrender.com',
-    'integradoarp-edu-co.onrender.com',
-]
-
-
+# --- Aplicaciones de Django ---
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -28,13 +23,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'notas',
+    'notas.apps.NotasConfig',
     'storages',
 ]
 
+# --- Middleware ---
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # importante para servir estáticos localmente
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -43,8 +39,11 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# --- Configuración de URLs y WSGI ---
 ROOT_URLCONF = 'config.urls'
+WSGI_APPLICATION = 'config.wsgi.application'
 
+# --- Plantillas (Templates) ---
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -61,57 +60,106 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'config.wsgi.application'
+# --- Base de Datos (Estrategia Mixta) ---
+# Se usará PostgreSQL en producción (cuando DEBUG=False)
+# y SQLite para desarrollo local (cuando DEBUG=True) para evitar problemas de entorno.
 
-DATABASES = {
-    'default': dj_database_url.config(default=os.environ.get('DATABASE_URL'))
-}
+if DEBUG:
+    print("✅ MODO DEBUG: Usando base de datos SQLite local.")
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+else:
+    print("🚀 MODO PRODUCCIÓN: Usando base de datos PostgreSQL.")
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('DB_NAME'),
+            'USER': os.getenv('DB_USER'),
+            'PASSWORD': os.getenv('DB_PASSWORD'),
+            'HOST': os.getenv('DB_HOST'),
+            'PORT': os.getenv('DB_PORT'),
+            'CONN_MAX_AGE': 60, # Optimización para producción
+        }
+    }
 
+# --- Validación de Contraseñas ---
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
+# --- Internacionalización ---
 LANGUAGE_CODE = 'es-co'
 TIME_ZONE = 'America/Bogota'
 USE_I18N = True
 USE_TZ = True
 
-USE_S3 = os.environ.get('USE_S3', '').lower() in ('true', '1', 'yes')
+# --- Archivos Estáticos (CSS, JavaScript, Imágenes de la plantilla) ---
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [BASE_DIR / "static"]
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-if USE_S3:
+# --- Almacenamiento de Archivos Multimedia (Subidos por usuarios) ---
+USE_B2 = os.getenv("USE_B2", "false").lower() in ("true", "1", "yes")
+
+print("✅ INICIANDO CONFIGURACIÓN DE ALMACENAMIENTO...")
+if USE_B2:
+    print("✅ USANDO ALMACENAMIENTO EN BACKBLAZE B2.")
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
     
-    AWS_ACCESS_KEY_ID = os.environ['AWS_ACCESS_KEY_ID']
-    AWS_SECRET_ACCESS_KEY = os.environ['AWS_SECRET_ACCESS_KEY']
-    AWS_STORAGE_BUCKET_NAME = os.environ['AWS_STORAGE_BUCKET_NAME']
-    AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME', 'us-east-2')
-    AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com"
+    # --- CORRECCIÓN DE URLS PARA BACKBLAZE B2 (MÉTODO ROBUSTO) ---
+    B2_REGION = os.getenv("B2_REGION")
+    B2_BUCKET_NAME = os.getenv("B2_BUCKET_NAME")
 
-    STATICFILES_LOCATION = 'static'
-    MEDIAFILES_LOCATION = 'media'
+    # Limpia la variable de región por si el usuario dejó el dominio completo
+    if B2_REGION and 'backblazeb2.com' in B2_REGION:
+        try:
+            # Extrae 'us-east-005' de 's3.us-east-005.backblazeb2.com'
+            B2_REGION = B2_REGION.split('.')[1]
+        except IndexError:
+            B2_REGION = 'us-east-005' # Fallback seguro
 
-    STATICFILES_STORAGE = 'config.storage_backends.StaticStorage'
-    DEFAULT_FILE_STORAGE = 'config.storage_backends.MediaStorage'
+    AWS_ACCESS_KEY_ID = os.getenv("B2_APPLICATION_KEY_ID")
+    AWS_SECRET_ACCESS_KEY = os.getenv("B2_APPLICATION_KEY")
+    AWS_STORAGE_BUCKET_NAME = B2_BUCKET_NAME
+    AWS_S3_REGION_NAME = B2_REGION
+    
+    # Usar AWS_S3_CUSTOM_DOMAIN para forzar la URL correcta.
+    # Esto evita que django-storages construya una URL incorrecta a partir del endpoint.
+    AWS_S3_CUSTOM_DOMAIN = f'{B2_BUCKET_NAME}.s3.{B2_REGION}.backblazeb2.com'
+    
+    # AWS_S3_LOCATION para organizar los archivos en una carpeta 'media/' dentro del bucket.
+    AWS_S3_LOCATION = 'media'
+    
+    # La URL de medios ahora se basa en el dominio personalizado y la ubicación.
+    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_S3_LOCATION}/'
+    
+    AWS_S3_FILE_OVERWRITE = False
+    AWS_DEFAULT_ACL = None
+    AWS_S3_VERIFY = True
 
-    STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{STATICFILES_LOCATION}/"
-    MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{MEDIAFILES_LOCATION}/"
 else:
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-    STATIC_URL = '/static/'
+    print("✅ USANDO ALMACENAMIENTO LOCAL (para desarrollo).")
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
     MEDIA_URL = '/media/'
-print("⚠️ STORAGE BACKEND ACTIVADO: S3" if USE_S3 else "⚠️ STORAGE BACKEND: LOCAL")
-# ✅ Siempre define STATIC_ROOT y MEDIA_ROOT
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-MEDIA_ROOT = BASE_DIR / 'media'
+    MEDIA_ROOT = BASE_DIR / 'media'
 
+# --- Clave Primaria por Defecto ---
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# --- Configuraciones de Seguridad para Producción ---
+if not DEBUG:
+    print("🚀 APLICANDO CONFIGURACIONES DE SEGURIDAD ADICIONALES PARA PRODUCCIÓN.")
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
