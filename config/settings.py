@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import dj_database_url # Importar la librería para la URL de la base de datos
 
 # Se utiliza python-dotenv para cargar las variables desde el archivo .env
 from dotenv import load_dotenv
@@ -22,6 +23,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'whitenoise.runserver_nostatic', # Para que WhiteNoise sirva estáticos en desarrollo
     'django.contrib.staticfiles',
     'notas.apps.NotasConfig',
     'storages',
@@ -30,7 +32,7 @@ INSTALLED_APPS = [
 # --- Middleware ---
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware', # WhiteNoise debe estar aquí
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -62,7 +64,7 @@ TEMPLATES = [
 
 # --- Base de Datos (Estrategia Mixta) ---
 # Se usará PostgreSQL en producción (cuando DEBUG=False)
-# y SQLite para desarrollo local (cuando DEBUG=True) para evitar problemas de entorno.
+# y SQLite para desarrollo local (cuando DEBUG=True).
 
 if DEBUG:
     print("✅ MODO DEBUG: Usando base de datos SQLite local.")
@@ -73,17 +75,13 @@ if DEBUG:
         }
     }
 else:
-    print("🚀 MODO PRODUCCIÓN: Usando base de datos PostgreSQL.")
+    print("🚀 MODO PRODUCCIÓN: Usando base de datos PostgreSQL desde DATABASE_URL.")
+    # Render y otras plataformas usan DATABASE_URL para la conexión.
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.getenv('DB_NAME'),
-            'USER': os.getenv('DB_USER'),
-            'PASSWORD': os.getenv('DB_PASSWORD'),
-            'HOST': os.getenv('DB_HOST'),
-            'PORT': os.getenv('DB_PORT'),
-            'CONN_MAX_AGE': 60, # Optimización para producción
-        }
+        'default': dj_database_url.config(
+            conn_max_age=60,      # Mantener conexiones vivas por 60 segundos
+            ssl_require=True      # Render requiere conexiones seguras (SSL)
+        )
     }
 
 # --- Validación de Contraseñas ---
@@ -104,6 +102,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
+# Se simplifica la configuración de WhiteNoise, es más robusta.
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # --- Almacenamiento de Archivos Multimedia (Subidos por usuarios) ---
@@ -114,33 +113,22 @@ if USE_B2:
     print("✅ USANDO ALMACENAMIENTO EN BACKBLAZE B2.")
     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
     
-    # --- CORRECCIÓN DE URLS PARA BACKBLAZE B2 (MÉTODO ROBUSTO) ---
     B2_REGION = os.getenv("B2_REGION")
     B2_BUCKET_NAME = os.getenv("B2_BUCKET_NAME")
 
-    # Limpia la variable de región por si el usuario dejó el dominio completo
     if B2_REGION and 'backblazeb2.com' in B2_REGION:
         try:
-            # Extrae 'us-east-005' de 's3.us-east-005.backblazeb2.com'
             B2_REGION = B2_REGION.split('.')[1]
         except IndexError:
-            B2_REGION = 'us-east-005' # Fallback seguro
+            B2_REGION = 'us-east-005'
 
     AWS_ACCESS_KEY_ID = os.getenv("B2_APPLICATION_KEY_ID")
     AWS_SECRET_ACCESS_KEY = os.getenv("B2_APPLICATION_KEY")
     AWS_STORAGE_BUCKET_NAME = B2_BUCKET_NAME
     AWS_S3_REGION_NAME = B2_REGION
-    
-    # Usar AWS_S3_CUSTOM_DOMAIN para forzar la URL correcta.
-    # Esto evita que django-storages construya una URL incorrecta a partir del endpoint.
     AWS_S3_CUSTOM_DOMAIN = f'{B2_BUCKET_NAME}.s3.{B2_REGION}.backblazeb2.com'
-    
-    # AWS_S3_LOCATION para organizar los archivos en una carpeta 'media/' dentro del bucket.
     AWS_S3_LOCATION = 'media'
-    
-    # La URL de medios ahora se basa en el dominio personalizado y la ubicación.
     MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_S3_LOCATION}/'
-    
     AWS_S3_FILE_OVERWRITE = False
     AWS_DEFAULT_ACL = None
     AWS_S3_VERIFY = True
