@@ -123,40 +123,52 @@ def publicar_noticia_vista(request, pk):
     return redirect('gestion_noticias')
 
 # --- VISTAS PARA GESTIONAR EL CARRUSEL ---
+# --- VISTAS PARA GESTIONAR EL CARRUSEL (CON DEPURACIÓN AVANZADA) ---
 @user_passes_test(es_admin_o_docente)
 def gestion_carrusel_vista(request):
     if request.method == 'POST':
         form = ImagenCarruselForm(request.POST, request.FILES)
         if form.is_valid():
-            form.save()
-            messages.success(request, 'Imagen añadida al carrusel.')
-            return redirect('gestion_carrusel')
+            try:
+                # Guardamos el formulario sin hacer commit a la base de datos todavía
+                nueva_imagen = form.save(commit=False)
+                
+                # Forzamos el guardado del archivo de imagen explícitamente
+                # Esto nos dará un error más claro si la subida falla aquí
+                imagen_subida = request.FILES['imagen']
+                nombre_archivo = default_storage.save(f"carrusel_portal/{imagen_subida.name}", imagen_subida)
+                
+                # Asignamos la ruta del archivo guardado al objeto del modelo
+                nueva_imagen.imagen.name = nombre_archivo
+                
+                # Ahora guardamos el objeto completo en la base de datos
+                nueva_imagen.save()
+                
+                messages.success(request, f'¡Éxito! Archivo guardado en B2 en la ruta: {nombre_archivo}')
+                return redirect('gestion_carrusel')
+
+            except Exception as e:
+                # Si algo falla durante la subida, mostramos el error exacto
+                messages.error(request, f'ERROR AL SUBIR EL ARCHIVO: {e}')
+        else:
+            # Si el formulario no es válido, mostramos los errores
+             messages.warning(request, f'El formulario no es válido: {form.errors.as_json()}')
+
     else:
         form = ImagenCarruselForm()
     
     imagenes = ImagenCarrusel.objects.all()
-
-    # --- INICIO DEL CÓDIGO DE DEPURACIÓN ---
-    # Recolectamos las variables tal como las ve esta vista
+    
     debug_context = {
         'b2_bucket_name_in_view': os.getenv("B2_BUCKET_NAME"),
         'b2_region_in_view': os.getenv("B2_REGION"),
         'b2_key_id_in_view': os.getenv("B2_APPLICATION_KEY_ID"),
     }
-    # --- FIN DEL CÓDIGO DE DEPURACIÓN ---
 
     context = { 
         'form': form, 
         'imagenes': imagenes, 
         'page_title': 'Gestionar Carrusel',
-        **debug_context # Añadimos las variables de depuración al contexto
+        **debug_context
     }
     return render(request, 'notas/admin_portal/gestion_carrusel.html', context)
-
-@user_passes_test(es_admin_o_docente)
-def eliminar_imagen_carrusel_vista(request, pk):
-    imagen = get_object_or_404(ImagenCarrusel, pk=pk)
-    if request.method == 'POST':
-        imagen.delete()
-        messages.success(request, 'Imagen eliminada del carrusel.')
-    return redirect('gestion_carrusel')
