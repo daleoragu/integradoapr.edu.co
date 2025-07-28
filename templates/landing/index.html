@@ -72,16 +72,16 @@
     </section>
 
     <!-- ================================================== -->
-    <!-- === INICIO: NUEVA SECCIÓN DE COLEGIOS AFILIADOS === -->
+    <!-- === INICIO: SECCIÓN DE COLEGIOS CORREGIDA      === -->
     <!-- ================================================== -->
-    {% if lista_colegios %}
+    {% if colegios %}
     <section id="colegios" class="bg-white py-20">
         <div class="container mx-auto px-6">
             <h2 class="text-3xl font-bold text-center mb-2">Accede al Portal de tu Institución</h2>
             <p class="text-center text-gray-600 mb-12">Selecciona tu colegio para ingresar a su portal de noticias, documentos y acceso a la plataforma.</p>
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
                 
-                {% for colegio in lista_colegios %}
+                {% for colegio in colegios %}
                 <a href="{% if colegio.domain %}//{{ colegio.domain }}{% else %}http://{{ colegio.slug }}.localhost:8010{% endif %}" target="_blank" class="block bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow p-6 text-center">
                     <div class="h-24 w-24 mx-auto mb-4 flex items-center justify-center">
                         {% if colegio.logo %}
@@ -100,7 +100,7 @@
     </section>
     {% endif %}
     <!-- ================================================== -->
-    <!-- === FIN: NUEVA SECCIÓN DE COLEGIOS AFILIADOS === -->
+    <!-- === FIN: SECCIÓN DE COLEGIOS CORREGIDA         === -->
     <!-- ================================================== -->
 
     <!-- Contact Section -->
