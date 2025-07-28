@@ -17,20 +17,36 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'tu-clave-secreta-para-desarrollo')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # DEBUG se desactivará automáticamente en producción.
-DEBUG = os.getenv('DJANGO_DEBUG', 'True') == 'True'
+# Es más seguro establecer 'False' como valor predeterminado para la producción.
+DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
 
+# ==============================================================================
+# SECCIÓN DE DEPURACIÓN PARA ALLOWED_HOSTS
+# ==============================================================================
 ALLOWED_HOSTS = []
-# Los hosts permitidos se configurarán desde las variables de entorno.
 ALLOWED_HOSTS_ENV = os.getenv('DJANGO_ALLOWED_HOSTS')
+
+# Imprimimos en la consola para ver qué está leyendo la aplicación al iniciar.
+print("--- INICIANDO VERIFICACIÓN DE ALLOWED_HOSTS ---")
+print(f"Valor leído de la variable de entorno DJANGO_ALLOWED_HOSTS: '{ALLOWED_HOSTS_ENV}'")
+
 if ALLOWED_HOSTS_ENV:
+    # Si la variable de entorno existe, la usamos.
     ALLOWED_HOSTS.extend(ALLOWED_HOSTS_ENV.split(','))
 else:
-    # Hosts para desarrollo local
+    # Si no, usamos la lista para desarrollo local.
+    print("ADVERTENCIA: No se encontró la variable de entorno DJANGO_ALLOWED_HOSTS. Usando hosts de desarrollo.")
     ALLOWED_HOSTS = [
         'localhost', '127.0.0.1', '::1',
         'colegio-bilingue-san-sebastian.localhost', 'liceo-colombia.localhost',
         'integradoapr.localhost', 'demo.localhost', 'santa-maria.localhost',
     ]
+
+# Imprimimos la lista final que Django usará.
+print(f"Lista final de ALLOWED_HOSTS configurada: {ALLOWED_HOSTS}")
+print("--- FIN DE VERIFICACIÓN ---")
+# ==============================================================================
+
 
 # Application definition
 
