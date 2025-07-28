@@ -12,39 +12,27 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# La SECRET_KEY se leerá desde las variables de entorno en producción.
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'tu-clave-secreta-para-desarrollo')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# DEBUG se desactivará automáticamente en producción.
-# Es más seguro establecer 'False' como valor predeterminado para la producción.
 DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
 
 # ==============================================================================
-# SECCIÓN DE DEPURACIÓN PARA ALLOWED_HOSTS
+# CONFIGURACIÓN DEFINITIVA DE ALLOWED_HOSTS
+# Escribimos los dominios directamente para evitar conflictos con las variables
+# de entorno de DigitalOcean.
 # ==============================================================================
-ALLOWED_HOSTS = []
-ALLOWED_HOSTS_ENV = os.getenv('DJANGO_ALLOWED_HOSTS')
+ALLOWED_HOSTS = [
+    'mcolegio.com.co',
+    '.mcolegio.com.co',  # Permite 'www.mcolegio.com.co' y cualquier otro subdominio.
+    'localhost',         # Para desarrollo local.
+    '127.0.0.1',       # Para desarrollo local.
+]
 
-# Imprimimos en la consola para ver qué está leyendo la aplicación al iniciar.
-print("--- INICIANDO VERIFICACIÓN DE ALLOWED_HOSTS ---")
-print(f"Valor leído de la variable de entorno DJANGO_ALLOWED_HOSTS: '{ALLOWED_HOSTS_ENV}'")
-
-if ALLOWED_HOSTS_ENV:
-    # Si la variable de entorno existe, la usamos.
-    ALLOWED_HOSTS.extend(ALLOWED_HOSTS_ENV.split(','))
-else:
-    # Si no, usamos la lista para desarrollo local.
-    print("ADVERTENCIA: No se encontró la variable de entorno DJANGO_ALLOWED_HOSTS. Usando hosts de desarrollo.")
-    ALLOWED_HOSTS = [
-        'localhost', '127.0.0.1', '::1',
-        'colegio-bilingue-san-sebastian.localhost', 'liceo-colombia.localhost',
-        'integradoapr.localhost', 'demo.localhost', 'santa-maria.localhost',
-    ]
-
-# Imprimimos la lista final que Django usará.
-print(f"Lista final de ALLOWED_HOSTS configurada: {ALLOWED_HOSTS}")
-print("--- FIN DE VERIFICACIÓN ---")
+# Si DigitalOcean inyecta su dominio por defecto, también lo agregamos por si acaso.
+APP_DOMAIN = os.getenv('APP_DOMAIN')
+if APP_DOMAIN:
+    ALLOWED_HOSTS.append(APP_DOMAIN)
 # ==============================================================================
 
 
@@ -62,13 +50,13 @@ INSTALLED_APPS = [
     # Apps de terceros
     'crispy_forms',
     'crispy_bootstrap5',
-    'cloudinary', # App de Cloudinary
-    'cloudinary_storage', # App para la integración con Django
+    'cloudinary',
+    'cloudinary_storage',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', # Middleware de Whitenoise
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -105,7 +93,6 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-# Configuración de la base de datos para que funcione tanto en local como en producción.
 DATABASE_URL = os.getenv('DATABASE_URL')
 if DATABASE_URL:
     DATABASES = {
@@ -146,7 +133,6 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-# Configuración de Whitenoise para comprimir y cachear archivos estáticos.
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
@@ -156,7 +142,6 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # --- CONFIGURACIÓN DE CLOUDINARY PARA ARCHIVOS (MEDIA) ---
-# Se leen las credenciales desde las variables de entorno de DigitalOcean.
 cloudinary.config(
   cloud_name = os.getenv('CLOUDINARY_CLOUD_NAME'), 
   api_key = os.getenv('CLOUDINARY_API_KEY'), 
@@ -164,10 +149,7 @@ cloudinary.config(
   secure = True
 )
 
-# Se le dice a Django que use Cloudinary para todos los archivos subidos.
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-
-# Se define la URL base para los archivos de medios. Cloudinary la gestionará.
 MEDIA_URL = '/media/'
 
 # Configuración para Crispy Forms
