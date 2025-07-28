@@ -45,7 +45,9 @@ def portal_vista(request):
         return render(request, 'notas/portal.html', context)
     else:
         todos_los_colegios = Colegio.objects.all()
-        return render(request, 'notas/landing_page.html', {'colegios': todos_los_colegios})
+        # --- LÍNEA CORREGIDA ---
+        # Ahora apunta a la plantilla correcta para la página de bienvenida.
+        return render(request, 'landing/index.html', {'colegios': todos_los_colegios})
 
 # --- VISTAS AJAX PARA CARGAR CONTENIDO DINÁMICO EN EL PORTAL ---
 
