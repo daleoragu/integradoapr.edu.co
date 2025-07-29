@@ -82,10 +82,11 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
                 
                 {% for colegio in colegios %}
-                <a href="{% if colegio.domain %}//{{ colegio.domain }}{% else %}http://{{ colegio.slug }}.localhost:8010{% endif %}" target="_blank" class="block bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow p-6 text-center">
+                <!-- LÍNEA CORREGIDA -->
+                <a href="{% if colegio.domain %}https://{{ colegio.domain }}{% else %}https://{{ colegio.slug }}.mcolegio.com.co{% endif %}" target="_blank" class="block bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow p-6 text-center">
                     <div class="h-24 w-24 mx-auto mb-4 flex items-center justify-center">
-                        {% if colegio.logo %}
-                            <img src="{{ colegio.logo.url }}" alt="Logo de {{ colegio.nombre }}" class="max-h-full max-w-full object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                        {% if colegio.escudo %}
+                            <img src="{{ colegio.escudo.url }}" alt="Logo de {{ colegio.nombre }}" class="max-h-full max-w-full object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
                             <div style="display:none;"><i class="fas fa-university text-4xl text-gray-400"></i></div>
                         {% else %}
                             <div><i class="fas fa-university text-4xl text-gray-400"></i></div>
@@ -127,3 +128,4 @@
 
 </body>
 </html>
+
