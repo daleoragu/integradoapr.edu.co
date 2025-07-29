@@ -2,6 +2,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils.text import slugify
+from django.conf import settings # <--- IMPORTANTE: Importar settings
+from django.urls import reverse # <--- IMPORTANTE: Importar reverse
 
 # ==============================================================================
 # MODELO CENTRAL PARA MULTI-COLEGIO (VERSIÓN COMPLETA Y CORREGIDA)
@@ -36,6 +38,7 @@ class Colegio(models.Model):
     # --- Datos Oficiales ---
     nit = models.CharField(max_length=50, blank=True, verbose_name="NIT del Colegio")
     resolucion_aprobacion = models.CharField(max_length=255, blank=True, verbose_name="Resolución de Aprobación")
+    nombre_rector = models.CharField(max_length=255, blank=True, null=True, verbose_name="Nombre Completo del Rector(a)") # <-- NUEVO CAMPO
     direccion = models.CharField(max_length=255, blank=True, verbose_name="Dirección Física")
     ciudad = models.CharField(max_length=100, blank=True, null=True, verbose_name="Ciudad")
     departamento = models.CharField(max_length=100, blank=True, null=True, verbose_name="Departamento")
@@ -84,6 +87,7 @@ class Colegio(models.Model):
     logo_derecho = models.ImageField(upload_to='logos_colegios/', blank=True, null=True, verbose_name="Logo Derecho (Reportes)", help_text="Ej: Logo de la Gobernación")
     favicon = models.ImageField(upload_to='logos_colegios/', blank=True, null=True, help_text="Icono para la pestaña del navegador (32x32px)")
     escudo = models.ImageField(upload_to='logos_colegios/', blank=True, null=True, verbose_name="Logo/Escudo Principal del Portal", help_text="Escudo para el portal y marca de agua en PDFs")
+    firma_rector = models.ImageField(upload_to='firmas_rectores/', blank=True, null=True, verbose_name="Firma del Rector(a)", help_text="Imagen de la firma para los reportes") # <-- NUEVO CAMPO
     alto_logos_pdf = models.PositiveSmallIntegerField(default=65, verbose_name="Altura Máxima de Logos en PDF (px)", help_text="Ajusta la altura de los logos para que se alineen con el texto del encabezado.")
 
     # --- Paleta de Colores del Portal ---
@@ -118,6 +122,25 @@ class Colegio(models.Model):
         if not self.slug:
             self.slug = slugify(self.nombre)
         super().save(*args, **kwargs)
+        
+    # ======================================================================
+    #               MÉTODO CORREGIDO
+    # ======================================================================
+    def get_absolute_url(self):
+        """
+        Devuelve la URL completa del portal del colegio.
+        Distingue entre el entorno de desarrollo (localhost) y producción.
+        """
+        if not settings.DEBUG:
+            # En producción, usa el subdominio real.
+            # Asegúrate de que tu dominio principal esté configurado correctamente.
+            main_domain = "mcolegio.com.co"
+            return f"https://{self.slug}.{main_domain}"
+        else:
+            # En desarrollo, usa localhost.
+            # Puedes ajustar el puerto si usas uno diferente.
+            return f"http://{self.slug}.localhost:8000"
+
 
     class Meta:
         verbose_name = "Colegio"
