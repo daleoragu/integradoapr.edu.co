@@ -16,19 +16,16 @@ DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
 
 # ==============================================================================
 # CONFIGURACIÓN DEFINITIVA DE ALLOWED_HOSTS
-# Escribimos los dominios directamente para evitar conflictos con las variables
-# de entorno de DigitalOcean.
 # ==============================================================================
 ALLOWED_HOSTS = [
     'mcolegio.com.co',
-    '.mcolegio.com.co',  # Permite 'www.mcolegio.com.co' y cualquier otro subdominio.
-    'localhost',         # Para desarrollo local.
-    '127.0.0.1',       # Para desarrollo local.
-    '.localhost',        # <-- CAMBIO: Permite cualquier subdominio de localhost.
+    '.mcolegio.com.co',
+    'localhost',
+    '127.0.0.1',
+    '.localhost',
     'integradoapr.edu.co',
 ]
 
-# Si DigitalOcean inyecta su dominio por defecto, también lo agregamos por si acaso.
 APP_DOMAIN = os.getenv('APP_DOMAIN')
 if APP_DOMAIN:
     ALLOWED_HOSTS.append(APP_DOMAIN)
@@ -49,7 +46,7 @@ INSTALLED_APPS = [
     # Apps de terceros
     'crispy_forms',
     'crispy_bootstrap5',
-    'storages', # Nueva app para DigitalOcean Spaces
+    'storages',
 ]
 
 MIDDLEWARE = [
@@ -140,19 +137,27 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-# --- CONFIGURACIÓN DE DIGITALOCEAN SPACES PARA ARCHIVOS (MEDIA) ---
+# --- CONFIGURACIÓN DE DIGITALOCEAN SPACES (VERSIÓN CORREGIDA) ---
 AWS_ACCESS_KEY_ID = os.getenv('DO_SPACES_ACCESS_KEY')
 AWS_SECRET_ACCESS_KEY = os.getenv('DO_SPACES_SECRET_KEY')
 AWS_STORAGE_BUCKET_NAME = os.getenv('DO_SPACES_BUCKET_NAME')
 AWS_S3_REGION_NAME = os.getenv('DO_SPACES_REGION')
 AWS_S3_ENDPOINT_URL = f'https://{AWS_S3_REGION_NAME}.digitaloceanspaces.com'
+
+# --- LÍNEA CORREGIDA Y CRUCIAL ---
+# Le decimos a la librería cuál es el dominio público correcto para los archivos.
+AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.{AWS_S3_REGION_NAME}.digitaloceanspaces.com'
+
 AWS_DEFAULT_ACL = 'public-read'
 AWS_S3_OBJECT_PARAMETERS = {
     'CacheControl': 'max-age=86400',
 }
 AWS_LOCATION = 'media' # Carpeta dentro del Space para los archivos
-MEDIA_URL = f'{AWS_S3_ENDPOINT_URL}/{AWS_LOCATION}/'
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
+# Ya no es necesario construir MEDIA_URL manualmente, la librería lo hará por nosotros
+# usando AWS_S3_CUSTOM_DOMAIN y AWS_LOCATION.
+MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/'
 
 
 # Configuración para Crispy Forms
