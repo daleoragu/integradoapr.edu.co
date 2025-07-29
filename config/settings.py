@@ -24,6 +24,7 @@ ALLOWED_HOSTS = [
     '.mcolegio.com.co',  # Permite 'www.mcolegio.com.co' y cualquier otro subdominio.
     'localhost',         # Para desarrollo local.
     '127.0.0.1',       # Para desarrollo local.
+    '.localhost',        # <-- CAMBIO: Permite cualquier subdominio de localhost.
     'integradoapr.edu.co',
 ]
 

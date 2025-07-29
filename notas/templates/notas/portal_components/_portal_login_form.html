@@ -25,7 +25,9 @@
                     <label for="login-password" class="form-label small">Contraseña</label>
                     <input type="password" name="password" class="form-control form-control-sm" id="login-password" required>
                 </div>
-                <button type="submit" class="btn btn-sm w-100 text-white" style="background-color: var(--color-vinotinto);">Ingresar</button>
+                <!-- === LÍNEA CORREGIDA === -->
+                <!-- Se usa la variable --color-primario que sí está definida en la base -->
+                <button type="submit" class="btn btn-sm w-100 login-btn">Ingresar</button>
             </form>
         {% endif %}
     </div>
