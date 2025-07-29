@@ -1,9 +1,6 @@
 import os
 from pathlib import Path
 import dj_database_url
-import cloudinary
-import cloudinary.uploader
-import cloudinary.api
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -27,6 +24,7 @@ ALLOWED_HOSTS = [
     '.mcolegio.com.co',  # Permite 'www.mcolegio.com.co' y cualquier otro subdominio.
     'localhost',         # Para desarrollo local.
     '127.0.0.1',       # Para desarrollo local.
+    'integradoapr.edu.co',
 ]
 
 # Si DigitalOcean inyecta su dominio por defecto, también lo agregamos por si acaso.
@@ -50,8 +48,7 @@ INSTALLED_APPS = [
     # Apps de terceros
     'crispy_forms',
     'crispy_bootstrap5',
-    'cloudinary',
-    'cloudinary_storage',
+    'storages', # Nueva app para DigitalOcean Spaces
 ]
 
 MIDDLEWARE = [
@@ -141,16 +138,21 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# --- CONFIGURACIÓN DE CLOUDINARY PARA ARCHIVOS (MEDIA) ---
-cloudinary.config(
-  cloud_name = os.getenv('CLOUDINARY_CLOUD_NAME'), 
-  api_key = os.getenv('CLOUDINARY_API_KEY'), 
-  api_secret = os.getenv('CLOUDINARY_API_SECRET'),
-  secure = True
-)
 
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-MEDIA_URL = '/media/'
+# --- CONFIGURACIÓN DE DIGITALOCEAN SPACES PARA ARCHIVOS (MEDIA) ---
+AWS_ACCESS_KEY_ID = os.getenv('DO_SPACES_ACCESS_KEY')
+AWS_SECRET_ACCESS_KEY = os.getenv('DO_SPACES_SECRET_KEY')
+AWS_STORAGE_BUCKET_NAME = os.getenv('DO_SPACES_BUCKET_NAME')
+AWS_S3_REGION_NAME = os.getenv('DO_SPACES_REGION')
+AWS_S3_ENDPOINT_URL = f'https://{AWS_S3_REGION_NAME}.digitaloceanspaces.com'
+AWS_DEFAULT_ACL = 'public-read'
+AWS_S3_OBJECT_PARAMETERS = {
+    'CacheControl': 'max-age=86400',
+}
+AWS_LOCATION = 'media' # Carpeta dentro del Space para los archivos
+MEDIA_URL = f'{AWS_S3_ENDPOINT_URL}/{AWS_LOCATION}/'
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
 
 # Configuración para Crispy Forms
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
