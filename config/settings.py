@@ -2,6 +2,9 @@ import os
 from pathlib import Path
 import dj_database_url
 
+from dotenv import load_dotenv
+load_dotenv()
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'tu-clave-secreta-para-desarrollo')
@@ -114,12 +117,21 @@ AWS_S3_OBJECT_PARAMETERS = {
     'CacheControl': 'max-age=86400',
 }
 AWS_LOCATION = 'media'
+
+print("ANTES DE STORAGE")
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+print("DESPUES DE STORAGE")
+
 MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/'
 
+# Debug para ver si las variables se cargan
 print("USANDO STORAGE:", DEFAULT_FILE_STORAGE)
-# --------------------------
+print("AWS BUCKET:", AWS_STORAGE_BUCKET_NAME)
+print("AWS ACCESS KEY:", AWS_ACCESS_KEY_ID)
+print("MEDIA_URL:", MEDIA_URL)
 
 # Configuración para Crispy Forms
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
+from django.core.files.storage import default_storage
+print("FORZANDO STORAGE, debería ser S3Boto3Storage:", type(default_storage))
