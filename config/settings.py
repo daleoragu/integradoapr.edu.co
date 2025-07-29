@@ -17,17 +17,10 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'tu-clave-secreta-para-desarrollo')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = [
-    'mcolegio.com.co',
-    '.mcolegio.com.co',
-    'localhost',
-    '127.0.0.1',
-    '.localhost',
-    'integradoapr.edu.co',
-]
-APP_DOMAIN = os.getenv('APP_DOMAIN')
+ALLOWED_HOSTS = []
+APP_DOMAIN = os.getenv('DJANGO_ALLOWED_HOSTS')
 if APP_DOMAIN:
-    ALLOWED_HOSTS.append(APP_DOMAIN)
+    ALLOWED_HOSTS.extend(APP_DOMAIN.split(','))
 
 
 # Application definition
@@ -84,7 +77,11 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# --- ¡ESTA ES LA SECCIÓN CORREGIDA! ---
 DATABASE_URL = os.getenv('DATABASE_URL')
+
+# Durante el 'build' en DigitalOcean, DATABASE_URL puede no estar disponible.
+# Este 'if' asegura que se use una DB temporal para que 'collectstatic' funcione.
 if DATABASE_URL:
     DATABASES = {
         'default': dj_database_url.config(conn_max_age=600, ssl_require=True)
@@ -132,32 +129,19 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # --- DigitalOcean Spaces ---
-# Carga las claves desde tus variables de entorno (.env)
 AWS_ACCESS_KEY_ID = os.getenv('DO_SPACES_ACCESS_KEY')
 AWS_SECRET_ACCESS_KEY = os.getenv('DO_SPACES_SECRET_KEY')
 AWS_STORAGE_BUCKET_NAME = os.getenv('DO_SPACES_BUCKET_NAME')
 AWS_S3_REGION_NAME = os.getenv('DO_SPACES_REGION')
 
-# Backend de almacenamiento
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-
-# Endpoint URL de tu Space
 AWS_S3_ENDPOINT_URL = f'https://{AWS_S3_REGION_NAME}.digitaloceanspaces.com'
-
-# Configuración para que los archivos subidos sean públicos por defecto
 AWS_DEFAULT_ACL = 'public-read'
-
-# Parámetros adicionales para los objetos
 AWS_S3_OBJECT_PARAMETERS = {
     'CacheControl': 'max-age=86400',
 }
-
-# Nombre de la carpeta dentro del bucket para los archivos de media
 AWS_LOCATION = 'media'
-
-# URL pública para acceder a los archivos
 MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.{AWS_S3_REGION_NAME}.digitaloceanspaces.com/{AWS_LOCATION}/'
-# --- Fin de la Configuración ---
 
 
 # Configuración para Crispy Forms
