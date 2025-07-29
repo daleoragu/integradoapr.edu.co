@@ -137,22 +137,25 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-# --- CONFIGURACIÓN DE DIGITALOCEAN SPACES (VERSIÓN CORREGIDA) ---
+# --- CONFIGURACIÓN DE DIGITALOCEAN SPACES (CORREGIDA Y RECOMENDADA) ---
 AWS_ACCESS_KEY_ID = os.getenv('DO_SPACES_ACCESS_KEY')
 AWS_SECRET_ACCESS_KEY = os.getenv('DO_SPACES_SECRET_KEY')
 AWS_STORAGE_BUCKET_NAME = os.getenv('DO_SPACES_BUCKET_NAME')
 AWS_S3_REGION_NAME = os.getenv('DO_SPACES_REGION')
 AWS_S3_ENDPOINT_URL = f'https://{AWS_S3_REGION_NAME}.digitaloceanspaces.com'
 
-# --- LÍNEA CORREGIDA Y CRUCIAL ---
 # Le decimos a la librería cuál es el dominio público correcto para los archivos.
 AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.{AWS_S3_REGION_NAME}.digitaloceanspaces.com'
 
-AWS_DEFAULT_ACL = 'public-read'
+# --- LÍNEAS CLAVE PARA QUE LOS ARCHIVOS SUBAN COMO PÚBLICOS ---
+AWS_DEFAULT_ACL = None  # <--- Cambio recomendado
 AWS_S3_OBJECT_PARAMETERS = {
+    'ACL': 'public-read',  # <--- Línea crítica
     'CacheControl': 'max-age=86400',
 }
-AWS_LOCATION = 'media' # Carpeta dentro del Space para los archivos
+# --------------------------------------------------------------
+
+AWS_LOCATION = 'media'  # Carpeta dentro del Space para los archivos
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
 # Ya no es necesario construir MEDIA_URL manualmente, la librería lo hará por nosotros
