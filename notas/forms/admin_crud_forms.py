@@ -8,18 +8,17 @@ from ..models.academicos import (
     AreaConocimiento, Materia, EscalaValoracion
 )
 
-# --- INICIO: FORMULARIO DE PERSONALIZACIÓN CORREGIDO ---
+# --- INICIO: FORMULARIO ÚNICO Y DEFINITIVO DE PERSONALIZACIÓN ---
 class ColorInput(forms.TextInput):
     input_type = 'color'
 
-# Se modifica únicamente esta clase para que solo incluya los campos
-# que se editan en la página de personalización del portal.
 class ColegioPersonalizacionForm(forms.ModelForm):
     class Meta:
         model = Colegio
-        # La lista de campos ahora es más corta para evitar errores de validación.
+        # Se incluyen TODOS los campos que se quieren editar en el formulario.
+        # Esto asegura que la validación funcione correctamente.
         fields = [
-            'lema', 'historia', 'mision', 'vision', 'modelo_pedagogico',
+            'nombre', 'lema', 'historia', 'mision', 'vision', 'modelo_pedagogico',
             'favicon', 'escudo',
             'color_primario', 'color_secundario', 'color_texto_primario', 'color_fondo',
             'color_topbar', 'color_topbar_texto', 'color_footer', 'color_footer_texto',
@@ -27,16 +26,8 @@ class ColegioPersonalizacionForm(forms.ModelForm):
             'url_facebook', 'url_instagram', 'url_twitter_x', 'url_youtube',
             'portal_publico_activo', 'layout_portal'
         ]
-        # Los widgets y help_texts se ajustan a los campos que sí se usan.
         widgets = {
-            'color_primario': ColorInput(attrs={'class': 'form-control form-control-color'}),
-            'color_secundario': ColorInput(attrs={'class': 'form-control form-control-color'}),
-            'color_texto_primario': ColorInput(attrs={'class': 'form-control form-control-color'}),
-            'color_fondo': ColorInput(attrs={'class': 'form-control form-control-color'}),
-            'color_topbar': ColorInput(attrs={'class': 'form-control form-control-color'}),
-            'color_topbar_texto': ColorInput(attrs={'class': 'form-control form-control-color'}),
-            'color_footer': ColorInput(attrs={'class': 'form-control form-control-color'}),
-            'color_footer_texto': ColorInput(attrs={'class': 'form-control form-control-color'}),
+            'nombre': forms.TextInput(attrs={'class': 'form-control'}),
             'lema': forms.TextInput(attrs={'class': 'form-control'}),
             'historia': forms.Textarea(attrs={'class': 'form-control', 'rows': 5}),
             'mision': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
@@ -53,11 +44,21 @@ class ColegioPersonalizacionForm(forms.ModelForm):
             'escudo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
             'portal_publico_activo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'layout_portal': forms.Select(attrs={'class': 'form-select'}),
+            'color_primario': ColorInput(attrs={'class': 'form-control form-control-color'}),
+            'color_secundario': ColorInput(attrs={'class': 'form-control form-control-color'}),
+            'color_texto_primario': ColorInput(attrs={'class': 'form-control form-control-color'}),
+            'color_fondo': ColorInput(attrs={'class': 'form-control form-control-color'}),
+            'color_topbar': ColorInput(attrs={'class': 'form-control form-control-color'}),
+            'color_topbar_texto': ColorInput(attrs={'class': 'form-control form-control-color'}),
+            'color_footer': ColorInput(attrs={'class': 'form-control form-control-color'}),
+            'color_footer_texto': ColorInput(attrs={'class': 'form-control form-control-color'}),
         }
         help_texts = {
             'escudo': 'Logo principal que se usará en el portal. Se recomienda PNG transparente.',
             'layout_portal': 'Elige cómo se mostrará el menú de navegación principal en el portal público.',
         }
+
+# ... (El resto de los formularios en este archivo permanecen igual) ...
 
 # --- Formularios para Cursos / Grados (SIN CAMBIOS) ---
 class CursoForm(forms.ModelForm):
