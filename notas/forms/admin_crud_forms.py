@@ -13,19 +13,14 @@ class ColorInput(forms.TextInput):
     input_type = 'color'
 
 class ColegioPersonalizacionForm(forms.ModelForm):
-    
-    # --- ¡ESTA ES LA CORRECCIÓN! ---
-    # Hacemos que el campo 'nombre' sea opcional para que el formulario valide.
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['nombre'].required = False
-
     class Meta:
         model = Colegio
-        # Se incluyen TODOS los campos que se quieren editar en el formulario.
-        # Esto asegura que la validación funcione correctamente.
+        
+        # --- ¡ESTA ES LA CORRECCIÓN DEFINITIVA! ---
+        # Se ha eliminado el campo 'nombre' de esta lista.
+        # Ahora el formulario solo se preocupa por los campos que sí están en la página.
         fields = [
-            'nombre', 'lema', 'historia', 'mision', 'vision', 'modelo_pedagogico',
+            'lema', 'historia', 'mision', 'vision', 'modelo_pedagogico',
             'favicon', 'escudo',
             'color_primario', 'color_secundario', 'color_texto_primario', 'color_fondo',
             'color_topbar', 'color_topbar_texto', 'color_footer', 'color_footer_texto',
@@ -34,7 +29,6 @@ class ColegioPersonalizacionForm(forms.ModelForm):
             'portal_publico_activo', 'layout_portal'
         ]
         widgets = {
-            'nombre': forms.TextInput(attrs={'class': 'form-control'}),
             'lema': forms.TextInput(attrs={'class': 'form-control'}),
             'historia': forms.Textarea(attrs={'class': 'form-control', 'rows': 5}),
             'mision': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
