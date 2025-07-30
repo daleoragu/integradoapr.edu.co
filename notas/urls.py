@@ -1,13 +1,7 @@
 # notas/urls.py
+# Este es el archivo final y completo que conecta todas tus vistas.
+
 from django.urls import path
-from django.contrib.auth import views as auth_views_django # Renombramos para evitar conflictos
-
-# --- INICIO: IMPORTACIONES CORREGIDAS Y COMPLETAS ---
-# Se importan las vistas directamente desde sus archivos específicos.
-from .views.admin_tools_views import ColegioPersonalizacionUpdateView
-from .views.auth_views import CustomLoginView
-
-# Se mantienen las importaciones de tus módulos de vistas existentes
 from .views import (
     auth_views,
     dashboard_views,
@@ -18,13 +12,11 @@ from .views import (
     observador_views,
     asistencia_views,
     consulta_views,
-    reporte_views,
     boletin_views,
     export_views,
-    import_views,     
+    import_views,
     reporte_parcial_views,
     estadisticas_views,
-    sabana_views,
     mensajeria_views,
     importar_asistencia_views,
     estudiante_observador_views,
@@ -34,57 +26,150 @@ from .views import (
     portal_views,
     portal_admin_views,
     impersonation_views,
-    gestion_docentes_views,
-    gestion_estudiantes_views,
     gestion_academica_views,
-    import_export_planillas_views,
     carnet_views,
-    certificados_views
+    certificados_views,
+    # --- ¡IMPORTANTE! Se importa el nuevo archivo de vistas de gestión de usuarios ---
+    gestion_docentes_views,
+    gestion_estudiantes_views
 )
-# --- FIN: IMPORTACIONES CORREGIDAS ---
-
 
 urlpatterns = [
     # --- Rutas del Portal Público y Autenticación ---
     path('', portal_views.portal_vista, name='portal'),
-    
     path('logout/', auth_views.logout_vista, name='logout'),
     path('logout/confirmacion/', auth_views.logout_confirmacion_vista, name='logout_confirmacion'),
-    path('dashboard/', dashboard_views.dashboard_vista, name='dashboard'),
-    path('perfil/cambiar-password/', auth_views.cambiar_password_vista, name='cambiar_password'),
+    path('cambiar-password/', auth_views.cambiar_password_vista, name='cambiar_password'),
 
     # --- Rutas de Paneles de Usuario ---
+    path('dashboard/', dashboard_views.dashboard_vista, name='dashboard'),
     path('panel-administrador/', dashboard_views.admin_dashboard_vista, name='admin_dashboard'),
     path('panel-docente/', dashboard_views.docente_dashboard_vista, name='panel_docente'),
     path('panel-estudiante/', dashboard_views.estudiante_dashboard_vista, name='panel_estudiante'),
 
-    # --- Rutas de Herramientas de Administración General ---
-    path('panel-administrador/control-periodos/', admin_tools_views.panel_control_periodos_vista, name='panel_control_periodos'),
-    path('panel-administrador/control-promocion/', admin_tools_views.panel_control_promocion_vista, name='panel_control_promocion'),
-    path('panel-administrador/estadisticas/', estadisticas_views.panel_estadisticas_vista, name='panel_estadisticas'),
-    path('panel-administrador/publicar-boletines/', publicacion_views.panel_publicacion_vista, name='panel_publicacion'),
-    path('panel-administrador/configuracion-calificaciones/', admin_tools_views.configuracion_calificaciones_vista, name='configuracion_calificaciones'),
+    # ==========================================================================
+    # --- RUTAS PARA GESTIÓN DE USUARIOS (DOCENTES Y ESTUDIANTES) ---
+    # ==========================================================================
+    path('admin/gestion-docentes/', gestion_docentes_views.gestion_docentes_vista, name='gestion_docentes'),
+    path('admin/gestion-docentes/crear/', gestion_docentes_views.crear_docente_vista, name='crear_docente'),
+    path('admin/gestion-docentes/editar/<int:docente_id>/', gestion_docentes_views.editar_docente_vista, name='editar_docente'),
+    path('admin/gestion-docentes/eliminar/<int:docente_id>/', gestion_docentes_views.eliminar_docente_vista, name='eliminar_docente'),
     
-    path('panel-administrador/configuracion-colegio/', ColegioPersonalizacionUpdateView.as_view(), name='configuracion_colegio'),
+    path('admin/gestion-estudiantes/', gestion_estudiantes_views.gestion_estudiantes_vista, name='gestion_estudiantes'),
+    path('admin/gestion-estudiantes/crear/', gestion_estudiantes_views.crear_estudiante_vista, name='crear_estudiante'),
+    path('admin/gestion-estudiantes/editar/<int:estudiante_id>/', gestion_estudiantes_views.editar_estudiante_vista, name='editar_estudiante'),
+    path('admin/gestion-estudiantes/eliminar/<int:estudiante_id>/', gestion_estudiantes_views.eliminar_estudiante_vista, name='eliminar_estudiante'),
     
-    # --- INICIO: RUTAS PARA EL PANEL DE CONFIGURACIÓN Y PERSONALIZACIÓN DEL PORTAL ---
-    path('panel-administrador/personalizacion-portal/', portal_admin_views.personalizacion_portal_vista, name='personalizacion_portal'),
-    path('panel-administrador/configuracion-portal/', portal_admin_views.configuracion_portal_vista, name='configuracion_portal'),
-    path('panel-administrador/gestion-documentos/', portal_admin_views.gestion_documentos_vista, name='gestion_documentos'),
-    path('panel-administrador/eliminar-documento/<int:pk>/', portal_admin_views.eliminar_documento_vista, name='eliminar_documento'),
-    path('panel-administrador/gestion-galeria/', portal_admin_views.gestion_galeria_vista, name='gestion_galeria'),
-    path('panel-administrador/eliminar-foto/<int:pk>/', portal_admin_views.eliminar_foto_vista, name='eliminar_foto'),
-    path('panel-administrador/gestion-noticias/', portal_admin_views.gestion_noticias_vista, name='gestion_noticias'),
-    path('panel-administrador/crear-noticia/', portal_admin_views.crear_noticia_vista, name='crear_noticia'),
-    path('panel-administrador/editar-noticia/<int:pk>/', portal_admin_views.editar_noticia_vista, name='editar_noticia'),
-    path('panel-administrador/eliminar-noticia/<int:pk>/', portal_admin_views.eliminar_noticia_vista, name='eliminar_noticia'),
-    path('panel-administrador/publicar-noticia/<int:pk>/', portal_admin_views.publicar_noticia_vista, name='publicar_noticia'),
-    path('panel-administrador/gestion-carrusel/', portal_admin_views.gestion_carrusel_vista, name='gestion_carrusel'),
-    path('panel-administrador/eliminar-imagen-carrusel/<int:pk>/', portal_admin_views.eliminar_imagen_carrusel_vista, name='eliminar_imagen_carrusel'),
-    path('panel-administrador/editar-imagen-carrusel/<int:pk>/', portal_admin_views.editar_imagen_carrusel_vista, name='editar_imagen_carrusel'),
-    # --- FIN: RUTAS DEL PORTAL ---
+    # --- Rutas de Herramientas de Administración ---
+    path('admin/panel-control-periodos/', admin_tools_views.panel_control_periodos_vista, name='panel_control_periodos'),
+    path('admin/panel-control-promocion/', admin_tools_views.panel_control_promocion_vista, name='panel_control_promocion'),
+    path('admin/configuracion-calificaciones/', admin_tools_views.configuracion_calificaciones_vista, name='configuracion_calificaciones'),
+    path('admin/configuracion-escala/', admin_tools_views.configuracion_escala_valoracion_vista, name='configuracion_escala_valoracion'),
+    path('admin/escala/editar/<int:escala_id>/', admin_tools_views.editar_escala_valoracion_vista, name='editar_escala_valoracion'),
+    path('admin/periodo/crear/', admin_tools_views.crear_periodo_vista, name='crear_periodo'),
+    path('admin/periodo/editar/<int:periodo_id>/', admin_tools_views.editar_periodo_vista, name='editar_periodo'),
+    path('admin/periodo/eliminar/<int:periodo_id>/', admin_tools_views.eliminar_periodo_vista, name='eliminar_periodo'),
 
-    # --- Rutas AJAX del Portal ---
+    # --- Rutas para Gestión Académica ---
+    path('admin/gestion-academica/', gestion_academica_views.gestion_asignacion_academica_vista, name='gestion_asignacion_academica'),
+    path('admin/gestion-academica/asignacion/crear/', gestion_academica_views.crear_asignacion_vista, name='crear_asignacion'),
+    path('admin/gestion-academica/asignacion/eliminar/<int:asignacion_id>/', gestion_academica_views.eliminar_asignacion_vista, name='eliminar_asignacion'),
+    path('admin/gestion-academica/cursos/', gestion_academica_views.gestion_cursos_vista, name='gestion_cursos'),
+    path('admin/gestion-academica/cursos/crear/', gestion_academica_views.crear_curso_vista, name='crear_curso'),
+    path('admin/gestion-academica/cursos/editar/<int:curso_id>/', gestion_academica_views.editar_curso_vista, name='editar_curso'),
+    path('admin/gestion-academica/cursos/eliminar/<int:curso_id>/', gestion_academica_views.eliminar_curso_vista, name='eliminar_curso'),
+    path('admin/gestion-academica/areas/', gestion_academica_views.gestion_areas_vista, name='gestion_areas'),
+    path('admin/gestion-academica/areas/crear/', gestion_academica_views.crear_area_vista, name='crear_area'),
+    path('admin/gestion-academica/areas/editar/<int:area_id>/', gestion_academica_views.editar_area_vista, name='editar_area'),
+    path('admin/gestion-academica/areas/eliminar/<int:area_id>/', gestion_academica_views.eliminar_area_vista, name='eliminar_area'),
+    path('admin/gestion-academica/materias/', gestion_academica_views.gestion_materias_vista, name='gestion_materias'),
+    path('admin/gestion-academica/materias/crear/', gestion_academica_views.crear_materia_vista, name='crear_materia'),
+    path('admin/gestion-academica/materias/crear/para-area/<int:area_id>/', gestion_academica_views.crear_materia_vista, name='crear_materia_para_area'),
+    path('admin/gestion-academica/materias/editar/<int:materia_id>/', gestion_academica_views.editar_materia_vista, name='editar_materia'),
+    path('admin/gestion-academica/materias/eliminar/<int:materia_id>/', gestion_academica_views.eliminar_materia_vista, name='eliminar_materia'),
+    path('admin/gestion-academica/ponderacion/', gestion_academica_views.gestion_ponderacion_areas_vista, name='gestion_ponderacion_areas'),
+
+    # --- Rutas para el Portal y su Administración ---
+    path('admin/portal/configuracion/', portal_admin_views.configuracion_portal_vista, name='configuracion_portal'),
+    path('admin/portal/personalizacion/', portal_admin_views.personalizacion_portal_vista, name='personalizacion_portal'),
+    path('admin/portal/documentos/', portal_admin_views.gestion_documentos_vista, name='gestion_documentos'),
+    path('admin/portal/documentos/eliminar/<int:pk>/', portal_admin_views.eliminar_documento_vista, name='eliminar_documento'),
+    path('admin/portal/galeria/', portal_admin_views.gestion_galeria_vista, name='gestion_galeria'),
+    path('admin/portal/galeria/eliminar/<int:pk>/', portal_admin_views.eliminar_foto_vista, name='eliminar_foto'),
+    path('admin/portal/noticias/', portal_admin_views.gestion_noticias_vista, name='gestion_noticias'),
+    path('admin/portal/noticias/crear/', portal_admin_views.crear_noticia_vista, name='crear_noticia'),
+    path('admin/portal/noticias/editar/<int:pk>/', portal_admin_views.editar_noticia_vista, name='editar_noticia'),
+    path('admin/portal/noticias/eliminar/<int:pk>/', portal_admin_views.eliminar_noticia_vista, name='eliminar_noticia'),
+    path('admin/portal/noticias/publicar/<int:pk>/', portal_admin_views.publicar_noticia_vista, name='publicar_noticia'),
+    path('admin/portal/carrusel/', portal_admin_views.gestion_carrusel_vista, name='gestion_carrusel'),
+    path('admin/portal/carrusel/editar/<int:pk>/', portal_admin_views.editar_imagen_carrusel_vista, name='editar_imagen_carrusel'),
+    path('admin/portal/carrusel/eliminar/<int:pk>/', portal_admin_views.eliminar_imagen_carrusel_vista, name='eliminar_imagen_carrusel'),
+
+    # --- Rutas para Importación y Exportación ---
+    path('admin/importacion/', import_views.importacion_vista, name='importacion_datos'),
+    path('admin/exportar-estudiantes/', export_views.exportar_estudiantes_excel, name='exportar_estudiantes_excel'),
+    path('admin/descargar-plantilla-estudiantes/', export_views.descargar_plantilla_estudiantes, name='descargar_plantilla_estudiantes'),
+    path('admin/exportar-materias/', export_views.exportar_materias_excel, name='exportar_materias_excel'),
+    path('admin/descargar-plantilla-docentes/', export_views.descargar_plantilla_docentes, name='descargar_plantilla_docentes'),
+    path('admin/descargar-plantilla-materias/', export_views.descargar_plantilla_materias, name='descargar_plantilla_materias'),   
+
+    # --- Rutas para Docentes ---
+    path('docente/ingresar-notas/', ingreso_notas_views.IngresoNotasView.as_view(), name='ingresar_notas_periodo'),
+    path('docente/exportar-planillas/<int:docente_id>/<int:periodo_id>/', import_export_planillas_views.exportar_planillas_docente, name='exportar_planillas_docente'),
+    path('docente/reporte-parcial/', reporte_parcial_views.reporte_parcial_vista, name='reporte_parcial'),
+    path('docente/plan-mejoramiento/', plan_mejoramiento_views.plan_mejoramiento_vista, name='plan_mejoramiento'),
+    path('docente/asistencia/', asistencia_views.asistencia_vista, name='asistencia'),
+    path('docente/consulta-asistencia/', consulta_views.consulta_asistencia_vista, name='consulta_asistencia'),
+    path('docente/importar-asistencia/', importar_asistencia_views.importar_asistencia_excel_vista, name='importar_asistencia_excel'),
+    path('indicador/crear/', indicador_views.crear_indicador_vista, name='crear_indicador'),
+    path('indicador/editar/<int:indicador_id>/', indicador_views.editar_indicador_vista, name='editar_indicador'),
+    path('indicador/eliminar/<int:indicador_id>/', indicador_views.eliminar_indicador_vista, name='eliminar_indicador'),
+    
+    # --- Rutas para Estudiantes ---
+    path('estudiante/mis-boletines/', estudiante_boletin_views.mis_boletines_vista, name='mi_boletin'),
+    path('estudiante/mi-observador/', estudiante_observador_views.mi_observador_vista, name='mi_observador'),
+
+    # --- Rutas para Boletines, Reportes y Estadísticas ---
+    path('reportes/selector-boletin/', boletin_views.selector_boletin_vista, name='selector_boletin'),
+    path('reportes/generar-boletin/', boletin_views.generar_boletin_vista, name='generar_boletin'),
+    path('admin/publicacion-boletines/', publicacion_views.panel_publicacion_vista, name='panel_publicacion'),
+    path('estadisticas/', estadisticas_views.panel_estadisticas_vista, name='panel_estadisticas'),
+    path('estadisticas/generar-pdf/', estadisticas_views.estadisticas_pdf_vista, name='estadisticas_pdf'),
+    path('reporte-parcial/acta/<int:estudiante_id>/', reporte_parcial_views.acta_reporte_parcial_estudiante, name='acta_reporte_parcial_estudiante'),
+    path('reporte-parcial/estudiantes/', reporte_parcial_views.lista_estudiantes_reporte, name='lista_estudiantes_reporte'),
+
+    # --- Rutas para Mensajería ---
+    path('mensajeria/componer/', mensajeria_views.componer_mensaje_vista, name='componer_mensaje'),
+    path('mensajeria/bandeja-entrada/', mensajeria_views.bandeja_entrada_vista, name='bandeja_entrada'),
+    path('mensajeria/ver/<int:mensaje_id>/', mensajeria_views.ver_mensaje_vista, name='ver_mensaje'),
+    path('mensajeria/enviados/', mensajeria_views.mensajes_enviados_vista, name='mensajes_enviados'),
+    path('mensajeria/borrar/<int:mensaje_id>/', mensajeria_views.borrar_mensaje_vista, name='borrar_mensaje'),
+    path('mensajeria/papelera/', mensajeria_views.papelera_vista, name='papelera'),
+    path('mensajeria/restaurar/<int:mensaje_id>/', mensajeria_views.restaurar_mensaje_vista, name='restaurar_mensaje'),
+    path('mensajeria/borrar-definitivo/<int:mensaje_id>/', mensajeria_views.borrar_definitivamente_vista, name='borrar_permanentemente_mensaje'),
+    path('mensajeria/borradores/', mensajeria_views.borradores_vista, name='borradores'),
+    
+    # --- Rutas para Observador ---
+    path('observador/seleccionar/', observador_views.observador_selector_vista, name='observador_selector'),
+    path('observador/detalle/<int:estudiante_id>/', observador_views.vista_detalle_observador, name='vista_detalle_observador'),
+    path('observador/crear/<int:estudiante_id>/', observador_views.crear_registro_observador_vista, name='crear_registro_observador'),
+    path('observador/ficha/<int:estudiante_id>/editar/', observador_views.editar_ficha_vista, name='editar_ficha'),
+    path('observador/pdf/<int:estudiante_id>/', observador_views.generar_observador_pdf_vista, name='generar_observador_pdf'),
+
+    # --- Rutas para Carnets y Certificados ---
+    path('carnet/generar/<int:estudiante_id>/', carnet_views.generar_carnet_estudiante, name='generar_carnet_estudiante'),
+    path('asistencia/kiosko/', carnet_views.vista_kiosko_asistencia, name='vista_kiosko_asistencia'),
+    path('asistencia/registrar-qr/<int:estudiante_id>/', carnet_views.registrar_asistencia_qr, name='registrar_asistencia_qr'),
+    path('herramientas/imprimir-carnets/', carnet_views.impresion_masiva_carnets, name='impresion_masiva_carnets'),
+    path('herramientas/certificados/', certificados_views.selector_certificados_vista, name='selector_certificados'),
+    path('herramientas/certificados/generar/<int:estudiante_id>/', certificados_views.generar_certificado_estudio_pdf, name='generar_certificado_estudio'),
+
+    # --- Rutas AJAX ---
+    path('ajax/guardar-inasistencia/', asistencia_views.guardar_inasistencia_ajax, name='guardar_inasistencia_ajax'),
+    path('ajax/get-inasistencias-auto/', ingreso_notas_views.ajax_get_inasistencias_auto, name='get_inasistencias_auto'),
+    path('ajax/obtener-notificaciones/', notificaciones_views.obtener_notificaciones_dropdown_ajax, name='obtener_notificaciones_dropdown'),
+    path('ajax/marcar-leida/', notificaciones_views.marcar_notificacion_leida_ajax, name='marcar_notificacion_leida'),
+    path('ajax/datos-graficos/', estadisticas_views.datos_graficos_ajax, name='datos_graficos_ajax'),
     path('ajax/noticia/<int:pk>/', portal_views.ajax_noticia_detalle, name='ajax_noticia_detalle'),
     path('ajax/directorio-docentes/', portal_views.directorio_docentes_json, name='ajax_directorio_docentes'),
     path('ajax/documentos-publicos/', portal_views.documentos_publicos_json, name='ajax_documentos_publicos'),
@@ -97,119 +182,7 @@ urlpatterns = [
     path('ajax/redes-sociales/', portal_views.ajax_redes_sociales, name='ajax_redes_sociales'),
     path('ajax/galeria-fotos/', portal_views.ajax_galeria_vista, name='ajax_galeria_fotos'),
 
-    # --- El resto de tus URLs (SIN CAMBIOS) ---
-    path('docente/ingresar-notas/', ingreso_notas_views.IngresoNotasView.as_view(), name='ingresar_notas_periodo'),
-    path('docente/exportar-planillas/<int:docente_id>/<int:periodo_id>/', import_export_planillas_views.exportar_planillas_docente, name='exportar_planillas_docente'),
-    path('docente/reporte-parcial/', reporte_parcial_views.reporte_parcial_vista, name='reporte_parcial'),
-    path('docente/planes-mejoramiento/', plan_mejoramiento_views.plan_mejoramiento_vista, name='plan_mejoramiento'),
-    path('docente/asistencia/', asistencia_views.asistencia_vista, name='asistencia'),
-    path('docente/consulta-asistencia/', consulta_views.consulta_asistencia_vista, name='consulta_asistencia'),
-    path('docente/importar-asistencia/', importar_asistencia_views.importar_asistencia_excel_vista, name='importar_asistencia_excel'),
-    path('indicador/<int:indicador_id>/editar/', indicador_views.editar_indicador_vista, name='editar_indicador'),
-    path('indicador/<int:indicador_id>/eliminar/', indicador_views.eliminar_indicador_vista, name='eliminar_indicador'),
-    path('indicador/crear/', indicador_views.crear_indicador_vista, name='crear_indicador_vista'),
-    path('ajax/get-inasistencias-auto/', ingreso_notas_views.ajax_get_inasistencias_auto, name='ajax_get_inasistencias_auto'),
-    path('ajax/obtener-meses/', reporte_views.obtener_meses_periodo_ajax, name='ajax_obtener_meses'),
-    path('ajax/guardar-asistencia/', asistencia_views.guardar_inasistencia_ajax, name='guardar_inasistencia_ajax'),
-    path('ajax/datos-graficos/', estadisticas_views.datos_graficos_ajax, name='datos_graficos_ajax'),
-    path('docente/selector-boletines/', boletin_views.selector_boletin_vista, name='selector_boletines'),
-    path('docente/generar-boletin/', boletin_views.generar_boletin_vista, name='generar_boletin'),
-    path('docente/selector-sabana/', sabana_views.selector_sabana_vista, name='selector_sabana'),
-    path('docente/generar-sabana/', sabana_views.generar_sabana_vista, name='generar_sabana'),
-    path('docente/exportar-sabana-excel/', sabana_views.exportar_sabana_excel, name='exportar_sabana_excel'),
-    path('docente/generar-sabana-pdf/', sabana_views.generar_sabana_pdf, name='generar_sabana_pdf'),
-    path('mensajes/componer/', mensajeria_views.componer_mensaje_vista, name='componer_mensaje'),
-    path('mensajes/bandeja-entrada/', mensajeria_views.bandeja_entrada_vista, name='bandeja_entrada'),
-    path('mensajes/ver/<int:mensaje_id>/', mensajeria_views.ver_mensaje_vista, name='ver_mensaje'),
-    path('mensajes/enviados/', mensajeria_views.mensajes_enviados_vista, name='mensajes_enviados'),
-    path('mensajes/borrar/<int:mensaje_id>/', mensajeria_views.borrar_mensaje_vista, name='borrar_mensaje'),
-    path('mensajes/papelera/', mensajeria_views.papelera_vista, name='papelera'),
-    path('mensajes/restaurar/<int:mensaje_id>/', mensajeria_views.restaurar_mensaje_vista, name='restaurar_mensaje'),
-    path('mensajes/borrar-definitivo/<int:mensaje_id>/', mensajeria_views.borrar_definitivamente_vista, name='borrar_permanentemente_mensaje'),
-    path('mensajes/borradores/', mensajeria_views.borradores_vista, name='borradores'),
-    path('observador/seleccionar/', observador_views.observador_selector_vista, name='observador_selector'),
-    path('observador/detalle/<int:estudiante_id>/', observador_views.vista_detalle_observador, name='vista_detalle_observador'),
-    path('observador/crear/<int:estudiante_id>/', observador_views.crear_registro_observador_vista, name='crear_registro_observador'),
-    path('observador/ficha/<int:estudiante_id>/editar/', observador_views.editar_ficha_vista, name='editar_ficha'),
-    path('observador/pdf/<int:estudiante_id>/', observador_views.generar_observador_pdf_vista, name='generar_observador_pdf'),
-    path('estudiante/panel/', dashboard_views.estudiante_dashboard_vista, name='panel_estudiante'),
-    path('estudiante/mi-observador/', estudiante_observador_views.mi_observador_vista, name='mi_observador'),
-    path('estudiante/mis-boletines/', estudiante_boletin_views.mis_boletines_vista, name='mi_boletin'),
-    path('notificaciones/', notificaciones_views.lista_notificaciones_vista, name='lista_notificaciones'),
-    path('ajax/obtener-notificaciones/', notificaciones_views.obtener_notificaciones_dropdown_ajax, name='obtener_notificaciones_dropdown'),
-    path('ajax/marcar-leida/', notificaciones_views.marcar_notificacion_leida_ajax, name='marcar_notificacion_leida'),
+    # --- Rutas de Suplantación ---
     path('suplantar/iniciar/<int:user_id>/', impersonation_views.iniciar_suplantacion, name='iniciar_suplantacion'),
     path('suplantar/detener/', impersonation_views.detener_suplantacion, name='detener_suplantacion'),
-    path('panel-administrador/asignacion-academica/', gestion_academica_views.gestion_asignacion_academica_vista, name='gestion_asignacion_academica'),
-    path('panel-administrador/asignacion/crear/', gestion_academica_views.crear_asignacion_vista, name='crear_asignacion'),
-    path('panel-administrador/asignacion/eliminar/<int:asignacion_id>/', gestion_academica_views.eliminar_asignacion_vista, name='eliminar_asignacion'),
-    path('panel-administrador/gestion-docentes/', gestion_docentes_views.gestion_docentes_vista, name='gestion_docentes'),
-    path('panel-administrador/gestion-docentes/crear/', gestion_docentes_views.crear_docente_vista, name='crear_docente'),
-    path('panel-administrador/gestion-docentes/editar/<int:docente_id>/', gestion_docentes_views.editar_docente_vista, name='editar_docente'),
-    path('panel-administrador/gestion-docentes/eliminar/<int:docente_id>/', gestion_docentes_views.eliminar_docente_vista, name='eliminar_docente'),
-    path('panel-administrador/gestion-estudiantes/', gestion_estudiantes_views.gestion_estudiantes_vista, name='gestion_estudiantes'),
-    path('panel-administrador/gestion-estudiantes/crear/', gestion_estudiantes_views.crear_estudiante_vista, name='crear_estudiante'),
-    path('panel-administrador/gestion-estudiantes/editar/<int:estudiante_id>/', gestion_estudiantes_views.editar_estudiante_vista, name='editar_estudiante'),
-    path('panel-administrador/gestion-estudiantes/eliminar/<int:estudiante_id>/', gestion_estudiantes_views.eliminar_estudiante_vista, name='eliminar_estudiante'),
-    path('panel-administrador/gestion-cursos/', gestion_academica_views.gestion_cursos_vista, name='gestion_cursos'),
-    path('panel-administrador/gestion-cursos/crear/', gestion_academica_views.crear_curso_vista, name='crear_curso'),
-    path('panel-administrador/gestion-cursos/editar/<int:curso_id>/', gestion_academica_views.editar_curso_vista, name='editar_curso'),
-    path('panel-administrador/gestion-cursos/eliminar/<int:curso_id>/', gestion_academica_views.eliminar_curso_vista, name='eliminar_curso'),
-    path('panel-administrador/gestion-materias/', gestion_academica_views.gestion_materias_vista, name='gestion_materias'),
-    path('panel-administrador/gestion-materias/crear/', gestion_academica_views.crear_materia_vista, name='crear_materia'),
-    path('panel-administrador/gestion-materias/editar/<int:materia_id>/', gestion_academica_views.editar_materia_vista, name='editar_materia'),
-    path('panel-administrador/gestion-materias/eliminar/<int:materia_id>/', gestion_academica_views.eliminar_materia_vista, name='eliminar_materia'),
-    path('panel-administrador/gestion-areas/', gestion_academica_views.gestion_areas_vista, name='gestion_areas'),
-    path('panel-administrador/gestion-areas/crear/', gestion_academica_views.crear_area_vista, name='crear_area'),
-    path('panel-administrador/gestion-areas/editar/<int:area_id>/', gestion_academica_views.editar_area_vista, name='editar_area'),
-    path('panel-administrador/gestion-materias/crear/para-area/<int:area_id>/', gestion_academica_views.crear_materia_vista, name='crear_materia_para_area'),
-    path('panel-administrador/gestion-areas/eliminar/<int:area_id>/', gestion_academica_views.eliminar_area_vista, name='eliminar_area'),
-    path('panel-administrador/gestion-ponderacion-areas/', gestion_academica_views.gestion_ponderacion_areas_vista, name='gestion_ponderacion_areas'),
-    path('panel-administrador/importar/', import_views.importacion_vista, name='importacion_datos'),
-    path('panel-administrador/exportar-estudiantes/', export_views.exportar_estudiantes_excel, name='exportar_estudiantes_excel'),
-    path('panel-administrador/descargar-plantilla-estudiantes/', export_views.descargar_plantilla_estudiantes, name='descargar_plantilla_estudiantes'),
-    path('panel-administrador/exportar-materias/', export_views.exportar_materias_excel, name='exportar_materias_excel'),
-    path('panel-administrador/descargar-plantilla-docentes/', export_views.descargar_plantilla_docentes, name='descargar_plantilla_docentes'),
-    path('panel-administrador/descargar-plantilla-materias/', export_views.descargar_plantilla_materias, name='descargar_plantilla_materias'),   
-    path('panel-administrador/periodos/crear/', admin_tools_views.crear_periodo_vista, name='crear_periodo'),
-    path('panel-administrador/periodos/editar/<int:periodo_id>/', admin_tools_views.editar_periodo_vista, name='editar_periodo'),
-    path('panel-administrador/periodos/eliminar/<int:periodo_id>/', admin_tools_views.eliminar_periodo_vista, name='eliminar_periodo'),
-    
-    path('panel-administrador/configuracion/escala-valoracion/', admin_tools_views.configuracion_escala_valoracion_vista, name='configuracion_escala_valoracion'),
-    path('panel-administrador/configuracion/escala-valoracion/editar/<int:escala_id>/', admin_tools_views.editar_escala_valoracion_vista, name='editar_escala_valoracion'),
-    
-    path('docente/reporte-asistencia/excel/', reporte_views.generar_reporte_individual_excel, name='generar_reporte_individual_excel'),
-    path('docente/reporte-asistencia/pdf/', reporte_views.generar_reporte_individual_pdf, name='generar_reporte_individual_pdf'),
-
-    path('reportes/estadisticas-pdf/', estadisticas_views.estadisticas_pdf_vista, name='estadisticas_pdf'),
-
-    path('reporte-parcial/', reporte_parcial_views.reporte_parcial_vista, name='reporte_parcial'),
-    path('reporte-parcial/acta/<int:estudiante_id>/', reporte_parcial_views.acta_reporte_parcial_estudiante, name='acta_reporte_parcial_estudiante'),
-    path('reporte-parcial/estudiantes/', reporte_parcial_views.lista_estudiantes_reporte, name='lista_estudiantes_reporte'),
-
-    path('carnet/generar/<int:estudiante_id>/',carnet_views.generar_carnet_estudiante,name='generar_carnet_estudiante'),
-           
-    path('asistencia/kiosko/',carnet_views.vista_kiosko_asistencia,name='vista_kiosko_asistencia'),        
-    path('asistencia/registrar-qr/<int:estudiante_id>/', carnet_views.registrar_asistencia_qr,name='registrar_asistencia_qr'),
-    path('herramientas/imprimir-carnets/', carnet_views.impresion_masiva_carnets,  name='impresion_masiva_carnets'),
-
-    path('carnet/generar/<int:estudiante_id>/', carnet_views.generar_carnet_estudiante, name='generar_carnet_estudiante'),
-         
-    # URL para el modo "Kiosko" de asistencia
-    path('asistencia/kiosko/', carnet_views.vista_kiosko_asistencia, name='vista_kiosko_asistencia'),
-         
-    # URL interna para el escaneo del QR
-    path('asistencia/registrar-qr/<int:estudiante_id>/', carnet_views.registrar_asistencia_qr, name='registrar_asistencia_qr'),
-         
-    # --- SOLUCIÓN: URL para la impresión masiva ---
-    # Se cambia el prefijo 'admin/' por 'herramientas/' para evitar conflictos.
-    path('herramientas/imprimir-carnets/', carnet_views.impresion_masiva_carnets,name='impresion_masiva_carnets'),
-
-     # --- INICIO: URLs PARA CERTIFICADOS ---
-    path('herramientas/certificados/', certificados_views.selector_certificados_vista, name='selector_certificados'),
-    path('herramientas/certificados/generar/<int:estudiante_id>/', certificados_views.generar_certificado_estudio_pdf,name='generar_certificado_estudio'),
-    # --- FIN: URLs PARA CERTIFICADOS ---
 ]
-
-
-
