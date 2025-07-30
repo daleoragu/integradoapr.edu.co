@@ -2,11 +2,14 @@ import os
 from pathlib import Path
 import dj_database_url
 
+from dotenv import load_dotenv
+load_dotenv()
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
+# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'tu-clave-secreta-para-desarrollo')
@@ -14,9 +17,8 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'tu-clave-secreta-para-desarrollo')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
 
-# ==============================================================================
-# CONFIGURACIÓN DEFINITIVA DE ALLOWED_HOSTS
-# ==============================================================================
+# --- ALLOWED_HOSTS ---
+# Se mantienen tus dominios como solicitaste.
 ALLOWED_HOSTS = [
     'mcolegio.com.co',
     '.mcolegio.com.co',
@@ -26,10 +28,11 @@ ALLOWED_HOSTS = [
     'integradoapr.edu.co',
 ]
 
-APP_DOMAIN = os.getenv('APP_DOMAIN')
-if APP_DOMAIN:
-    ALLOWED_HOSTS.append(APP_DOMAIN)
-# ==============================================================================
+
+# --- CONFIGURACIÓN PARA PROXY ---
+# Es importante mantener esto para que Django confíe en DigitalOcean.
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
 # Application definition
@@ -42,8 +45,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'notas.apps.NotasConfig',
-    
-    # Apps de terceros
     'crispy_forms',
     'crispy_bootstrap5',
     'storages',
@@ -85,25 +86,29 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
+# --- Base de Datos ---
+# CAMBIO PRINCIPAL: Se establece SQLite como base de datos por defecto.
+# Esto permite que el comando `collectstatic` se ejecute sin errores durante el build.
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
 
+# Luego, si la variable DATABASE_URL existe (en el entorno de producción),
+# se sobrescribe la configuración para usar PostgreSQL.
 DATABASE_URL = os.getenv('DATABASE_URL')
 if DATABASE_URL:
-    DATABASES = {
-        'default': dj_database_url.config(conn_max_age=600, ssl_require=True)
-    }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+    DATABASES['default'] = dj_database_url.config(
+        conn_max_age=600,
+        ssl_require=True,
+        default=DATABASE_URL
+    )
 
 
 # Password validation
-# https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
+# https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
@@ -114,7 +119,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 # Internationalization
-# https://docs.djangoproject.com/en/5.0/topics/i18n/
+# https://docs.djangoproject.com/en/5.2/topics/i18n/
 
 LANGUAGE_CODE = 'es-co'
 TIME_ZONE = 'America/Bogota'
@@ -123,46 +128,45 @@ USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.0/howto/static-files/
+# https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-
 # Default primary key field type
-# https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
+# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-
-# --- CONFIGURACIÓN DE DIGITALOCEAN SPACES (CORREGIDA Y RECOMENDADA) ---
+# --- DigitalOcean Spaces (Almacenamiento de Medios) ---
 AWS_ACCESS_KEY_ID = os.getenv('DO_SPACES_ACCESS_KEY')
 AWS_SECRET_ACCESS_KEY = os.getenv('DO_SPACES_SECRET_KEY')
 AWS_STORAGE_BUCKET_NAME = os.getenv('DO_SPACES_BUCKET_NAME')
 AWS_S3_REGION_NAME = os.getenv('DO_SPACES_REGION')
-AWS_S3_ENDPOINT_URL = f'https://{AWS_S3_REGION_NAME}.digitaloceanspaces.com'
 
-# Le decimos a la librería cuál es el dominio público correcto para los archivos.
-AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.{AWS_S3_REGION_NAME}.digitaloceanspaces.com'
-
-# --- LÍNEAS CLAVE PARA QUE LOS ARCHIVOS SUBAN COMO PÚBLICOS ---
-AWS_DEFAULT_ACL = None  # <--- Cambio recomendado
-AWS_S3_OBJECT_PARAMETERS = {
-    'ACL': 'public-read',  # <--- Línea crítica
-    'CacheControl': 'max-age=86400',
-}
-# --------------------------------------------------------------
-
-AWS_LOCATION = 'media'  # Carpeta dentro del Space para los archivos
-DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-
-# Ya no es necesario construir MEDIA_URL manualmente, la librería lo hará por nosotros
-# usando AWS_S3_CUSTOM_DOMAIN y AWS_LOCATION.
-MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/'
+# Solo configurar el almacenamiento de medios si las credenciales están presentes
+if AWS_STORAGE_BUCKET_NAME:
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    AWS_S3_ENDPOINT_URL = f'https://{AWS_S3_REGION_NAME}.digitaloceanspaces.com'
+    AWS_DEFAULT_ACL = 'public-read'
+    AWS_S3_OBJECT_PARAMETERS = {
+        'CacheControl': 'max-age=86400',
+    }
+    AWS_LOCATION = 'media'
+    MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.{AWS_S3_REGION_NAME}.digitaloceanspaces.com/{AWS_LOCATION}/'
 
 
 # Configuración para Crispy Forms
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+
+# --- LÍNEAS DE DEPURACIÓN ---
+# Estas líneas se imprimirán en los logs de DigitalOcean para ayudarnos a diagnosticar.
+print("--- INICIANDO DEPURACIÓN DE SETTINGS ---")
+print(f"MODO DEBUG: {DEBUG}")
+print(f"DEFAULT_FILE_STORAGE: {globals().get('DEFAULT_FILE_STORAGE', 'No configurado')}")
+print(f"AWS_STORAGE_BUCKET_NAME: {AWS_STORAGE_BUCKET_NAME}")
+print("--- FIN DE DEPURACIÓN DE SETTINGS ---")
