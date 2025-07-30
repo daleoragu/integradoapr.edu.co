@@ -27,6 +27,11 @@ def personalizacion_portal_vista(request):
             messages.success(request, '¡La personalización del portal se ha guardado correctamente!')
             return redirect('personalizacion_portal')
         else:
+            # --- LÍNEAS DE DEPURACIÓN AÑADIDAS ---
+            # Si el formulario no es válido, imprimimos los errores en los logs.
+            print("--- ERRORES DE VALIDACIÓN DEL FORMULARIO ---")
+            print(form.errors.as_json())
+            print("--- FIN DE ERRORES ---")
             messages.error(request, 'Por favor, corrija los errores en el formulario.')
     else:
         form = ColegioPersonalizacionForm(instance=colegio)
@@ -37,6 +42,8 @@ def personalizacion_portal_vista(request):
         'colegio': colegio
     }
     return render(request, 'notas/admin_portal/personalizacion_portal.html', context)
+
+# ... (el resto de tus vistas permanecen igual) ...
 
 @user_passes_test(es_admin_o_docente)
 def configuracion_portal_vista(request):
