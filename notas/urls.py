@@ -29,7 +29,9 @@ from .views import (
     gestion_academica_views,
     carnet_views,
     certificados_views,
-    # --- ¡IMPORTANTE! Se importa el nuevo archivo de vistas de gestión de usuarios ---
+    # --- ¡CORRECCIÓN! Se añade la importación que faltaba ---
+    import_export_planillas_views,
+    # --- Se importa el nuevo archivo de vistas de gestión de usuarios ---
     gestion_docentes_views,
     gestion_estudiantes_views
 )
