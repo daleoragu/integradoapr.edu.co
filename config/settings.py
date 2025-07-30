@@ -17,7 +17,14 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'tu-clave-secreta-para-desarrollo')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'mcolegio.com.co',
+    '.mcolegio.com.co',
+    'localhost',
+    '127.0.0.1',
+    '.localhost',
+    'integradoapr.edu.co',
+]
 APP_DOMAIN = os.getenv('DJANGO_ALLOWED_HOSTS')
 if APP_DOMAIN:
     ALLOWED_HOSTS.extend(APP_DOMAIN.split(','))
