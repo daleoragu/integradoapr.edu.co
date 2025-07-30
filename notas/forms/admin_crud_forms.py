@@ -13,6 +13,13 @@ class ColorInput(forms.TextInput):
     input_type = 'color'
 
 class ColegioPersonalizacionForm(forms.ModelForm):
+    
+    # --- ¡ESTA ES LA CORRECCIÓN! ---
+    # Hacemos que el campo 'nombre' sea opcional para que el formulario valide.
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['nombre'].required = False
+
     class Meta:
         model = Colegio
         # Se incluyen TODOS los campos que se quieren editar en el formulario.
