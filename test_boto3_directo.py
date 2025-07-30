@@ -118,3 +118,14 @@ print(f"AWS_S3_REGION_NAME: {AWS_S3_REGION_NAME}")
 print(f"AWS_S3_ENDPOINT_URL: {AWS_S3_ENDPOINT_URL}")
 print(f"MEDIA_URL: {MEDIA_URL}")
 print("--- FIN DE DEPURACIÓN DE SETTINGS ---")
+
+print("--- INICIO DEPURACIÓN SETTINGS ---")
+print("DEFAULT_FILE_STORAGE:", DEFAULT_FILE_STORAGE)
+print("DEBUG:", DEBUG)
+print("INSTALLED_APPS:", INSTALLED_APPS)
+try:
+    import storages
+    print("django-storages importado correctamente")
+except Exception as e:
+    print("Error importando django-storages:", e)
+print("--- FIN DEPURACIÓN SETTINGS ---")
