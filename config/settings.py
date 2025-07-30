@@ -164,7 +164,7 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 
 # --- LÍNEAS DE DEPURACIÓN ---
-# Estas líneas se imprimirán en los logs de DigitalOcean para ayudarnos a diagnosticar.
+# Estas líneas se imprimirán en los logs de DigitalOcean para ayudarnos a diagnosticar y rezar.
 print("--- INICIANDO DEPURACIÓN DE SETTINGS ---")
 print(f"MODO DEBUG: {DEBUG}")
 print(f"DEFAULT_FILE_STORAGE: {globals().get('DEFAULT_FILE_STORAGE', 'No configurado')}")
