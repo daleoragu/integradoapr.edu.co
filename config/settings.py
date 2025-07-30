@@ -18,12 +18,14 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'tu-clave-secreta-para-desarrollo')
 DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
 
 # --- ALLOWED_HOSTS ---
-# Lista de dominios permitidos, incluyendo el de DigitalOcean y los tuyos.
+# Se mantienen tus dominios como solicitaste.
 ALLOWED_HOSTS = [
-    'mcolegio-bfry5.ondigitalocean.app', # Reemplaza si el nombre de tu app cambió
+    'mcolegio-bfry5.ondigitalocean.app',
     'mcolegio.com.co',
     'www.mcolegio.com.co',
     '.mcolegio.com.co',
+    '127.0.0.1', # Añadido para desarrollo local
+    'localhost', # Añadido para desarrollo local
 ]
 
 
@@ -84,22 +86,25 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+# --- Base de Datos ---
+# CAMBIO PRINCIPAL: Se establece SQLite como base de datos por defecto.
+# Esto permite que el comando `collectstatic` se ejecute sin errores durante el build.
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
 
+# Luego, si la variable DATABASE_URL existe (en el entorno de producción),
+# se sobrescribe la configuración para usar PostgreSQL.
 DATABASE_URL = os.getenv('DATABASE_URL')
-
 if DATABASE_URL:
-    DATABASES = {
-        'default': dj_database_url.config(conn_max_age=600, ssl_require=True)
-    }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+    DATABASES['default'] = dj_database_url.config(
+        conn_max_age=600,
+        ssl_require=True,
+        default=DATABASE_URL
+    )
 
 
 # Password validation
@@ -135,20 +140,22 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# --- DigitalOcean Spaces ---
+# --- DigitalOcean Spaces (Almacenamiento de Medios) ---
 AWS_ACCESS_KEY_ID = os.getenv('DO_SPACES_ACCESS_KEY')
 AWS_SECRET_ACCESS_KEY = os.getenv('DO_SPACES_SECRET_KEY')
 AWS_STORAGE_BUCKET_NAME = os.getenv('DO_SPACES_BUCKET_NAME')
 AWS_S3_REGION_NAME = os.getenv('DO_SPACES_REGION')
 
-DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-AWS_S3_ENDPOINT_URL = f'https://{AWS_S3_REGION_NAME}.digitaloceanspaces.com'
-AWS_DEFAULT_ACL = 'public-read'
-AWS_S3_OBJECT_PARAMETERS = {
-    'CacheControl': 'max-age=86400',
-}
-AWS_LOCATION = 'media'
-MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.{AWS_S3_REGION_NAME}.digitaloceanspaces.com/{AWS_LOCATION}/'
+# Solo configurar el almacenamiento de medios si las credenciales están presentes
+if AWS_STORAGE_BUCKET_NAME:
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    AWS_S3_ENDPOINT_URL = f'https://{AWS_S3_REGION_NAME}.digitaloceanspaces.com'
+    AWS_DEFAULT_ACL = 'public-read'
+    AWS_S3_OBJECT_PARAMETERS = {
+        'CacheControl': 'max-age=86400',
+    }
+    AWS_LOCATION = 'media'
+    MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.{AWS_S3_REGION_NAME}.digitaloceanspaces.com/{AWS_LOCATION}/'
 
 
 # Configuración para Crispy Forms
@@ -160,6 +167,6 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 # Estas líneas se imprimirán en los logs de DigitalOcean para ayudarnos a diagnosticar.
 print("--- INICIANDO DEPURACIÓN DE SETTINGS ---")
 print(f"MODO DEBUG: {DEBUG}")
-print(f"DEFAULT_FILE_STORAGE: {DEFAULT_FILE_STORAGE}")
+print(f"DEFAULT_FILE_STORAGE: {globals().get('DEFAULT_FILE_STORAGE', 'No configurado')}")
 print(f"AWS_STORAGE_BUCKET_NAME: {AWS_STORAGE_BUCKET_NAME}")
 print("--- FIN DE DEPURACIÓN DE SETTINGS ---")
