@@ -17,17 +17,20 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'tu-clave-secreta-para-desarrollo')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
 
+# --- ALLOWED_HOSTS ---
+# Lista de dominios permitidos, incluyendo el de DigitalOcean y los tuyos.
 ALLOWED_HOSTS = [
+    'mcolegio-bfry5.ondigitalocean.app', # Reemplaza si el nombre de tu app cambió
     'mcolegio.com.co',
+    'www.mcolegio.com.co',
     '.mcolegio.com.co',
-    'localhost',
-    '127.0.0.1',
-    '.localhost',
-    'integradoapr.edu.co',
 ]
-APP_DOMAIN = os.getenv('DJANGO_ALLOWED_HOSTS')
-if APP_DOMAIN:
-    ALLOWED_HOSTS.extend(APP_DOMAIN.split(','))
+
+
+# --- CONFIGURACIÓN PARA PROXY ---
+# Es importante mantener esto para que Django confíe en DigitalOcean.
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
 # Application definition
@@ -84,11 +87,8 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# --- ¡ESTA ES LA SECCIÓN CORREGIDA! ---
 DATABASE_URL = os.getenv('DATABASE_URL')
 
-# Durante el 'build' en DigitalOcean, DATABASE_URL puede no estar disponible.
-# Este 'if' asegura que se use una DB temporal para que 'collectstatic' funcione.
 if DATABASE_URL:
     DATABASES = {
         'default': dj_database_url.config(conn_max_age=600, ssl_require=True)
@@ -154,3 +154,12 @@ MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.{AWS_S3_REGION_NAME}.digitalocea
 # Configuración para Crispy Forms
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+
+# --- LÍNEAS DE DEPURACIÓN ---
+# Estas líneas se imprimirán en los logs de DigitalOcean para ayudarnos a diagnosticar.
+print("--- INICIANDO DEPURACIÓN DE SETTINGS ---")
+print(f"MODO DEBUG: {DEBUG}")
+print(f"DEFAULT_FILE_STORAGE: {DEFAULT_FILE_STORAGE}")
+print(f"AWS_STORAGE_BUCKET_NAME: {AWS_STORAGE_BUCKET_NAME}")
+print("--- FIN DE DEPURACIÓN DE SETTINGS ---")
