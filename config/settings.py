@@ -15,7 +15,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'tu-clave-secreta-para-desarrollo')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
+DEBUG = True #os.getenv('DJANGO_DEBUG', 'False') == 'True'
 
 # --- ALLOWED_HOSTS ---
 # Se mantienen tus dominios como solicitaste.
