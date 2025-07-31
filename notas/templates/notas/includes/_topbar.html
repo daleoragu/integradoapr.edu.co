@@ -44,7 +44,10 @@
                     {# --- ¡CORRECCIÓN! Se cambia 'selector_boletines' a 'selector_boletin' --- #}
                     <li><a class="dropdown-item {% if 'boletin' in request.path %}active{% endif %}" href="{% url 'selector_boletin' %}"><i class="fas fa-file-invoice fa-fw me-2 text-muted"></i>Generar Boletines</a></li>
                     
-                    <li><a class="dropdown-item {% if 'sabana' in request.path %}active{% endif %}" href="{% url 'selector_sabana' %}"><i class="fas fa-table fa-fw me-2 text-muted"></i>Sábana de Notas</a></li>
+                    {# --- ¡CORRECCIÓN! Se cambia 'selector_sabana' (que no existe) a la URL correcta si la tienes --- #}
+                    {# Si no tienes una vista para 'selector_sabana', puedes comentar o eliminar esta línea #}
+                    {# <li><a class="dropdown-item {% if 'sabana' in request.path %}active{% endif %}" href="{% url 'selector_sabana' %}"><i class="fas fa-table fa-fw me-2 text-muted"></i>Sábana de Notas</a></li> #}
+                    
                     <li><a class="dropdown-item {% if request.resolver_match.url_name == 'panel_estadisticas' %}active{% endif %}" href="{% url 'panel_estadisticas' %}"><i class="fas fa-chart-pie fa-fw me-2 text-muted"></i>Estadísticas</a></li>
                     <li><a class="dropdown-item {% if 'configuracion-portal' in request.path %}active{% endif %}" href="{% url 'configuracion_portal' %}"><i class="fas fa-newspaper fa-fw me-2 text-muted"></i>Gestionar Portal</a></li>
                 {% endif %}
