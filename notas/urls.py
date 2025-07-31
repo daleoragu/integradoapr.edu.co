@@ -29,8 +29,9 @@ from .views import (
     gestion_academica_views,
     carnet_views,
     certificados_views,
-    # --- ¡CORRECCIÓN! Se añade la importación que faltaba ---
     import_export_planillas_views,
+    # --- ¡CORRECCIÓN! Se añade la importación que faltaba ---
+    sabana_views,
     # --- Se importa el nuevo archivo de vistas de gestión de usuarios ---
     gestion_docentes_views,
     gestion_estudiantes_views
@@ -126,6 +127,12 @@ urlpatterns = [
     path('indicador/crear/', indicador_views.crear_indicador_vista, name='crear_indicador'),
     path('indicador/editar/<int:indicador_id>/', indicador_views.editar_indicador_vista, name='editar_indicador'),
     path('indicador/eliminar/<int:indicador_id>/', indicador_views.eliminar_indicador_vista, name='eliminar_indicador'),
+    
+    # --- ¡NUEVO! Rutas para Sábana de Notas ---
+    path('docente/selector-sabana/', sabana_views.selector_sabana_vista, name='selector_sabana'),
+    path('docente/generar-sabana/', sabana_views.generar_sabana_vista, name='generar_sabana'),
+    path('docente/exportar-sabana-excel/', sabana_views.exportar_sabana_excel, name='exportar_sabana_excel'),
+    path('docente/generar-sabana-pdf/', sabana_views.generar_sabana_pdf, name='generar_sabana_pdf'),
     
     # --- Rutas para Estudiantes ---
     path('estudiante/mis-boletines/', estudiante_boletin_views.mis_boletines_vista, name='mi_boletin'),
