@@ -15,9 +15,14 @@
     <a href="{% url 'observador_selector' %}" class="app-icon"><div class="icon-container bg-observador"><i class="fas fa-eye"></i></div><span class="app-label">Observador</span></a>
     <a href="{% url 'plan_mejoramiento' %}" class="app-icon"><div class="icon-container bg-mejoramiento"><i class="fas fa-tasks"></i></div><span class="app-label">Nivelaciones</span></a>
     <a href="{% url 'reporte_parcial' %}" class="app-icon"><div class="icon-container bg-reporte"><i class="fas fa-file-alt"></i></div><span class="app-label">Reporte Parcial</span></a>
-    <a href="{% url 'selector_boletines' %}" class="app-icon"><div class="icon-container bg-boletines"><i class="fas fa-file-invoice"></i></div><span class="app-label">Boletines</span></a>
+    
+    {# --- ¡CORRECCIÓN! Se cambia a singular --- #}
+    <a href="{% url 'selector_boletin' %}" class="app-icon"><div class="icon-container bg-boletines"><i class="fas fa-file-invoice"></i></div><span class="app-label">Boletines</span></a>
+    
+    {# --- ¡CORRECCIÓN! Se cambia a singular --- #}
     <a href="{% url 'selector_sabana' %}" class="app-icon"><div class="icon-container bg-sabana"><i class="fas fa-table"></i></div><span class="app-label">Sábana de Notas</span></a>
+    
     <a href="{% url 'panel_estadisticas' %}" class="app-icon"><div class="icon-container bg-stats"><i class="fas fa-chart-pie"></i></div><span class="app-label">Estadísticas</span></a>
-    <a href="{% url 'bandeja_entrada' %}" class="app-icon"><div class="icon-container bg-mail"><i class="fas fa-envelope"></i></div><span class="app-label">CofraMail</span></a>
+    <a href="{% url 'bandeja_entrada' %}" class="app-icon"><div class="icon-container bg-mail"><i class="fas fa-envelope"></i></div><span class="app-label">Correo Interno</span></a>
     <a href="{% url 'configuracion_portal' %}" class="app-icon"><div class="icon-container" style="background: linear-gradient(135deg, #42b42c, #b02130);"><i class="fas fa-newspaper"></i></div><span class="app-label">Gestionar Portal</span></a>
 </div>
