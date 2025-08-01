@@ -21,7 +21,7 @@
         <div class="card shadow-sm">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Carga Académica por Docente</h5>
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#asignacionModal">
+                <button id="add-assignment-btn" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#asignacionModal">
                     <i class="fas fa-plus me-2"></i>Añadir Asignación
                 </button>
             </div>
@@ -37,7 +37,6 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {# Asegúrate de que tu vista Django pase una variable 'docentes_list' con los datos #}
                             {% for data in docentes_list %}
                             <tr>
                                 <td class="align-middle">
@@ -58,10 +57,26 @@
                                                 <i class="fas fa-book-open text-muted me-2"></i>
                                                 {{ asignacion.materia.nombre }} - <strong>{{ asignacion.curso.nombre }}</strong> ({{ asignacion.intensidad_horaria_semanal }}h)
                                             </span>
-                                            <form action="{% url 'notas:eliminar_asignacion' asignacion.id %}" method="POST" class="d-inline" onsubmit="return confirm('¿Eliminar esta asignación?')">
-                                                {% csrf_token %}
-                                                <button type="submit" class="btn btn-sm btn-outline-danger border-0" title="Eliminar Asignación"><i class="fas fa-trash-alt"></i></button>
-                                            </form>
+                                            <div>
+                                                <!-- BOTÓN EDITAR (NUEVO) -->
+                                                <button class="btn btn-sm btn-outline-info border-0 edit-btn"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#asignacionModal"
+                                                        data-id="{{ asignacion.id }}"
+                                                        data-curso-id="{{ asignacion.curso.id }}"
+                                                        data-materia-id="{{ asignacion.materia.id }}"
+                                                        data-docente-id="{{ asignacion.docente.id }}"
+                                                        data-ihs="{{ asignacion.intensidad_horaria_semanal }}"
+                                                        title="Editar Asignación">
+                                                    <i class="fas fa-pencil-alt"></i>
+                                                </button>
+                                                <!-- FIN BOTÓN EDITAR -->
+
+                                                <form action="{% url 'notas:eliminar_asignacion' asignacion.id %}" method="POST" class="d-inline" onsubmit="return confirm('¿Eliminar esta asignación?')">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger border-0" title="Eliminar Asignación"><i class="fas fa-trash-alt"></i></button>
+                                                </form>
+                                            </div>
                                         </li>
                                         {% empty %}
                                         <li class="text-muted">Sin asignaciones.</li>
@@ -69,7 +84,6 @@
                                     </ul>
                                 </td>
                                 <td class="align-middle text-center fs-5">
-                                    {# Asegúrate de que 'total_ih' esté calculado en tu vista o modelo #}
                                     <strong>{{ data.total_ih }}</strong>
                                 </td>
                             </tr>
@@ -98,130 +112,155 @@
             </div>
         </div>
 
+        <!-- SECCIÓN MODIFICADA -->
         <div class="card shadow-sm">
             <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-hourglass-half me-2"></i>I.H. por Curso</h5>
+                <h5 class="mb-0"><i class="fas fa-search me-2"></i>Ver Carga por Curso</h5>
             </div>
-            <div class="card-body">
-                <ul class="list-group">
-                    {# Asegúrate de que tu vista Django pase una variable 'cursos_list' con los datos #}
-                    {% for curso in cursos_list %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        {{ curso.nombre }}
-                        {# Asegúrate de que 'total_ih' esté calculado en tu vista o modelo para cada curso #}
+            <div class="list-group list-group-flush">
+                 {% for curso in cursos_list %}
+                    <!-- Cada curso ahora es un enlace a su página de detalle -->
+                    <a href="{% url 'notas:detalle_curso' curso.id %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-chalkboard me-2"></i>{{ curso.nombre }}</span>
                         <span class="badge bg-primary rounded-pill fs-6">{{ curso.total_ih }}h</span>
-                    </li>
-                    {% endfor %}
-                </ul>
+                    </a>
+                {% empty %}
+                    <li class="list-group-item">No hay cursos para mostrar.</li>
+                {% endfor %}
             </div>
         </div>
+        <!-- FIN SECCIÓN MODIFICADA -->
     </div>
 </div>
 
-<!-- Modal para Añadir/Editar Asignación - INICIO -->
+<!-- Modal para Añadir/Editar Asignación -->
 <div class="modal fade" id="asignacionModal" tabindex="-1" aria-labelledby="asignacionModalLabel" aria-hidden="true">
-    <div class="modal-dialog relative w-auto my-6 mx-auto max-w-3xl">
-        <div class="modal-content border-none shadow-lg relative flex flex-col w-full pointer-events-auto bg-white bg-clip-padding rounded-lg outline-none text-current">
-            <div class="modal-header flex flex-shrink-0 items-center justify-between p-4 border-b border-gray-200 rounded-t-lg">
-                <h5 class="text-xl font-medium leading-normal text-gray-800" id="asignacionModalLabel">Crear Nueva Asignación Académica</h5>
-                <button type="button" class="btn-close box-content w-4 h-4 p-1 text-black border-none rounded-none opacity-50 focus:shadow-none focus:outline-none focus:opacity-100 hover:text-black hover:opacity-75 hover:no-underline" data-bs-dismiss="modal" aria-label="Close"></button>
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="asignacionModalLabel">Crear Nueva Asignación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="{% url 'notas:crear_asignacion' %}" method="post">
+            <!-- El 'action' del formulario se cambiará dinámicamente con JavaScript -->
+            <form id="assignment-form" action="{% url 'notas:crear_asignacion' %}" method="post">
                 {% csrf_token %}
-                <div class="modal-body relative p-4">
-                    <div class="mb-4">
-                        <label for="id_curso" class="block text-gray-700 text-sm font-bold mb-2">Curso / Grado:</label>
-                        <select id="id_curso" name="curso" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="id_curso" class="form-label">Curso / Grado:</label>
+                        <select id="id_curso" name="curso" class="form-select" required>
                             <option value="">Seleccione un curso</option>
-                            {# Itera sobre tus cursos aquí. Ejemplo: #}
                             {% for curso in cursos %}
                                 <option value="{{ curso.id }}">{{ curso.nombre }}</option>
                             {% endfor %}
                         </select>
                     </div>
 
-                    <div class="mb-4">
-                        <label for="id_materia" class="block text-gray-700 text-sm font-bold mb-2">Materia:</label>
-                        <select id="id_materia" name="materia" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                    <div class="mb-3">
+                        <label for="id_materia" class="form-label">Materia:</label>
+                        <select id="id_materia" name="materia" class="form-select" required>
                             <option value="">Seleccione una materia</option>
-                            {# Itera sobre tus materias aquí, incluyendo el área como data-attribute #}
                             {% for materia in materias %}
                                 <option value="{{ materia.id }}" data-area-id="{{ materia.area_id_display }}" data-area-nombre="{{ materia.area_nombre_display }}">{{ materia.nombre }}</option>
                             {% endfor %}
                         </select>
                     </div>
 
-                    <div class="mb-4">
-                        <label for="id_area" class="block text-gray-700 text-sm font-bold mb-2">Área:</label>
-                        <input type="text" id="id_area" name="area_display" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 bg-gray-100 leading-tight focus:outline-none focus:shadow-outline cursor-not-allowed" readonly>
-                        {# Campo oculto para enviar el ID del área al backend si es necesario #}
+                    <div class="mb-3">
+                        <label for="id_area" class="form-label">Área:</label>
+                        <input type="text" id="id_area" name="area_display" class="form-control" readonly>
                         <input type="hidden" id="id_area_hidden" name="area">
                     </div>
 
-                    <div class="mb-4">
-                        <label for="id_docente" class="block text-gray-700 text-sm font-bold mb-2">Docente:</label>
-                        <select id="id_docente" name="docente" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                    <div class="mb-3">
+                        <label for="id_docente" class="form-label">Docente:</label>
+                        <select id="id_docente" name="docente" class="form-select" required>
                             <option value="">Seleccione un docente</option>
-                            {# Itera sobre tus docentes aquí #}
                             {% for docente in docentes %}
                                 <option value="{{ docente.id }}">{{ docente.user.get_full_name }}</option>
                             {% endfor %}
                         </select>
                     </div>
 
-                    <div class="mb-4">
-                        <label for="id_intensidad_horaria" class="block text-gray-700 text-sm font-bold mb-2">Intensidad Horaria Semanal (horas):</label>
-                        <input type="number" id="id_intensidad_horaria" name="intensidad_horaria_semanal" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" min="1" required>
+                    <div class="mb-3">
+                        <label for="id_intensidad_horaria" class="form-label">Intensidad Horaria Semanal (horas):</label>
+                        <input type="number" id="id_intensidad_horaria" name="intensidad_horaria_semanal" class="form-control" min="1" required>
                     </div>
                 </div>
-                <div class="modal-footer flex flex-shrink-0 flex-wrap items-center justify-end p-4 border-t border-gray-200 rounded-b-lg">
-                    <button type="button" class="inline-block px-6 py-2.5 bg-gray-200 text-gray-700 font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-gray-300 hover:shadow-lg focus:bg-gray-300 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-gray-400 active:shadow-lg transition duration-150 ease-in-out" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="inline-block px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out ml-1">Guardar Asignación</button>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
-<!-- Modal para Añadir/Editar Asignación - FIN -->
+<!-- FIN MODAL -->
 
+{% endblock %}
+
+{% block extra_js %}
 <script>
-    // Script para manejar la selección de materia y la visualización automática del área.
-    document.addEventListener('DOMContentLoaded', function() {
-        const materiaSelect = document.getElementById('id_materia');
-        const areaInput = document.getElementById('id_area');
-        const areaHiddenInput = document.getElementById('id_area_hidden'); // Para enviar el ID del área si es necesario
+document.addEventListener('DOMContentLoaded', function() {
+    const materiaSelect = document.getElementById('id_materia');
+    const areaInput = document.getElementById('id_area');
+    const areaHiddenInput = document.getElementById('id_area_hidden');
+    const asignacionModal = document.getElementById('asignacionModal');
+    const modalForm = document.getElementById('assignment-form');
+    const modalTitle = document.getElementById('asignacionModalLabel');
+    
+    // URL base para crear, la usaremos para resetear el formulario
+    const createUrl = "{% url 'notas:crear_asignacion' %}";
 
-        // Función para actualizar el campo de área
-        function updateAreaField() {
-            const selectedOption = materiaSelect.options[materiaSelect.selectedIndex];
-            // Solo intenta obtener el dataset si hay una opción seleccionada y no es la opción por defecto
-            if (selectedOption && selectedOption.value !== "") {
-                const areaNombre = selectedOption.dataset.areaNombre; // Obtiene el nombre del área del atributo data-
-                const areaId = selectedOption.dataset.areaId; // Obtiene el ID del área si lo necesitas
-
-                if (areaNombre) {
-                    areaInput.value = areaNombre;
-                    areaHiddenInput.value = areaId; // Asigna el ID del área al campo oculto
-                } else {
-                    areaInput.value = '';
-                    areaHiddenInput.value = '';
-                }
-            } else {
-                areaInput.value = '';
-                areaHiddenInput.value = '';
-            }
+    // Función para actualizar el campo de área (ya la tenías)
+    function updateAreaField() {
+        const selectedOption = materiaSelect.options[materiaSelect.selectedIndex];
+        if (selectedOption && selectedOption.value) {
+            areaInput.value = selectedOption.dataset.areaNombre || '';
+            areaHiddenInput.value = selectedOption.dataset.areaId || '';
+        } else {
+            areaInput.value = '';
+            areaHiddenInput.value = '';
         }
+    }
 
-        // Escucha el evento 'change' en el selector de materia
-        materiaSelect.addEventListener('change', updateAreaField);
+    materiaSelect.addEventListener('change', updateAreaField);
 
-        // Llama a la función al cargar la página por si ya hay una materia seleccionada (por ejemplo, en un formulario de edición)
-        updateAreaField();
+    // --- LÓGICA NUEVA PARA EDITAR ---
+    asignacionModal.addEventListener('show.bs.modal', function (event) {
+        // El botón que abrió el modal
+        const button = event.relatedTarget;
+
+        // Verifica si el botón es de 'editar' por su clase
+        if (button.classList.contains('edit-btn')) {
+            // --- MODO EDICIÓN ---
+            const assignmentId = button.dataset.id;
+            
+            // 1. Cambiar título y acción del formulario
+            modalTitle.textContent = 'Editar Asignación Académica';
+            // ¡IMPORTANTE! Debes crear esta URL en tu urls.py. Usamos un placeholder que reemplazamos.
+            modalForm.action = `/admin/gestion-academica/asignacion/editar/${assignmentId}/`;
+
+            // 2. Rellenar el formulario con los datos del botón
+            document.getElementById('id_curso').value = button.dataset.cursoId;
+            document.getElementById('id_materia').value = button.dataset.materiaId;
+            document.getElementById('id_docente').value = button.dataset.docenteId;
+            document.getElementById('id_intensidad_horaria').value = button.dataset.ihs;
+
+            // Actualiza el campo de área después de seleccionar la materia
+            updateAreaField();
+            
+        } else {
+            // --- MODO CREACIÓN ---
+            // 1. Resetear título y acción del formulario
+            modalTitle.textContent = 'Crear Nueva Asignación Académica';
+            modalForm.action = createUrl;
+
+            // 2. Limpiar el formulario
+            modalForm.reset();
+            // Asegurarse de que el campo de área también se limpie
+            updateAreaField();
+        }
     });
+});
 </script>
-
-{# Asegúrate de que Tailwind CSS y Font Awesome estén cargados en tu base.html o aquí #}
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
-
 {% endblock %}
