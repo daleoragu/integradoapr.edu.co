@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib import messages
 from django.db import transaction, IntegrityError
-from django.db.models import Sum, Prefetch, OuterRef, Subquery # Importar OuterRef y Subquery
+from django.db.models import Sum, Prefetch, OuterRef, Subquery
 from django.views.decorators.http import require_POST
 from django.http import HttpResponseNotFound
 
@@ -19,7 +19,7 @@ def es_personal_admin(user):
     return user.is_superuser
 
 # ===============================================================
-# VISTA PRINCIPAL DE ASIGNACIÓN ACADÉMICA (MODIFICADA)
+# VISTA PRINCIPAL DE ASIGNACIÓN ACADÉMICA
 # ===============================================================
 @user_passes_test(es_personal_admin)
 def gestion_asignacion_academica_vista(request):
@@ -43,19 +43,17 @@ def gestion_asignacion_academica_vista(request):
     # Obtener todos los cursos, materias y docentes para poblar los selectores del modal
     cursos_para_modal = Curso.objects.filter(colegio=request.colegio).order_by('nombre')
     
-    # MODIFICACIÓN CLAVE: Obtener el nombre y ID del área asociada a cada Materia
-    # Esto asume que cada Materia tiene al menos una PonderacionAreaMateria asociada.
     subquery_area_nombre = Subquery(
         PonderacionAreaMateria.objects.filter(
             materia=OuterRef('pk'),
             colegio=request.colegio
-        ).values('area__nombre')[:1] # Obtiene el nombre del área de la primera ponderación encontrada
+        ).values('area__nombre')[:1]
     )
     subquery_area_id = Subquery(
         PonderacionAreaMateria.objects.filter(
             materia=OuterRef('pk'),
             colegio=request.colegio
-        ).values('area__id')[:1] # Obtiene el ID del área de la primera ponderación encontrada
+        ).values('area__id')[:1]
     )
 
     materias_para_modal = Materia.objects.filter(colegio=request.colegio).annotate(
@@ -68,14 +66,17 @@ def gestion_asignacion_academica_vista(request):
     context = {
         'docentes_list': docentes_list,
         'cursos_list': cursos_list,
-        'cursos': cursos_para_modal,     # Para el selector de cursos en el modal
-        'materias': materias_para_modal, # Para el selector de materias en el modal (ahora con área)
-        'docentes': docentes_para_modal, # Para el selector de docentes en el modal
+        'cursos': cursos_para_modal,
+        'materias': materias_para_modal,
+        'docentes': docentes_para_modal,
         'titulo': "Panel de Asignación Académica",
         'colegio': request.colegio,
     }
     return render(request, 'notas/admin_crud/gestion_asignacion_academica.html', context)
 
+# ===============================================================
+# CRUD PARA ASIGNACIONES
+# ===============================================================
 @user_passes_test(es_personal_admin)
 @require_POST
 def crear_asignacion_vista(request):
@@ -92,7 +93,6 @@ def crear_asignacion_vista(request):
         materia = get_object_or_404(Materia, id=materia_id, colegio=request.colegio)
         docente = get_object_or_404(Docente, id=docente_id, colegio=request.colegio)
 
-        # Crea la asignación
         asignacion, created = AsignacionDocente.objects.get_or_create(
             colegio=request.colegio,
             curso=curso,
@@ -101,7 +101,6 @@ def crear_asignacion_vista(request):
             defaults={'intensidad_horaria_semanal': intensidad_horaria_semanal}
         )
         if not created:
-            # Si ya existía, actualiza la intensidad horaria
             asignacion.intensidad_horaria_semanal = intensidad_horaria_semanal
             asignacion.save()
             messages.info(request, 'Asignación actualizada correctamente (ya existía).')
@@ -112,6 +111,31 @@ def crear_asignacion_vista(request):
 
     return redirect('notas:gestion_asignacion_academica')
 
+@user_passes_test(es_personal_admin)
+@require_POST
+def editar_asignacion_vista(request, asignacion_id):
+    if not request.colegio:
+        return HttpResponseNotFound("<h1>Colegio no configurado</h1>")
+
+    asignacion = get_object_or_404(AsignacionDocente, pk=asignacion_id, colegio=request.colegio)
+    
+    try:
+        curso_id = request.POST.get('curso')
+        materia_id = request.POST.get('materia')
+        docente_id = request.POST.get('docente')
+        ihs = request.POST.get('intensidad_horaria_semanal')
+
+        asignacion.curso_id = curso_id
+        asignacion.materia_id = materia_id
+        asignacion.docente_id = docente_id
+        asignacion.intensidad_horaria_semanal = ihs
+        asignacion.save()
+
+        messages.success(request, '¡La asignación se ha actualizado correctamente!')
+    except Exception as e:
+        messages.error(request, f'Error al editar la asignación: {e}')
+        
+    return redirect('notas:gestion_asignacion_academica')
 
 @user_passes_test(es_personal_admin)
 @require_POST
@@ -125,7 +149,43 @@ def eliminar_asignacion_vista(request, asignacion_id):
     return redirect('notas:gestion_asignacion_academica')
 
 # ===============================================================
-# VISTAS PARA GESTIÓN DE CURSOS / GRADOS (Sin cambios)
+# VISTA DE DETALLE POR CURSO
+# ===============================================================
+@user_passes_test(es_personal_admin)
+def detalle_curso(request, curso_id):
+    if not request.colegio:
+        return HttpResponseNotFound("<h1>Colegio no configurado</h1>")
+
+    curso = get_object_or_404(Curso, pk=curso_id, colegio=request.colegio)
+    
+    asignaciones = AsignacionDocente.objects.filter(
+        colegio=request.colegio, 
+        curso=curso
+    ).select_related(
+        'materia',
+        'docente__user'
+    ).order_by('materia__nombre')
+    
+    # Para obtener el área, es más eficiente hacerlo aquí que en la plantilla
+    for asignacion in asignaciones:
+        ponderacion = PonderacionAreaMateria.objects.filter(materia=asignacion.materia, colegio=request.colegio).select_related('area').first()
+        asignacion.area = ponderacion.area if ponderacion else None
+
+    total_ih_curso = asignaciones.aggregate(total=Sum('intensidad_horaria_semanal'))['total'] or 0
+
+    context = {
+        'titulo': f'Detalle de {curso.nombre}',
+        'curso': curso,
+        'asignaciones': asignaciones,
+        'total_ih_curso': total_ih_curso,
+        'colegio': request.colegio,
+    }
+    
+    return render(request, 'notas/admin_crud/detalle_curso.html', context)
+
+
+# ===============================================================
+# VISTAS PARA GESTIÓN DE CURSOS / GRADOS
 # ===============================================================
 @user_passes_test(es_personal_admin)
 def gestion_cursos_vista(request):
@@ -187,7 +247,7 @@ def eliminar_curso_vista(request, curso_id):
     return redirect('notas:gestion_cursos')
 
 # ===============================================================
-# VISTAS PARA GESTIÓN DE ÁREAS Y MATERIAS (Con cambios)
+# VISTAS PARA GESTIÓN DE ÁREAS Y MATERIAS
 # ===============================================================
 @user_passes_test(es_personal_admin)
 def gestion_materias_vista(request):
@@ -244,7 +304,7 @@ def eliminar_area_vista(request, area_id):
     if not request.colegio:
         return HttpResponseNotFound("<h1>Colegio no configurado</h1>")
     area = get_object_or_404(AreaConocimiento, id=area_id, colegio=request.colegio)
-    if area.materias.filter(colegio=request.colegio).exists():
+    if PonderacionAreaMateria.objects.filter(area=area, colegio=request.colegio).exists():
         messages.error(request, f"No se puede eliminar el área '{area.nombre}' porque contiene materias asociadas.")
     else:
         nombre_area = area.nombre
@@ -252,10 +312,10 @@ def eliminar_area_vista(request, area_id):
         messages.success(request, f"Área '{nombre_area}' eliminada con éxito.")
     return redirect('notas:gestion_areas')
 
-# --- 👇 VISTA MODIFICADA ---
+
 @user_passes_test(es_personal_admin)
 @transaction.atomic
-def crear_materia_vista(request, area_id=None): # 1. Acepta un area_id opcional
+def crear_materia_vista(request, area_id=None):
     if not request.colegio:
         return HttpResponseNotFound("<h1>Colegio no configurado</h1>")
 
@@ -278,7 +338,6 @@ def crear_materia_vista(request, area_id=None): # 1. Acepta un area_id opcional
             messages.success(request, f"Materia '{materia.nombre}' creada con éxito.")
             return redirect('notas:gestion_materias')
     else:
-        # 2. Pre-selecciona el área si se pasa un area_id en la URL
         initial_data = {}
         if area_id:
             initial_data['area'] = area_id
@@ -288,7 +347,7 @@ def crear_materia_vista(request, area_id=None): # 1. Acepta un area_id opcional
     context = {'form': form, 'titulo': 'Añadir Nueva Materia', 'colegio': request.colegio}
     return render(request, 'notas/admin_crud/formulario_materia.html', context)
 
-# --- VISTA SIN CAMBIOS (YA ESTABA CORRECTA) ---
+
 @user_passes_test(es_personal_admin)
 @transaction.atomic
 def editar_materia_vista(request, materia_id):

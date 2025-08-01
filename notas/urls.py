@@ -197,4 +197,7 @@ urlpatterns = [
     # --- Rutas de Suplantación ---
     path('suplantar/iniciar/<int:user_id>/', impersonation_views.iniciar_suplantacion, name='iniciar_suplantacion'),
     path('suplantar/detener/', impersonation_views.detener_suplantacion, name='detener_suplantacion'),
+
+    path('admin/gestion-academica/curso/<int:curso_id>/', gestion_academica_views.detalle_curso, name='detalle_curso'),
+    
 ]
