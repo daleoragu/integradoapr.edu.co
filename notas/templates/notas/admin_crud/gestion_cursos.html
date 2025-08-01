@@ -14,10 +14,10 @@
     {% endfor %}
 {% endif %}
 <div class="mb-3 d-flex flex-wrap gap-2">
-    <a href="{% url 'crear_curso' %}" class="btn btn-primary">
+    <a href="{% url 'notas:crear_curso' %}" class="btn btn-primary">
         <i class="fas fa-plus me-2"></i>Añadir Nuevo Curso
     </a>
-    <a href="{% url 'gestion_asignacion_academica' %}" class="btn btn-secondary">
+    <a href="{% url 'notas:gestion_asignacion_academica' %}" class="btn btn-secondary">
         <i class="fas fa-arrow-left me-2"></i>Volver al Panel Principal
     </a>
 </div>
@@ -40,10 +40,10 @@
                         <td>{{ curso.get_nivel_display }}</td>
                         <td>{{ curso.director_grado.user.get_full_name|default:"No asignado" }}</td>
                         <td class="text-end">
-                            <a href="{% url 'editar_curso' curso.id %}" class="btn btn-sm btn-outline-info" title="Editar">
+                            <a href="{% url 'notas:editar_curso' curso.id %}" class="btn btn-sm btn-outline-info" title="Editar">
                                 <i class="fas fa-pencil-alt"></i>
                             </a>
-                            <form action="{% url 'eliminar_curso' curso.id %}" method="POST" class="d-inline"
+                            <form action="{% url 'notas:eliminar_curso' curso.id %}" method="POST" class="d-inline"
                                   onsubmit="return confirm('¿Seguro que quieres eliminar el curso \'{{ curso.nombre|escapejs }}\'?')">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">

@@ -75,10 +75,10 @@ def editar_indicador_vista(request, indicador_id):
         
         if not (request.user.is_superuser or (docente_actual and indicador.asignacion.docente == docente_actual)):
             messages.error(request, "No tiene permiso para editar este indicador.")
-            return redirect('ingresar_notas_periodo')
+            return redirect('notas:ingresar_notas_periodo')
     except IndicadorLogroPeriodo.DoesNotExist:
         messages.error(request, "El indicador que intenta editar no existe o no pertenece a este colegio.")
-        return redirect('ingresar_notas_periodo')
+        return redirect('notas:ingresar_notas_periodo')
 
     docente_id_param = indicador.asignacion.docente.id if request.user.is_superuser else None
     redirect_url = f"{reverse('ingresar_notas_periodo')}?asignacion_id={indicador.asignacion.id}&periodo_id={indicador.periodo.id}"
@@ -134,4 +134,4 @@ def eliminar_indicador_vista(request, indicador_id):
         return redirect(redirect_url)
     except IndicadorLogroPeriodo.DoesNotExist:
         messages.error(request, "El indicador que intenta eliminar no existe o no pertenece a este colegio.")
-        return redirect('ingresar_notas_periodo')
+        return redirect('notas:ingresar_notas_periodo')

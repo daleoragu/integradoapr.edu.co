@@ -16,17 +16,17 @@
 {% endif %}
 
 <div class="mb-3 d-flex flex-wrap gap-2">
-    <a href="{% url 'crear_materia' %}" class="btn btn-primary">
+    <a href="{% url 'notas:crear_materia' %}" class="btn btn-primary">
         <i class="fas fa-plus me-2"></i>Añadir Materia
     </a>
     <!-- BOTÓN MODIFICADO: Ahora dirige a la nueva herramienta de ponderación -->
-    <a href="{% url 'gestion_ponderacion_areas' %}" class="btn btn-info">
+    <a href="{% url 'notas:gestion_ponderacion_areas' %}" class="btn btn-info">
         <i class="fas fa-balance-scale me-2"></i>Gestionar Ponderación por Áreas
     </a>
     <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#importarModal">
         <i class="fas fa-file-excel me-2"></i>Importar Materias
     </button>
-    <a href="{% url 'exportar_materias_excel' %}" class="btn btn-secondary">
+    <a href="{% url 'notas:exportar_materias_excel' %}" class="btn btn-secondary">
         <i class="fas fa-file-download me-2"></i>Exportar Lista a Excel
     </a>
 </div>
@@ -55,8 +55,8 @@
                         <td><strong>{{ materia.nombre }}</strong></td>
                         <td>{{ materia.abreviatura|default_if_none:"" }}</td>
                         <td class="text-end">
-                            <a href="{% url 'editar_materia' materia.id %}" class="btn btn-sm btn-outline-info" title="Editar"><i class="fas fa-pencil-alt"></i></a>
-                            <form action="{% url 'eliminar_materia' materia.id %}" method="POST" class="d-inline" onsubmit="return confirm('¿Estás seguro de que quieres eliminar la materia \'{{ materia.nombre|escapejs }}\'?')">
+                            <a href="{% url 'notas:editar_materia' materia.id %}" class="btn btn-sm btn-outline-info" title="Editar"><i class="fas fa-pencil-alt"></i></a>
+                            <form action="{% url 'notas:eliminar_materia' materia.id %}" method="POST" class="d-inline" onsubmit="return confirm('¿Estás seguro de que quieres eliminar la materia \'{{ materia.nombre|escapejs }}\'?')">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar"><i class="fas fa-trash"></i></button>
                             </form>
@@ -83,7 +83,7 @@
                 <h5 class="modal-title" id="importarModalLabel">Importación Masiva de Materias</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form action="{% url 'importacion_datos' %}" method="post" enctype="multipart/form-data">
+            <form action="{% url 'notas:importacion_datos' %}" method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 <div class="modal-body">
                     <p>Siga estos pasos para importar materias:</p>
@@ -92,7 +92,7 @@
                         <li>Rellene el archivo Excel con los nombres y abreviaturas de las materias.</li>
                         <li>Guarde el archivo y súbalo en el siguiente formulario.</li>
                     </ol>
-                    <a href="{% url 'descargar_plantilla_materias' %}" class="btn btn-link">
+                    <a href="{% url 'notas:descargar_plantilla_materias' %}" class="btn btn-link">
                        <i class="fas fa-download me-1"></i> Descargar plantilla de importación (.xlsx)
                     </a>
                     <hr>

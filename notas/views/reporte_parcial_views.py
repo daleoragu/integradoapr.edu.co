@@ -63,7 +63,7 @@ def reporte_parcial_vista(request):
             context['docente_actual'] = docente_actual
         except Docente.DoesNotExist:
             messages.error(request, "Acceso denegado. No tiene un perfil de docente asociado en este colegio.")
-            return redirect('dashboard')
+            return redirect('notas:dashboard')
             
     context['asignaciones'] = asignaciones.select_related('curso', 'materia')
     # Filtrar periodos por el colegio actual.
@@ -169,7 +169,7 @@ def acta_reporte_parcial_estudiante(request, estudiante_id):
     # Verificar que el usuario tiene permiso para ver esta acta utilizando la función has_report_access
     if not has_report_access(request.user, estudiante_id, request.colegio):
         messages.error(request, "No tiene permiso para ver este reporte.")
-        return redirect('dashboard') # Redirige al dashboard si no tiene permiso
+        return redirect('notas:dashboard') # Redirige al dashboard si no tiene permiso
 
     estudiante = get_object_or_404(Estudiante, id=estudiante_id, colegio=request.colegio)
     
@@ -241,7 +241,7 @@ def lista_estudiantes_reporte(request):
             todos_los_cursos = todos_los_cursos.filter(id__in=cursos_del_docente)
         except Docente.DoesNotExist:
             messages.error(request, "Acceso denegado. No tiene un perfil de docente asociado en este colegio.")
-            return redirect('dashboard')
+            return redirect('notas:dashboard')
 
     # Aplicar filtro por curso si se seleccionó uno
     if curso_seleccionado_id:

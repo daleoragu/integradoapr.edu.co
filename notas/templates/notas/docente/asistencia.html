@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 statusSpan.classList.add('visible');
 
                 try {
-                    const response = await fetch("{% url 'guardar_inasistencia_ajax' %}", {
+                    const response = await fetch("{% url 'notas:guardar_inasistencia_ajax' %}", {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',

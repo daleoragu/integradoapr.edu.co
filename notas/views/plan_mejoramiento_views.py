@@ -73,7 +73,7 @@ def plan_mejoramiento_vista(request):
             context['docente_actual'] = docente_actual
         except Docente.DoesNotExist:
             messages.error(request, "Acceso denegado. Su usuario no está asociado a un perfil de docente en este colegio.")
-            return redirect('dashboard')
+            return redirect('notas:dashboard')
 
     context['asignaciones'] = asignaciones_docente.select_related('curso', 'materia').order_by('curso__nombre', 'materia__nombre')
     context['periodos'] = PeriodoAcademico.objects.filter(colegio=request.colegio).order_by('-ano_lectivo', 'nombre')

@@ -91,7 +91,7 @@ def crear_estudiante_vista(request):
                 nuevo_usuario.groups.add(grupo_estudiantes)
             except ObjectDoesNotExist:
                 messages.error(request, "Error crítico: El grupo 'Estudiantes' no fue encontrado.")
-                return redirect('crear_estudiante')
+                return redirect('notas:crear_estudiante')
 
             # 👇 ASOCIACIÓN: Crear el estudiante para el colegio actual
             nuevo_estudiante = Estudiante.objects.create(user=nuevo_usuario, curso=curso, colegio=request.colegio)
@@ -107,7 +107,7 @@ def crear_estudiante_vista(request):
                 f"<strong>Contraseña Provisional:</strong> {password_provisional}"
             )
             messages.success(request, success_message, extra_tags='safe')
-            return redirect('editar_estudiante', estudiante_id=nuevo_estudiante.id)
+            return redirect('notas:editar_estudiante', estudiante_id=nuevo_estudiante.id)
     else:
         # Pasar el colegio al formulario para filtrar los cursos
         form = AdminCrearEstudianteForm(colegio=request.colegio)
@@ -135,7 +135,7 @@ def editar_estudiante_vista(request, estudiante_id):
         if form.is_valid():
             form.save()
             messages.success(request, f"¡Ficha actualizada con éxito!")
-            return redirect('dashboard' if request.user.id == estudiante.user.id else 'gestion_estudiantes')
+            return redirect('notas:dashboard' if request.user.id == estudiante.user.id else 'notas:gestion_estudiantes')
     else:
         # Pasar el colegio al formulario para filtrar el curso
         form = AdminEditarEstudianteForm(instance=ficha, colegio=request.colegio)
@@ -154,4 +154,4 @@ def eliminar_estudiante_vista(request, estudiante_id):
     estudiante = get_object_or_404(Estudiante, id=estudiante_id, colegio=request.colegio)
     estudiante.user.delete()
     messages.success(request, f"Estudiante '{estudiante.user.get_full_name()}' ha sido eliminado permanentemente.")
-    return redirect('gestion_estudiantes')
+    return redirect('notas:gestion_estudiantes')

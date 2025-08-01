@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const actualizarEstadisticas = async () => {
         const formData = new FormData(form);
         const params = new URLSearchParams(formData);
-        const baseUrl = new URL("{% url 'datos_graficos_ajax' %}", window.location.origin);
+        const baseUrl = new URL("{% url 'notas:datos_graficos_ajax' %}", window.location.origin);
         params.forEach((value, key) => baseUrl.searchParams.append(key, value));
 
         try {
@@ -151,7 +151,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const formData = new FormData(form);
         const params = new URLSearchParams(formData);
         
-        const baseUrl = new URL("{% url 'estadisticas_pdf' %}", window.location.origin);
+        const baseUrl = new URL("{% url 'notas:estadisticas_pdf' %}", window.location.origin);
         params.forEach((value, key) => baseUrl.searchParams.append(key, value));
 
         window.open(baseUrl.href, '_blank');

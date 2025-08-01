@@ -25,7 +25,7 @@ def personalizacion_portal_vista(request):
         if form.is_valid():
             form.save()
             messages.success(request, '¡La personalización del portal se ha guardado correctamente!')
-            return redirect('personalizacion_portal')
+            return redirect('notas:personalizacion_portal')
         else:
             messages.error(request, 'Por favor, corrija los errores en el formulario.')
     else:
@@ -58,7 +58,7 @@ def gestion_documentos_vista(request):
             documento.colegio = colegio
             documento.save()
             messages.success(request, 'Documento guardado exitosamente.')
-            return redirect('gestion_documentos')
+            return redirect('notas:gestion_documentos')
         else:
             # Si el formulario no es válido, se añade un mensaje de error.
             messages.error(request, 'No se pudo guardar el documento. Por favor, corrija los errores.')
@@ -78,7 +78,7 @@ def eliminar_documento_vista(request, pk):
     if request.method == 'POST':
         documento.delete()
         messages.success(request, 'Documento eliminado exitosamente.')
-    return redirect('gestion_documentos')
+    return redirect('notas:gestion_documentos')
 
 # --- Vistas para la Galería (CORREGIDA) ---
 @user_passes_test(es_admin_o_docente)
@@ -94,7 +94,7 @@ def gestion_galeria_vista(request):
             foto.colegio = colegio
             foto.save()
             messages.success(request, 'Foto añadida a la galería.')
-            return redirect('gestion_galeria')
+            return redirect('notas:gestion_galeria')
         else:
             messages.error(request, 'No se pudo añadir la foto. Por favor, corrija los errores.')
     else:
@@ -112,7 +112,7 @@ def eliminar_foto_vista(request, pk):
     if request.method == 'POST':
         foto.delete()
         messages.success(request, 'Foto eliminada de la galería.')
-    return redirect('gestion_galeria')
+    return redirect('notas:gestion_galeria')
 
 # --- Vistas para Noticias (MEJORADA) ---
 @user_passes_test(es_admin_o_docente)
@@ -136,7 +136,7 @@ def crear_noticia_vista(request):
             noticia.colegio = request.colegio
             noticia.save()
             messages.success(request, 'Noticia creada como BORRADOR. Ahora puedes publicarla desde la lista.')
-            return redirect('gestion_noticias')
+            return redirect('notas:gestion_noticias')
         else:
             # Se añade un mensaje de error explícito para diagnóstico.
             messages.error(request, 'El formulario contiene errores. Por favor, revise los campos.')
@@ -155,7 +155,7 @@ def editar_noticia_vista(request, pk):
         if form.is_valid():
             form.save()
             messages.success(request, 'Noticia actualizada exitosamente.')
-            return redirect('gestion_noticias')
+            return redirect('notas:gestion_noticias')
         else:
             # Se añade un mensaje de error explícito para diagnóstico.
             messages.error(request, 'El formulario contiene errores. Por favor, revise los campos.')
@@ -172,7 +172,7 @@ def eliminar_noticia_vista(request, pk):
     if request.method == 'POST':
         noticia.delete()
         messages.success(request, 'Noticia eliminada exitosamente.')
-    return redirect('gestion_noticias')
+    return redirect('notas:gestion_noticias')
 
 @user_passes_test(es_admin_o_docente)
 def publicar_noticia_vista(request, pk):
@@ -187,7 +187,7 @@ def publicar_noticia_vista(request, pk):
             noticia.estado = 'BORRADOR'
             messages.info(request, f"La noticia '{noticia.titulo}' ha sido movida a borradores.")
         noticia.save()
-    return redirect('gestion_noticias')
+    return redirect('notas:gestion_noticias')
 
 # --- Vistas para gestionar el Carrusel (CORREGIDA) ---
 @user_passes_test(es_admin_o_docente)
@@ -203,7 +203,7 @@ def gestion_carrusel_vista(request):
             imagen.colegio = colegio
             imagen.save()
             messages.success(request, 'Imagen añadida al carrusel.')
-            return redirect('gestion_carrusel')
+            return redirect('notas:gestion_carrusel')
         else:
             messages.error(request, 'No se pudo añadir la imagen. Por favor, corrija los errores.')
     else:
@@ -228,7 +228,7 @@ def editar_imagen_carrusel_vista(request, pk):
         if form.is_valid():
             form.save()
             messages.success(request, 'Imagen del carrusel actualizada exitosamente.')
-            return redirect('gestion_carrusel')
+            return redirect('notas:gestion_carrusel')
         else:
             messages.error(request, 'El formulario contiene errores. Por favor, revise los campos.')
     else:
@@ -249,4 +249,4 @@ def eliminar_imagen_carrusel_vista(request, pk):
     if request.method == 'POST':
         imagen.delete()
         messages.success(request, 'Imagen eliminada del carrusel.')
-    return redirect('gestion_carrusel')
+    return redirect('notas:gestion_carrusel')

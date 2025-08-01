@@ -305,7 +305,7 @@ def generar_sabana_vista(request):
     curso, periodo_ref, datos_completos, error, is_final_report = _preparar_y_validar_sabana(request)
     if error:
         messages.error(request, error)
-        return redirect('selector_sabana')
+        return redirect('notas:selector_sabana')
     
     context = {
         'curso': curso, 
@@ -320,7 +320,7 @@ def generar_sabana_vista(request):
 def generar_sabana_pdf(request):
     if not PDF_SUPPORT:
         messages.error(request, "La funcionalidad de PDF no está disponible. Contacte al administrador.")
-        return redirect('selector_sabana')
+        return redirect('notas:selector_sabana')
         
     curso, periodo_ref, datos_completos, error, is_final_report = _preparar_y_validar_sabana(request)
     if error:
@@ -348,7 +348,7 @@ def exportar_sabana_excel(request):
     curso, periodo_ref, datos_completos, error, _ = _preparar_y_validar_sabana(request)
     if error:
         messages.error(request, error)
-        return redirect('selector_sabana')
+        return redirect('notas:selector_sabana')
     return generar_excel_sabana(curso=curso, periodo=periodo_ref, **datos_completos)
 
 @login_required
@@ -367,7 +367,7 @@ def selector_sabana_vista(request):
             cursos = Curso.objects.filter(id__in=cursos_ids, colegio=request.colegio).order_by('nombre')
         except Docente.DoesNotExist:
             messages.error(request, "Acceso denegado. Su usuario no está registrado como docente.")
-            return redirect('dashboard')
+            return redirect('notas:dashboard')
             
     ano_actual = timezone.now().year
     periodos = PeriodoAcademico.objects.filter(colegio=request.colegio, ano_lectivo=ano_actual).order_by('fecha_inicio')

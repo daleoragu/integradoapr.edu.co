@@ -12,7 +12,7 @@
     <div class="impersonation-banner">
         <i class="fas fa-user-secret me-2"></i>
         Estás viendo la plataforma como <strong>{{ request.user.get_full_name|upper }}</strong>. 
-        <a href="{% url 'detener_suplantacion' %}">Volver a mi cuenta de Administrador</a>
+        <a href="{% url 'notas:detener_suplantacion' %}">Volver a mi cuenta de Administrador</a>
     </div>
     {% endif %}
     

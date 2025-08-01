@@ -148,7 +148,7 @@
     <p class="text-muted text-center mb-4">Seleccione un estudiante para ver su acta de reporte parcial de desempeño.</p>
 
     {# Formulario de filtro por grado #}
-    <form method="GET" action="{% url 'lista_estudiantes_reporte' %}" class="form-filtros-estudiantes">
+    <form method="GET" action="{% url 'notas:lista_estudiantes_reporte' %}" class="form-filtros-estudiantes">
         <div class="form-grupo">
             <label for="curso_id">Filtrar por Grado:</label>
             <select name="curso_id" id="curso_id" class="form-select">
@@ -178,7 +178,7 @@
                         <td>{{ estudiante_obj.user.get_full_name|default:estudiante_obj.user.username }}</td>
                         <td>{{ estudiante_obj.curso.nombre }}</td>
                         <td>
-                            <a href="{% url 'acta_reporte_parcial_estudiante' estudiante_obj.id %}" class="btn-ver-reporte">
+                            <a href="{% url 'notas:acta_reporte_parcial_estudiante' estudiante_obj.id %}" class="btn-ver-reporte">
                                 <i class="fas fa-file-alt me-2"></i>Ver Acta
                             </a>
                         </td>

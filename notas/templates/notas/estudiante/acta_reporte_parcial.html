@@ -178,7 +178,7 @@
     </div>
 
     {# Formulario de filtro por período #}
-    <form method="GET" action="{% url 'acta_reporte_parcial_estudiante' estudiante.id %}" class="form-filtro-periodo">
+    <form method="GET" action="{% url 'notas:acta_reporte_parcial_estudiante' estudiante.id %}" class="form-filtro-periodo">
         <div style="flex-grow: 1;">
             <label for="periodo_id">Filtrar por Período:</label>
             <select name="periodo_id" id="periodo_id">

@@ -16,10 +16,10 @@
 {% endif %}
 
 <div class="mb-3 d-flex flex-wrap gap-2">
-    <a href="{% url 'crear_area' %}" class="btn btn-primary">
+    <a href="{% url 'notas:crear_area' %}" class="btn btn-primary">
         <i class="fas fa-plus me-2"></i>Añadir Nueva Área
     </a>
-     <a href="{% url 'gestion_materias' %}" class="btn btn-outline-secondary">
+     <a href="{% url 'notas:gestion_materias' %}" class="btn btn-outline-secondary">
         <i class="fas fa-arrow-left me-2"></i>Volver a Gestión de Materias
     </a>
 </div>
@@ -39,8 +39,8 @@
                     <tr>
                         <td><strong>{{ area.nombre }}</strong></td>
                         <td class="text-end">
-                            <a href="{% url 'editar_area' area.id %}" class="btn btn-sm btn-outline-info" title="Editar"><i class="fas fa-pencil-alt"></i></a>
-                            <form action="{% url 'eliminar_area' area.id %}" method="POST" class="d-inline" onsubmit="return confirm('¿Estás seguro de que quieres eliminar el área \'{{ area.nombre|escapejs }}\'? Esta acción solo es posible si el área no tiene materias asociadas.')">
+                            <a href="{% url 'notas:editar_area' area.id %}" class="btn btn-sm btn-outline-info" title="Editar"><i class="fas fa-pencil-alt"></i></a>
+                            <form action="{% url 'notas:eliminar_area' area.id %}" method="POST" class="d-inline" onsubmit="return confirm('¿Estás seguro de que quieres eliminar el área \'{{ area.nombre|escapejs }}\'? Esta acción solo es posible si el área no tiene materias asociadas.')">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar"><i class="fas fa-trash"></i></button>
                             </form>

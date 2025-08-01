@@ -76,12 +76,12 @@
                 <textarea name="descripcion_indicador" rows="4" required>{{ indicador.descripcion }}</textarea>
                 <div class="form-actions">
                     <button type="submit">Actualizar Indicador</button>
-                    <a href="{% url 'ingresar_notas_periodo' %}?curso_id={{ curso_seleccionado_id }}&materia_id={{ materia_seleccionada_id }}&periodo_valor={{ periodo_seleccionado_valor }}" class="cancel-link">Cancelar</a>
+                    <a href="{% url 'notas:ingresar_notas_periodo' %}?curso_id={{ curso_seleccionado_id }}&materia_id={{ materia_seleccionada_id }}&periodo_valor={{ periodo_seleccionado_valor }}" class="cancel-link">Cancelar</a>
                 </div>
             </form>
         {% else %}
             <p>No se encontró el indicador especificado.</p>
-             <a href="{% url 'ingresar_notas_periodo' %}" class="cancel-link" style="margin-top:15px;">Volver a Ingreso de Notas</a>
+             <a href="{% url 'notas:ingresar_notas_periodo' %}" class="cancel-link" style="margin-top:15px;">Volver a Ingreso de Notas</a>
         {% endif %}
     </div>
 </body>

@@ -42,12 +42,12 @@
         <!-- === COLUMNA IZQUIERDA (NAVEGACIÓN) === -->
         <div class="coframail-nav">
             <div class="coframail-logo"><i class="fas fa-envelope-open-text fa-2x icon"></i><h3><span class="c-1">C</span><span class="c-2">o</span><span class="c-3">f</span><span class="c-1">r</span><span class="c-2">a</span><span class="c-3">M</span><span class="c-1">a</span><span class="c-2">i</span><span class="c-3">l</span></h3></div>
-            <a href="{% url 'componer_mensaje' %}" class="btn btn-primary btn-redactar mb-4"><i class="fas fa-pencil-alt me-2"></i>Redactar</a>
+            <a href="{% url 'notas:componer_mensaje' %}" class="btn btn-primary btn-redactar mb-4"><i class="fas fa-pencil-alt me-2"></i>Redactar</a>
             <ul class="nav nav-pills flex-column">
-                <li class="nav-item mb-1"><a class="nav-link" href="{% url 'bandeja_entrada' %}"><i class="fas fa-inbox fa-fw"></i> Recibidos</a></li>
-                <li class="nav-item mb-1"><a class="nav-link active" href="{% url 'mensajes_enviados' %}"><i class="fas fa-paper-plane fa-fw"></i> Enviados</a></li>
-                <li class="nav-item mb-1"><a class="nav-link" href="{% url 'borradores' %}"><i class="fas fa-edit fa-fw"></i> Borradores</a></li>
-                <li class="nav-item mb-1"><a class="nav-link" href="{% url 'papelera' %}"><i class="fas fa-trash-alt fa-fw"></i> Papelera</a></li>
+                <li class="nav-item mb-1"><a class="nav-link" href="{% url 'notas:bandeja_entrada' %}"><i class="fas fa-inbox fa-fw"></i> Recibidos</a></li>
+                <li class="nav-item mb-1"><a class="nav-link active" href="{% url 'notas:mensajes_enviados' %}"><i class="fas fa-paper-plane fa-fw"></i> Enviados</a></li>
+                <li class="nav-item mb-1"><a class="nav-link" href="{% url 'notas:borradores' %}"><i class="fas fa-edit fa-fw"></i> Borradores</a></li>
+                <li class="nav-item mb-1"><a class="nav-link" href="{% url 'notas:papelera' %}"><i class="fas fa-trash-alt fa-fw"></i> Papelera</a></li>
                 <li class="nav-item mb-1"><a class="nav-link disabled" href="#"><i class="fas fa-star fa-fw"></i> Destacados</a></li>
             </ul>
             <div class="coframail-nav-header">Etiquetas</div>
@@ -60,7 +60,7 @@
         <!-- === COLUMNA DERECHA (LISTA DE MENSAJES ENVIADOS) === -->
         <div class="coframail-content">
             <div class="search-bar-container">
-                <form method="get" action="{% url 'mensajes_enviados' %}" class="search-form">
+                <form method="get" action="{% url 'notas:mensajes_enviados' %}" class="search-form">
                     <i class="fas fa-search search-icon"></i>
                     <input type="text" name="q" class="form-control" placeholder="Buscar en enviados..." value="{{ search_query|default_if_none:'' }}">
                 </form>
@@ -70,16 +70,16 @@
                 {% for mensaje in mensajes %}
                 <div class="email-item">
                     <div class="d-flex align-items-center me-3"><input class="form-check-input" type="checkbox" id="check-{{ forloop.counter }}"></div>
-                    <div class="recipient" onclick="window.location='{% url 'ver_mensaje' mensaje.id %}'">
+                    <div class="recipient" onclick="window.location='{% url 'notas:ver_mensaje' mensaje.id %}'">
                         Para: {{ mensaje.destinatario.get_full_name|default:mensaje.destinatario.username }}
                     </div>
-                    <div class="subject-line" onclick="window.location='{% url 'ver_mensaje' mensaje.id %}'">
+                    <div class="subject-line" onclick="window.location='{% url 'notas:ver_mensaje' mensaje.id %}'">
                         <span>{{ mensaje.asunto }}</span>
                         <span class="text-muted fw-normal ms-2">- {{ mensaje.cuerpo|truncatewords:8 }}</span>
                     </div>
                     <div class="ms-auto">
                         <div class="date">{{ mensaje.fecha_envio|date:"d M" }}</div>
-                        <div class="email-actions"><form action="{% url 'borrar_mensaje' mensaje.id %}" method="post" class="d-inline">{% csrf_token %}<input type="hidden" name="vista_origen" value="mensajes_enviados"><button type="submit" class="btn btn-sm btn-outline-danger border-0" title="Mover a la papelera"><i class="fas fa-trash-alt"></i></button></form></div>
+                        <div class="email-actions"><form action="{% url 'notas:borrar_mensaje' mensaje.id %}" method="post" class="d-inline">{% csrf_token %}<input type="hidden" name="vista_origen" value="mensajes_enviados"><button type="submit" class="btn btn-sm btn-outline-danger border-0" title="Mover a la papelera"><i class="fas fa-trash-alt"></i></button></form></div>
                     </div>
                 </div>
                 {% empty %}

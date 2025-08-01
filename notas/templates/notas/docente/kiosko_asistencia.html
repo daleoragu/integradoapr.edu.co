@@ -45,7 +45,7 @@
                             <p class="mb-0"><strong>Curso:</strong> {{ asignacion_activa.curso.nombre }}</p>
                         </div>
                         <p class="text-muted small">El sistema está listo para recibir escaneos de QR para esta clase.</p>
-                        <form method="post" action="{% url 'vista_kiosko_asistencia' %}">
+                        <form method="post" action="{% url 'notas:vista_kiosko_asistencia' %}">
                             {% csrf_token %}
                             <button type="submit" name="finalizar" value="1" class="btn btn-danger w-100">
                                 <i class="fas fa-stop-circle"></i> Finalizar Modo Kiosko
@@ -55,7 +55,7 @@
                         <!-- MODO INACTIVO -->
                         <h6 class="card-title">Seleccionar Clase</h6>
                         <p class="text-muted small">Elija la clase para la cual desea registrar la asistencia.</p>
-                        <form method="post" action="{% url 'vista_kiosko_asistencia' %}">
+                        <form method="post" action="{% url 'notas:vista_kiosko_asistencia' %}">
                             {% csrf_token %}
                             <div class="mb-3">
                                 <label for="asignacion_id" class="form-label">Clase y Curso:</label>

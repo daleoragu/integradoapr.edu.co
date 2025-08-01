@@ -33,12 +33,12 @@
 
         <div class="coframail-nav">
             <div class="coframail-logo"><i class="fas fa-envelope-open-text fa-2x icon"></i><h3><span class="c-1">C</span><span class="c-2">o</span><span class="c-3">f</span><span class="c-1">r</span><span class="c-2">a</span><span class="c-3">M</span><span class="c-1">a</span><span class="c-2">i</span><span class="c-3">l</span></h3></div>
-            <a href="{% url 'componer_mensaje' %}" class="btn btn-primary btn-redactar mb-4"><i class="fas fa-pencil-alt me-2"></i>Redactar</a>
+            <a href="{% url 'notas:componer_mensaje' %}" class="btn btn-primary btn-redactar mb-4"><i class="fas fa-pencil-alt me-2"></i>Redactar</a>
             <ul class="nav nav-pills flex-column">
-                <li class="nav-item mb-1"><a class="nav-link" href="{% url 'bandeja_entrada' %}"><i class="fas fa-inbox fa-fw"></i> Recibidos</a></li>
-                <li class="nav-item mb-1"><a class="nav-link" href="{% url 'mensajes_enviados' %}"><i class="fas fa-paper-plane fa-fw"></i> Enviados</a></li>
-                <li class="nav-item mb-1"><a class="nav-link active" href="{% url 'borradores' %}"><i class="fas fa-edit fa-fw"></i> Borradores</a></li>
-                <li class="nav-item mb-1"><a class="nav-link" href="{% url 'papelera' %}"><i class="fas fa-trash-alt fa-fw"></i> Papelera</a></li>
+                <li class="nav-item mb-1"><a class="nav-link" href="{% url 'notas:bandeja_entrada' %}"><i class="fas fa-inbox fa-fw"></i> Recibidos</a></li>
+                <li class="nav-item mb-1"><a class="nav-link" href="{% url 'notas:mensajes_enviados' %}"><i class="fas fa-paper-plane fa-fw"></i> Enviados</a></li>
+                <li class="nav-item mb-1"><a class="nav-link active" href="{% url 'notas:borradores' %}"><i class="fas fa-edit fa-fw"></i> Borradores</a></li>
+                <li class="nav-item mb-1"><a class="nav-link" href="{% url 'notas:papelera' %}"><i class="fas fa-trash-alt fa-fw"></i> Papelera</a></li>
                 <li class="nav-item mb-1"><a class="nav-link disabled" href="#"><i class="fas fa-star fa-fw"></i> Destacados</a></li>
             </ul>
             <div class="coframail-nav-header">Etiquetas</div>
@@ -55,7 +55,7 @@
             <div class="email-list-container">
                 {% for mensaje in mensajes %}
                 {# --- CORRECCIÓN: Se añade el enlace para editar el borrador --- #}
-                <a href="{% url 'editar_borrador' mensaje.id %}" class="email-item text-decoration-none text-dark">
+                <a href="{% url 'notas:editar_borrador' mensaje.id %}" class="email-item text-decoration-none text-dark">
                     <div class="recipient">
                         Para: {{ mensaje.destinatario.get_full_name|default:"(Sin destinatario)" }}
                     </div>

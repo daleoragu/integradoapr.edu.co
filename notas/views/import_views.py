@@ -70,9 +70,9 @@ def importacion_vista(request):
         except Exception as e:
             messages.error(request, f"Error durante el proceso: {e}")
 
-        return redirect(request.META.get('HTTP_REFERER', 'admin_dashboard'))
+        return redirect(request.META.get('HTTP_REFERER', 'notas:admin_dashboard'))
 
-    return redirect('admin_dashboard')
+    return redirect('notas:admin_dashboard')
 
 def _procesar_excel_estudiantes(request, archivo, colegio):
     """Logic to process the student Excel file safely for the current school."""

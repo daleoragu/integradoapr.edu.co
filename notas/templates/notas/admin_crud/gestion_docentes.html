@@ -6,10 +6,10 @@
 {% if messages %}{% for message in messages %}<div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">{{ message|safe }}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>{% endfor %}{% endif %}
 
 <div class="mb-3 d-flex flex-wrap gap-2">
-    <a href="{% url 'crear_docente' %}" class="btn btn-primary">
+    <a href="{% url 'notas:crear_docente' %}" class="btn btn-primary">
         <i class="fas fa-user-plus me-2"></i>Añadir Nuevo Docente
     </a>
-    <a href="{% url 'gestion_asignacion_academica' %}" class="btn btn-secondary"><i class="fas fa-arrow-left me-2"></i>Volver al Panel de Asignación</a>
+    <a href="{% url 'notas:gestion_asignacion_academica' %}" class="btn btn-secondary"><i class="fas fa-arrow-left me-2"></i>Volver al Panel de Asignación</a>
 </div>
 
 <div class="card shadow-sm"><div class="card-body"><div class="table-responsive">
@@ -24,9 +24,9 @@
         <td class="text-end">
             
             {% if docente.user %}
-                <a href="{% url 'iniciar_suplantacion' docente.user.id %}" class="btn btn-sm btn-outline-success" title="Ver como este docente"><i class="fas fa-user-secret"></i></a>
-                <a href="{% url 'editar_docente' docente.id %}" class="btn btn-sm btn-outline-info" title="Editar Docente"><i class="fas fa-pencil-alt"></i></a>
-                <form action="{% url 'eliminar_docente' docente.id %}" method="POST" class="d-inline" onsubmit="return confirm('¿Seguro que quieres eliminar a \'{{ docente.user.get_full_name|escapejs }}\'? Esta acción es permanente.')">
+                <a href="{% url 'notas:iniciar_suplantacion' docente.user.id %}" class="btn btn-sm btn-outline-success" title="Ver como este docente"><i class="fas fa-user-secret"></i></a>
+                <a href="{% url 'notas:editar_docente' docente.id %}" class="btn btn-sm btn-outline-info" title="Editar Docente"><i class="fas fa-pencil-alt"></i></a>
+                <form action="{% url 'notas:eliminar_docente' docente.id %}" method="POST" class="d-inline" onsubmit="return confirm('¿Seguro que quieres eliminar a \'{{ docente.user.get_full_name|escapejs }}\'? Esta acción es permanente.')">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar Docente"><i class="fas fa-trash"></i></button>
                 </form>

@@ -77,7 +77,7 @@
     </div>
 
     <!-- El formulario envía los datos a la URL 'panel_control_promocion' usando el método POST -->
-    <form method="POST" action="{% url 'panel_control_promocion' %}">
+    <form method="POST" action="{% url 'notas:panel_control_promocion' %}">
         {% csrf_token %}
         
         <div class="form-group">

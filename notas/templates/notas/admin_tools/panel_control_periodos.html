@@ -102,7 +102,7 @@
                                 data-bs-toggle="modal" 
                                 data-bs-target="#periodoModal"
                                 data-action="editar"
-                                data-url="{% url 'editar_periodo' periodo.id %}"
+                                data-url="{% url 'notas:editar_periodo' periodo.id %}"
                                 data-nombre="{{ periodo.nombre }}"
                                 data-ano="{{ periodo.ano_lectivo }}"
                                 data-inicio="{{ periodo.fecha_inicio|date:'Y-m-d' }}"
@@ -114,7 +114,7 @@
                             <i class="fas fa-pencil-alt"></i>
                         </button>
                         <!-- Formulario para eliminar -->
-                        <form action="{% url 'eliminar_periodo' periodo.id %}" method="POST" class="d-inline" onsubmit="return confirm('¿Estás seguro de que quieres eliminar el período \'{{ periodo.get_nombre_display }}\'?')">
+                        <form action="{% url 'notas:eliminar_periodo' periodo.id %}" method="POST" class="d-inline" onsubmit="return confirm('¿Estás seguro de que quieres eliminar el período \'{{ periodo.get_nombre_display }}\'?')">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar Período"><i class="fas fa-trash"></i></button>
                         </form>
@@ -227,7 +227,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             // --- MODO CREACIÓN ---
             modalTitle.textContent = 'Crear Nuevo Período Académico';
-            modalForm.setAttribute('action', "{% url 'crear_periodo' %}"); // Asegúrate que esta URL exista
+            modalForm.setAttribute('action', "{% url 'notas:crear_periodo' %}"); // Asegúrate que esta URL exista
             modalForm.reset(); // Limpiar el formulario
             
             // Poner el año actual por defecto

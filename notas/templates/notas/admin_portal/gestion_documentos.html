@@ -2,7 +2,7 @@
 
 {% block page_title %}
     <h1>Gestión de Documentos Públicos</h1>
-    <a href="{% url 'configuracion_portal' %}" class="btn btn-secondary btn-sm"><i class="fas fa-arrow-left me-2"></i>Volver al Panel</a>
+    <a href="{% url 'notas:configuracion_portal' %}" class="btn btn-secondary btn-sm"><i class="fas fa-arrow-left me-2"></i>Volver al Panel</a>
 {% endblock %}
 
 {% block content %}
@@ -47,7 +47,7 @@
                                 <td><a href="{{ doc.archivo.url }}" target="_blank">{{ doc.archivo.name|truncatechars:25 }}</a></td>
                                 <td>{{ doc.fecha_publicacion|date:"d/m/Y" }}</td>
                                 <td>
-                                    <form action="{% url 'eliminar_documento' doc.pk %}" method="POST" class="d-inline">
+                                    <form action="{% url 'notas:eliminar_documento' doc.pk %}" method="POST" class="d-inline">
                                         {% csrf_token %}
                                         <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Está seguro de que desea eliminar este documento?');">
                                             <i class="fas fa-trash"></i>

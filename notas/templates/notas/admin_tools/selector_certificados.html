@@ -45,7 +45,7 @@
                                 <td>{{ estudiante.user.get_full_name }}</td>
                                 <td>{{ estudiante.curso.nombre }}</td>
                                 <td class="text-end">
-                                    <a href="{% url 'generar_certificado_estudio' estudiante.id %}" class="btn btn-primary btn-sm" target="_blank">
+                                    <a href="{% url 'notas:generar_certificado_estudio' estudiante.id %}" class="btn btn-primary btn-sm" target="_blank">
                                         <i class="fas fa-file-pdf"></i> Generar Certificado
                                     </a>
                                 </td>

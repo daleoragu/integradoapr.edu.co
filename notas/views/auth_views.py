@@ -35,7 +35,7 @@ def logout_vista(request):
     Maneja el proceso de cierre de sesión del usuario.
     """
     logout(request)
-    return redirect('logout_confirmacion')
+    return redirect('notas:logout_confirmacion')
 
 def logout_confirmacion_vista(request):
     """
@@ -51,7 +51,7 @@ def cambiar_password_vista(request):
             user = form.save()
             update_session_auth_hash(request, user)
             messages.success(request, '¡Tu contraseña ha sido actualizada exitosamente!')
-            return redirect('dashboard')
+            return redirect('notas:dashboard')
     else:
         # CORRECCIÓN: Se eliminó un guion erróneo en el nombre del formulario.
         form = CustomPasswordChangeForm(request.user)

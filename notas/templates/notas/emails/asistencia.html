@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', function () {
             statusSpan.classList.add('visible');
 
             try {
-                const response = await fetch("{% url 'asistencia' %}", {
+                const response = await fetch("{% url 'notas:asistencia' %}", {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

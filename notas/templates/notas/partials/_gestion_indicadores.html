@@ -10,7 +10,7 @@
     {% if periodo_cerrado %}
         <p class="text-muted">No se pueden añadir o editar indicadores porque el periodo está cerrado.</p>
     {% else %}
-        <form method="POST" action="{% url 'crear_indicador_vista' %}" class="form-indicador my-3">
+        <form method="POST" action="{% url 'notas:crear_indicador_vista' %}" class="form-indicador my-3">
             {% csrf_token %}
             <input type="hidden" name="asignacion_id" value="{{ asignacion_seleccionada.id }}">
             <input type="hidden" name="periodo_id" value="{{ periodo_seleccionado.id }}">
@@ -44,7 +44,7 @@
                                     data-descripcion="{{ indicador.descripcion }}">
                                 <i class="fas fa-pencil-alt"></i>
                             </button>
-                            <form action="{% url 'eliminar_indicador' indicador.id %}" method="post" class="d-inline" onsubmit="return confirm('¿Está seguro de que desea eliminar este indicador?');">
+                            <form action="{% url 'notas:eliminar_indicador' indicador.id %}" method="post" class="d-inline" onsubmit="return confirm('¿Está seguro de que desea eliminar este indicador?');">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-1" title="Eliminar">
                                     <i class="fas fa-trash-alt"></i>

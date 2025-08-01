@@ -87,7 +87,7 @@ def crear_docente_vista(request):
                 f"<strong>Contraseña Provisional:</strong> {password_provisional}"
             )
             messages.success(request, success_message, extra_tags='safe')
-            return redirect('editar_docente', docente_id=nuevo_docente.id)
+            return redirect('notas:editar_docente', docente_id=nuevo_docente.id)
     else:
         form = AdminCrearDocenteForm()
     
@@ -113,7 +113,7 @@ def editar_docente_vista(request, docente_id):
         if form.is_valid():
             form.save()
             messages.success(request, f"¡Ficha actualizada con éxito!")
-            return redirect('dashboard' if request.user.id == docente.user.id else 'gestion_docentes')
+            return redirect('notas:dashboard' if request.user.id == docente.user.id else 'notas:gestion_docentes')
     else:
         form = AdminEditarDocenteForm(instance=ficha, docente=docente)
         
@@ -131,4 +131,4 @@ def eliminar_docente_vista(request, docente_id):
     docente = get_object_or_404(Docente, id=docente_id, colegio=request.colegio)
     docente.user.delete()
     messages.success(request, f"Docente '{docente.user.get_full_name()}' eliminado permanentemente.")
-    return redirect('gestion_docentes')
+    return redirect('notas:gestion_docentes')

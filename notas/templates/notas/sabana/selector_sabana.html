@@ -106,9 +106,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnExcel = document.getElementById('btnExportarExcel');
     const btnPdf = document.getElementById('btnDescargarPdf');
 
-    const urlVer = "{% url 'generar_sabana' %}";
-    const urlExcel = "{% url 'exportar_sabana_excel' %}";
-    const urlPdf = "{% url 'generar_sabana_pdf' %}";
+    const urlVer = "{% url 'notas:generar_sabana' %}";
+    const urlExcel = "{% url 'notas:exportar_sabana_excel' %}";
+    const urlPdf = "{% url 'notas:generar_sabana_pdf' %}";
 
     function submitInNewTab(actionUrl) {
         if (!form.checkValidity()) {

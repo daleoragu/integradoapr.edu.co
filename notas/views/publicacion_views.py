@@ -94,7 +94,7 @@ def panel_publicacion_vista(request):
             except Exception as e:
                 messages.error(request, f"Error al procesar el informe final: {e}")
 
-        return redirect('panel_publicacion')
+        return redirect('notas:panel_publicacion')
 
     # CORRECCIÓN: Filtrar periodos por el colegio actual.
     periodos = PeriodoAcademico.objects.filter(colegio=request.colegio).order_by('-ano_lectivo', 'fecha_inicio')

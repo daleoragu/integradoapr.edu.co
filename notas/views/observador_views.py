@@ -41,7 +41,7 @@ def observador_selector_vista(request):
             cursos = Curso.objects.filter(id__in=cursos_ids, colegio=request.colegio).order_by('nombre')
         except Docente.DoesNotExist:
             messages.error(request, "Su perfil no está asociado a un docente en este colegio.")
-            return redirect('dashboard')
+            return redirect('notas:dashboard')
 
     curso_seleccionado_id = request.GET.get('curso_id')
     if curso_seleccionado_id:
@@ -52,7 +52,7 @@ def observador_selector_vista(request):
     if request.method == 'POST':
         estudiante_id = request.POST.get('estudiante_id')
         if estudiante_id:
-            return redirect('vista_detalle_observador', estudiante_id=estudiante_id)
+            return redirect('notas:vista_detalle_observador', estudiante_id=estudiante_id)
 
     context = {
         'colegio': request.colegio,
@@ -113,7 +113,7 @@ def crear_registro_observador_vista(request, estudiante_id):
                 url=url_destino
             )
             messages.success(request, f"Observación para {estudiante.user.get_full_name()} guardada.")
-            return redirect('vista_detalle_observador', estudiante_id=estudiante.id)
+            return redirect('notas:vista_detalle_observador', estudiante_id=estudiante.id)
     else:
         form = RegistroObservadorForm()
 
@@ -139,7 +139,7 @@ def editar_ficha_vista(request, estudiante_id):
         if form.is_valid():
             form.save()
             messages.success(request, f"Ficha de {estudiante.user.get_full_name()} actualizada.")
-            return redirect('vista_detalle_observador', estudiante_id=estudiante.id)
+            return redirect('notas:vista_detalle_observador', estudiante_id=estudiante.id)
     else:
         form = FichaEstudianteForm(instance=ficha)
     

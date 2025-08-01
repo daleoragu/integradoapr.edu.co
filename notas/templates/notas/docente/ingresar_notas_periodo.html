@@ -64,7 +64,7 @@
             data-csrf-token="{{ csrf_token }}"
             data-asignacion-id="{{ asignacion_seleccionada.id }}"
             data-periodo-id="{{ periodo_seleccionado.id }}"
-            data-guardar-url="{% url 'ingresar_notas_periodo' %}"
+            data-guardar-url="{% url 'notas:ingresar_notas_periodo' %}"
         {% endif %}>
 
         {% include 'notas/partials/_filtros_notas.html' %}

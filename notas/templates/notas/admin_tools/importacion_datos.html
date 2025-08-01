@@ -12,7 +12,7 @@
                 <p class="card-text text-muted">Carga masiva de perfiles de estudiantes y sus cuentas de usuario.</p>
                 <div class="alert alert-info">
                     <strong>Formato del archivo:</strong> 11 columnas.<br>
-                    <a href="{% url 'descargar_plantilla_estudiantes' %}" class="btn btn-sm btn-outline-primary mt-2">
+                    <a href="{% url 'notas:descargar_plantilla_estudiantes' %}" class="btn btn-sm btn-outline-primary mt-2">
                         <i class="fas fa-download me-1"></i> Descargar Plantilla Excel
                     </a>
                 </div>
@@ -36,7 +36,7 @@
                 <p class="card-text text-muted">Carga masiva de perfiles de docentes y sus cuentas de usuario.</p>
                 <div class="alert alert-secondary">
                     <strong>Formato del archivo:</strong> 6 columnas.<br>
-                    <a href="{% url 'descargar_plantilla_docentes' %}" class="btn btn-sm btn-outline-secondary mt-2">
+                    <a href="{% url 'notas:descargar_plantilla_docentes' %}" class="btn btn-sm btn-outline-secondary mt-2">
                         <i class="fas fa-download me-1"></i> Descargar Plantilla Excel
                     </a>
                 </div>
@@ -60,7 +60,7 @@
                 <p class="card-text text-muted">Carga masiva de materias y su asignación a un área de conocimiento.</p>
                 <div class="alert alert-warning">
                     <strong>Formato del archivo:</strong> 2 columnas (NOMBRE_MATERIA;NOMBRE_AREA).<br>
-                    <a href="{% url 'descargar_plantilla_materias' %}" class="btn btn-sm btn-outline-warning mt-2 text-dark">
+                    <a href="{% url 'notas:descargar_plantilla_materias' %}" class="btn btn-sm btn-outline-warning mt-2 text-dark">
                         <i class="fas fa-download me-1"></i> Descargar Plantilla Excel
                     </a>
                 </div>

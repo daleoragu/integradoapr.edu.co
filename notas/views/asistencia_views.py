@@ -41,7 +41,7 @@ def asistencia_vista(request):
     docente_actual = Docente.objects.filter(user=request.user, colegio=request.colegio).first()
     if not docente_actual and not request.user.is_superuser:
         messages.error(request, "Acceso denegado. Su usuario no está asociado a un perfil de docente en este colegio.")
-        return redirect('dashboard')
+        return redirect('notas:dashboard')
 
     if request.user.is_superuser:
         asignaciones_docente = AsignacionDocente.objects.filter(colegio=request.colegio).select_related('curso', 'materia').order_by('curso__nombre', 'materia__nombre')

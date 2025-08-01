@@ -76,17 +76,14 @@
         .email-float { background-color: #B23121; }
         .documents-float { background-color: #6c757d; }
 
-        /* ===== INICIO DE LA CORRECCIÓN ===== */
-        /* Esta regla asegura que las imágenes del carrusel se vean completas */
         .carousel-item img {
-            object-fit: contain !important; /* Muestra la imagen completa */
+            object-fit: contain !important;
             object-position: center;
             overflow: hidden;
-            background-color: rgba(0, 0, 0, 0.7); /* Fondo oscuro para el espacio sobrante */
-            height: 60vh; /* Altura del carrusel, puedes ajustarla */
+            background-color: rgba(0, 0, 0, 0.7);
+            height: 60vh;
             min-height: 400px;
         }
-        /* ===== FIN DE LA CORRECCIÓN ===== */
 
     </style>
 </head>
@@ -130,18 +127,19 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // CORREGIDO: Se añade el namespace 'notas:' a todas las URLs.
         const DJANGO_URLS = {
-            directorio: "{% url 'ajax_directorio_docentes' %}",
-            documentos: "{% url 'ajax_documentos_publicos' %}",
-            galeria: "{% url 'ajax_galeria_fotos' %}",
-            noticias: "{% url 'ajax_noticias' %}",
-            carrusel: "{% url 'ajax_carrusel' %}",
-            historia: "{% url 'ajax_historia' %}",
-            mision: "{% url 'ajax_mision_vision' %}",
-            modelo: "{% url 'ajax_modelo_pedagogico' %}",
-            recursos: "{% url 'ajax_recursos_educativos' %}",
-            redes: "{% url 'ajax_redes_sociales' %}",
-            noticia_detalle: "{% url 'ajax_noticia_detalle' 0 %}",
+            directorio: "{% url 'notas:ajax_directorio_docentes' %}",
+            documentos: "{% url 'notas:ajax_documentos_publicos' %}",
+            galeria: "{% url 'notas:ajax_galeria_fotos' %}",
+            noticias: "{% url 'notas:ajax_noticias' %}",
+            carrusel: "{% url 'notas:ajax_carrusel' %}",
+            historia: "{% url 'notas:ajax_historia' %}",
+            mision: "{% url 'notas:ajax_mision_vision' %}",
+            modelo: "{% url 'notas:ajax_modelo_pedagogico' %}",
+            recursos: "{% url 'notas:ajax_recursos_educativos' %}",
+            redes: "{% url 'notas:ajax_redes_sociales' %}",
+            noticia_detalle: "{% url 'notas:ajax_noticia_detalle' 0 %}",
         };
     </script>
     <script src="{% static 'js/portal_scripts.js' %}"></script>

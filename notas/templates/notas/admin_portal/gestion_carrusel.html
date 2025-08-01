@@ -2,7 +2,7 @@
 
 {% block page_title %}
     <h1>Gestión del Carrusel de Inicio</h1>
-    <a href="{% url 'configuracion_portal' %}" class="btn btn-secondary btn-sm"><i class="fas fa-arrow-left me-2"></i>Volver al Panel</a>
+    <a href="{% url 'notas:configuracion_portal' %}" class="btn btn-secondary btn-sm"><i class="fas fa-arrow-left me-2"></i>Volver al Panel</a>
 {% endblock %}
 
 {% block content %}
@@ -83,7 +83,7 @@
                             </a>
                             
                             <!-- Botón para Eliminar -->
-                            <form action="{% url 'eliminar_imagen_carrusel' img.pk %}" method="POST" class="d-inline">
+                            <form action="{% url 'notas:eliminar_imagen_carrusel' img.pk %}" method="POST" class="d-inline">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Eliminar esta imagen?');" title="Eliminar">
                                     <i class="fas fa-trash"></i>

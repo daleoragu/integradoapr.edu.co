@@ -2,11 +2,8 @@
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-<!-- Script para la barra lateral (ya es seguro) -->
+<!-- Script para la barra lateral -->
 <script>
-// --- Mensaje de diagnóstico 1 ---
-console.log("Scripts.html: Cargando script para la barra lateral...");
-
 window.addEventListener('DOMContentLoaded', event => {
     const sidebarToggle = document.body.querySelector('#sidebarToggle');
     if (sidebarToggle) {
@@ -22,22 +19,13 @@ window.addEventListener('DOMContentLoaded', event => {
 });
 </script>
 
-<!-- Script para las notificaciones (CORREGIDO Y VERIFICADO) -->
+<!-- Script para las notificaciones -->
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    // --- Mensaje de diagnóstico 2 ---
-    console.log("Scripts.html: Buscando elementos de la campana de notificaciones...");
-
     const notificationIcon = document.getElementById("notification-icon-link");
     const notificationDropdown = document.querySelector(".dropdown-menu[aria-labelledby='notification-icon-link']");
     
-    // --- INICIO DE LA CORRECCIÓN ---
-    // Esta es la parte más importante. Solo ejecutamos el código de las notificaciones
-    // SI Y SOLO SI encontramos el icono Y el menú desplegable en la página.
     if (notificationIcon && notificationDropdown) {
-        // --- Mensaje de diagnóstico 3 (Éxito) ---
-        console.log("Scripts.html: ¡Elementos de notificación encontrados! Iniciando script.");
-
         const notificationBadge = notificationIcon.querySelector(".badge");
         const notificationList = notificationDropdown;
 
@@ -59,7 +47,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
         async function fetchNotifications() {
             try {
-                const response = await fetch("{% url 'obtener_notificaciones_dropdown' %}", {
+                // CORREGIDO: Se añade el namespace 'notas:'
+                const response = await fetch("{% url 'notas:obtener_notificaciones_dropdown' %}", {
                     headers: { "X-Requested-With": "XMLHttpRequest" }
                 });
                 if (!response.ok) throw new Error("Network response was not ok");
@@ -104,7 +93,8 @@ document.addEventListener("DOMContentLoaded", function() {
             formData.append('notificacion_id', notificacionId);
 
             try {
-                const response = await fetch("{% url 'marcar_notificacion_leida' %}", {
+                // CORREGIDO: Se añade el namespace 'notas:'
+                const response = await fetch("{% url 'notas:marcar_notificacion_leida' %}", {
                     method: 'POST',
                     headers: { 
                         'X-CSRFToken': csrftoken,
@@ -124,10 +114,6 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         });
 
-    } else {
-        // --- Mensaje de diagnóstico 4 (Informativo) ---
-        console.log("Scripts.html: Elementos de notificación NO encontrados. El script de notificaciones no se ejecutará en esta página (esto es normal en los formularios).");
     }
-    // --- FIN DEL BLOQUE DE CORRECCIÓN ---
 });
 </script>

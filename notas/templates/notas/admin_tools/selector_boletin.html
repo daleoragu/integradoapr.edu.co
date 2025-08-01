@@ -76,7 +76,7 @@
         <p>Selecciona el curso y el reporte que deseas generar.</p>
     </div>
     <!-- El formulario ahora apunta a una nueva URL unificada -->
-    <form method="GET" action="{% url 'generar_boletin' %}" target="_blank" class="form-selector">
+    <form method="GET" action="{% url 'notas:generar_boletin' %}" target="_blank" class="form-selector">
         <div class="form-body">
             {% if user.is_superuser %}
             <div class="form-group">

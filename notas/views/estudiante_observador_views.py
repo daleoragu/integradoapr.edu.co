@@ -32,7 +32,7 @@ def mi_observador_vista(request):
         estudiante = Estudiante.objects.get(user=request.user, colegio=request.colegio)
     except Estudiante.DoesNotExist:
         messages.error(request, "Acceso denegado. Su usuario no está asociado a un perfil de estudiante en este colegio.")
-        return redirect('logout')
+        return redirect('notas:logout')
 
     ficha, created = FichaEstudiante.objects.get_or_create(estudiante=estudiante)
 
@@ -73,7 +73,7 @@ def mi_observador_vista(request):
             else:
                 messages.error(request, "Hubo un error al guardar tu compromiso. Por favor, inténtalo de nuevo.")
             
-        return redirect('mi_observador')
+        return redirect('notas:mi_observador')
 
     # Para peticiones GET, se prepara el formulario
     compromiso_form = EstudianteCompromisoForm(instance=ficha)

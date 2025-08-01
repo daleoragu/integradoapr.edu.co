@@ -117,7 +117,7 @@ def vista_kiosko_asistencia(request):
             request.session['kiosko_asignacion_id'] = asignacion_id
         elif 'finalizar' in request.POST:
             request.session.pop('kiosko_asignacion_id', None)
-        return redirect('vista_kiosko_asistencia')
+        return redirect('notas:vista_kiosko_asistencia')
 
     context = {'colegio': request.colegio, 'asignaciones': asignaciones, 'asignacion_activa': None}
     kiosko_asignacion_id = request.session.get('kiosko_asignacion_id')
@@ -138,12 +138,12 @@ def vista_kiosko_asistencia(request):
 def registrar_asistencia_qr(request, estudiante_id):
     if not request.colegio:
         messages.error(request, "Error de configuración: Colegio no identificado.")
-        return redirect('vista_kiosko_asistencia')
+        return redirect('notas:vista_kiosko_asistencia')
 
     asignacion_id = request.session.get('kiosko_asignacion_id')
     if not asignacion_id:
         messages.error(request, "No hay una clase activa para registrar la asistencia.")
-        return redirect('vista_kiosko_asistencia')
+        return redirect('notas:vista_kiosko_asistencia')
 
     try:
         estudiante = get_object_or_404(Estudiante, id=estudiante_id, colegio=request.colegio)
@@ -151,7 +151,7 @@ def registrar_asistencia_qr(request, estudiante_id):
 
         if estudiante.curso != asignacion.curso:
             messages.warning(request, f"Acción denegada: {estudiante} no pertenece al curso {asignacion.curso}.")
-            return redirect('vista_kiosko_asistencia')
+            return redirect('notas: vista_kiosko_asistencia')
 
         asistencia, created = Asistencia.objects.update_or_create(
             colegio=request.colegio,
@@ -171,4 +171,4 @@ def registrar_asistencia_qr(request, estudiante_id):
     except Exception as e:
         messages.error(request, f"Ocurrió un error inesperado: {e}")
 
-    return redirect('vista_kiosko_asistencia')
+    return redirect('notas:vista_kiosko_asistencia')

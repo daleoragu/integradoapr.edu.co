@@ -44,7 +44,7 @@ def consulta_asistencia_vista(request):
             context['docente_actual'] = docente_actual
         except Docente.DoesNotExist:
             messages.error(request, "Acceso denegado. Su usuario no está asociado a un perfil de docente en este colegio.")
-            return redirect('dashboard')
+            return redirect('notas:dashboard')
 
     # Variables de contexto para el historial
     curso_seleccionado = None

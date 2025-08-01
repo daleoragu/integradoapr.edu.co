@@ -149,7 +149,7 @@ def panel_control_periodos_vista(request):
         except Exception as e:
             messages.error(request, f"Ocurrió un error inesperado: {e}")
         
-        return redirect('panel_control_periodos')
+        return redirect('notas:panel_control_periodos')
 
     periodos = PeriodoAcademico.objects.filter(colegio=request.colegio).order_by('-ano_lectivo', '-fecha_inicio')
     context = {
@@ -185,7 +185,7 @@ def panel_control_promocion_vista(request):
             # Guardamos el objeto en la base de datos.
             config.save()
             messages.success(request, "La regla de promoción ha sido actualizada correctamente.")
-            return redirect('panel_control_promocion')
+            return redirect('notas:panel_control_promocion')
         else:
             messages.error(request, "Por favor, ingrese un número válido.")
 
@@ -231,7 +231,7 @@ def configuracion_calificaciones_vista(request):
             formset.save()
             form_global.save()
             messages.success(request, 'La configuración de calificaciones ha sido actualizada correctamente.')
-            return redirect('configuracion_calificaciones')
+            return redirect('notas:configuracion_calificaciones')
         else:
             messages.error(request, 'Por favor, corrija los errores en el formulario.')
 
@@ -283,7 +283,7 @@ def configuracion_escala_valoracion_vista(request):
             except Exception as e:
                 messages.error(request, f"No se pudo eliminar el nivel: {e}")
         
-        return redirect('configuracion_escala_valoracion')
+        return redirect('notas:configuracion_escala_valoracion')
 
     escalas = EscalaValoracion.objects.filter(colegio=colegio).order_by('valor_minimo')
     form = EscalaValoracionForm()
@@ -322,7 +322,7 @@ def editar_escala_valoracion_vista(request, escala_id):
             for error in errors:
                 messages.error(request, f"Error al editar '{escala_a_editar.nombre_desempeno}': {error}")
     
-    return redirect('configuracion_escala_valoracion')
+    return redirect('notas:configuracion_escala_valoracion')
 
 
 class ColegioPersonalizacionUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
@@ -380,7 +380,7 @@ def crear_periodo_vista(request):
         messages.error(request, f"Error al crear el período: {e}")
     except Exception as e:
         messages.error(request, f"Ocurrió un error inesperado: {e}")
-    return redirect('panel_control_periodos')
+    return redirect('notas:panel_control_periodos')
 
 
 @user_passes_test(es_superusuario)
@@ -403,7 +403,7 @@ def editar_periodo_vista(request, periodo_id):
         messages.error(request, f"Error al actualizar el período: {e}")
     except Exception as e:
         messages.error(request, f"Ocurrió un error inesperado: {e}")
-    return redirect('panel_control_periodos')
+    return redirect('notas:panel_control_periodos')
 
 
 @user_passes_test(es_superusuario)
@@ -417,4 +417,4 @@ def eliminar_periodo_vista(request, periodo_id):
         messages.success(request, 'Período eliminado exitosamente.')
     except Exception as e:
         messages.error(request, f'Error al eliminar el período: {e}')
-    return redirect('panel_control_periodos')
+    return redirect('notas:panel_control_periodos')

@@ -53,7 +53,7 @@
         <div class="dashboard-menu">
             <!-- Mostramos el menú correspondiente al rol del usuario -->
             {% if user.groups.all.0.name == 'Docentes' %}
-                <a href="{% url 'ingresar_notas_periodo' %}">Ingresar Notas e Indicadores</a>
+                <a href="{% url 'notas:ingresar_notas_periodo' %}">Ingresar Notas e Indicadores</a>
                 <a href="#">Tomar Asistencia</a>
                 <a href="#">Registrar Observador</a>
             {% elif user.groups.all.0.name == 'Estudiantes' %}

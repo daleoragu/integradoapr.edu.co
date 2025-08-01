@@ -14,7 +14,7 @@
                 <p class="card-text text-muted">
                     Seleccione un curso para descargar un archivo CSV con la lista completa de estudiantes, sus nombres y datos de contacto. Este archivo es compatible con Microsoft Excel.
                 </p>
-                <form method="get" action="{% url 'exportar_estudiantes_csv' %}" target="_blank">
+                <form method="get" action="{% url 'notas:exportar_estudiantes_csv' %}" target="_blank">
                     <div class="row align-items-end g-3">
                         <div class="col-md-8">
                             <label for="curso_id" class="form-label"><b>Curso</b></label>

@@ -36,7 +36,7 @@
                                 {% endif %}
                             </td>
                             <td class="text-center">
-                                <form method="post" action="{% url 'panel_publicacion' %}" class="d-inline">
+                                <form method="post" action="{% url 'notas:panel_publicacion' %}" class="d-inline">
                                     {% csrf_token %}
                                     <input type="hidden" name="tipo_publicacion" value="periodo">
                                     <input type="hidden" name="periodo_id" value="{{ periodo.id }}">
@@ -60,7 +60,7 @@
                                 {% endif %}
                             </td>
                             <td class="text-center">
-                                <form method="post" action="{% url 'panel_publicacion' %}" class="d-inline">
+                                <form method="post" action="{% url 'notas:panel_publicacion' %}" class="d-inline">
                                     {% csrf_token %}
                                     <input type="hidden" name="tipo_publicacion" value="final">
                                     <input type="hidden" name="ano_lectivo" value="{{ ano }}">

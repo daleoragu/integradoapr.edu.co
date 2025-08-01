@@ -104,8 +104,6 @@
         <div class="nav nav-tabs dashboard-nav" id="nav-tab" role="tablist">
             <button class="nav-link active" id="nav-admin-tab" data-bs-toggle="tab" data-bs-target="#nav-admin" type="button" role="tab">Panel de Administración</button>
             
-            {# --- CORRECCIÓN CLAVE --- #}
-            {# Se verifica si el usuario es superusuario O si pertenece al grupo 'Docentes' #}
             {% if user.is_superuser or 'Docentes' in user.groups.all.0.name %}
             <button class="nav-link" id="nav-docente-tab" data-bs-toggle="tab" data-bs-target="#nav-docente" type="button" role="tab">Vista de Docente</button>
             {% endif %}
@@ -119,33 +117,32 @@
                     <h2>Panel de Administración</h2>
                     <p>Bienvenido, {{ user.get_full_name }}. Gestiona todos los aspectos de la plataforma.</p>
                 </div>
-                <a href="{% url 'portal' %}" class="btn btn-light"><i class="fas fa-globe me-2"></i>Ir al Portal</a>
+                <!-- CORREGIDO: Se añade el namespace 'notas:' -->
+                <a href="{% url 'notas:portal' %}" class="btn btn-light"><i class="fas fa-globe me-2"></i>Ir al Portal</a>
             </div>
 
             <div class="app-grid">
-                {# --- CORRECCIÓN CLAVE --- #}
-                {# Se eliminan los 'perms' que no son necesarios y a veces causan errores #}
-                <a href="{% url 'gestion_asignacion_academica' %}" class="app-icon">
+                <!-- CORREGIDO: Se añade el namespace 'notas:' a todos los enlaces -->
+                <a href="{% url 'notas:gestion_asignacion_academica' %}" class="app-icon">
                     <div class="icon-container bg-asignacion"><i class="fas fa-sitemap"></i></div>
                     <span class="app-label">Asignación Académica</span>
                 </a>
-                <a href="{% url 'gestion_estudiantes' %}" class="app-icon"><div class="icon-container bg-estudiantes"><i class="fas fa-users"></i></div><span class="app-label">Gestión Estudiantes</span></a>
-                <a href="{% url 'gestion_materias' %}" class="app-icon"><div class="icon-container bg-materias"><i class="fas fa-book-open"></i></div><span class="app-label">Gestión Materias</span></a>
-                <a href="{% url 'gestion_docentes' %}" class="app-icon"><div class="icon-container bg-docentes"><i class="fas fa-chalkboard-teacher"></i></div><span class="app-label">Gestión de Docentes</span></a>
-                <a href="{% url 'panel_control_periodos' %}" class="app-icon"><div class="icon-container bg-periodos"><i class="fas fa-calendar-alt"></i></div><span class="app-label">Control de Plazos</span></a>
-                <a href="{% url 'panel_publicacion' %}" class="app-icon"><div class="icon-container bg-publicar"><i class="fas fa-paper-plane"></i></div><span class="app-label">Publicar Boletines</span></a>
-                <a href="{% url 'panel_control_promocion' %}" class="app-icon"><div class="icon-container bg-promocion"><i class="fas fa-gavel"></i></div><span class="app-label">Regla de Promoción</span></a>
-                <a href="{% url 'gestion_ponderacion_areas' %}" class="app-icon"><div class="icon-container bg-ponderacion"><i class="fas fa-balance-scale"></i></div><span class="app-label">Ponderación Áreas</span></a>
-                <a href="{% url 'configuracion_calificaciones' %}" class="app-icon"><div class="icon-container bg-permisos"><i class="fas fa-percentage"></i></div><span class="app-label">Permisos Porcentajes</span></a>
-                <a href="{% url 'configuracion_escala_valoracion' %}" class="app-icon"><div class="icon-container bg-escala-valoracion"><i class="fas fa-ruler-combined"></i></div><span class="app-label">Escala de Valoración</span></a>
-                <a href="{% url 'personalizacion_portal' %}" class="app-icon"><div class="icon-container bg-personalizacion"><i class="fas fa-palette"></i></div><span class="app-label">Personalizar Portal</span></a>
-                <a href="{% url 'lista_estudiantes_reporte' %}" class="app-icon"><div class="icon-container bg-admin-reporte-estudiantes"><i class="fas fa-user-times"></i></div><span class="app-label">Reporte Estudiantes</span></a>
-                <a href="{% url 'impresion_masiva_carnets' %}" class="app-icon"><div class="icon-container bg-impresion-carnets"><i class="fas fa-id-card"></i></div><span class="app-label">Imprimir Carnets</span></a>
-                <a href="{% url 'selector_certificados' %}" class="app-icon"><div class="icon-container bg-certificado-de-estudios" ><i class="fas fa-award"></i></div><span class="app-label">Generar Certificados</span></a>
+                <a href="{% url 'notas:gestion_estudiantes' %}" class="app-icon"><div class="icon-container bg-estudiantes"><i class="fas fa-users"></i></div><span class="app-label">Gestión Estudiantes</span></a>
+                <a href="{% url 'notas:gestion_materias' %}" class="app-icon"><div class="icon-container bg-materias"><i class="fas fa-book-open"></i></div><span class="app-label">Gestión Materias</span></a>
+                <a href="{% url 'notas:gestion_docentes' %}" class="app-icon"><div class="icon-container bg-docentes"><i class="fas fa-chalkboard-teacher"></i></div><span class="app-label">Gestión de Docentes</span></a>
+                <a href="{% url 'notas:panel_control_periodos' %}" class="app-icon"><div class="icon-container bg-periodos"><i class="fas fa-calendar-alt"></i></div><span class="app-label">Control de Plazos</span></a>
+                <a href="{% url 'notas:panel_publicacion' %}" class="app-icon"><div class="icon-container bg-publicar"><i class="fas fa-paper-plane"></i></div><span class="app-label">Publicar Boletines</span></a>
+                <a href="{% url 'notas:panel_control_promocion' %}" class="app-icon"><div class="icon-container bg-promocion"><i class="fas fa-gavel"></i></div><span class="app-label">Regla de Promoción</span></a>
+                <a href="{% url 'notas:gestion_ponderacion_areas' %}" class="app-icon"><div class="icon-container bg-ponderacion"><i class="fas fa-balance-scale"></i></div><span class="app-label">Ponderación Áreas</span></a>
+                <a href="{% url 'notas:configuracion_calificaciones' %}" class="app-icon"><div class="icon-container bg-permisos"><i class="fas fa-percentage"></i></div><span class="app-label">Permisos Porcentajes</span></a>
+                <a href="{% url 'notas:configuracion_escala_valoracion' %}" class="app-icon"><div class="icon-container bg-escala-valoracion"><i class="fas fa-ruler-combined"></i></div><span class="app-label">Escala de Valoración</span></a>
+                <a href="{% url 'notas:personalizacion_portal' %}" class="app-icon"><div class="icon-container bg-personalizacion"><i class="fas fa-palette"></i></div><span class="app-label">Personalizar Portal</span></a>
+                <a href="{% url 'notas:lista_estudiantes_reporte' %}" class="app-icon"><div class="icon-container bg-admin-reporte-estudiantes"><i class="fas fa-user-times"></i></div><span class="app-label">Reporte Estudiantes</span></a>
+                <a href="{% url 'notas:impresion_masiva_carnets' %}" class="app-icon"><div class="icon-container bg-impresion-carnets"><i class="fas fa-id-card"></i></div><span class="app-label">Imprimir Carnets</span></a>
+                <a href="{% url 'notas:selector_certificados' %}" class="app-icon"><div class="icon-container bg-certificado-de-estudios" ><i class="fas fa-award"></i></div><span class="app-label">Generar Certificados</span></a>
             </div>
         </div>
 
-        {# --- CORRECCIÓN CLAVE --- #}
         {% if user.is_superuser or 'Docentes' in user.groups.all.0.name %}
         <div class="tab-pane fade" id="nav-docente" role="tabpanel">
             {# Este include asume que tienes una plantilla con los iconos para el panel de docente #}

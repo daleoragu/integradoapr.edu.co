@@ -22,7 +22,7 @@ def iniciar_suplantacion(request, user_id):
     """
     if 'original_user_id' in request.session:
         messages.error(request, "Ya estás suplantando a un usuario. Por favor, detén la sesión actual primero.")
-        return redirect('dashboard')
+        return redirect('notas:dashboard')
 
     try:
         usuario_objetivo = get_object_or_404(User, id=user_id)
@@ -35,11 +35,11 @@ def iniciar_suplantacion(request, user_id):
         request.session['original_user_id'] = original_user_id
         
         messages.success(request, f"Ahora estás viendo la plataforma como {usuario_objetivo.get_full_name()}.")
-        return redirect('dashboard')
+        return redirect('notas:dashboard')
         
     except Exception as e:
         messages.error(request, f"No se pudo suplantar al usuario. Error: {e}")
-        return redirect(request.META.get('HTTP_REFERER', 'admin_dashboard'))
+        return redirect(request.META.get('HTTP_REFERER', 'notas:admin_dashboard'))
 
 
 # --- CORRECCIÓN: Se cambia el decorador a @login_required para permitir el acceso ---
@@ -52,7 +52,7 @@ def detener_suplantacion(request):
     
     if not original_user_id:
         messages.warning(request, "No estabas suplantando a ningún usuario.")
-        return redirect('dashboard')
+        return redirect('notas:dashboard')
 
     try:
         admin_user = get_object_or_404(User, id=original_user_id)
@@ -61,15 +61,15 @@ def detener_suplantacion(request):
         if not es_personal_admin(admin_user):
             messages.error(request, "Error de seguridad: La cuenta original no tiene permisos de administrador.")
             logout(request) # Por seguridad, cerramos la sesión por completo.
-            return redirect('portal')
+            return redirect('notas:portal')
 
         # Volver a iniciar sesión como el admin. Esto limpia la sesión del estudiante.
         login(request, admin_user, backend='django.contrib.auth.backends.ModelBackend')
         
         messages.info(request, "Has vuelto a tu cuenta de administrador.")
         # Ahora el redirect al panel de admin funcionará correctamente.
-        return redirect('admin_dashboard')
+        return redirect('notas:admin_dashboard')
 
     except Exception as e:
         messages.error(request, f"No se pudo detener la suplantación. Error: {e}")
-        return redirect('dashboard')
+        return redirect('notas:dashboard')

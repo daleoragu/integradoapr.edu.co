@@ -66,10 +66,10 @@
             </p>
         </div>
         <div>
-            <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary">
+            <a href="{% url 'notas:admin_dashboard' %}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left me-2"></i>Volver
             </a>
-            <a href="{% url 'crear_area' %}" class="btn btn-primary">
+            <a href="{% url 'notas:crear_area' %}" class="btn btn-primary">
                 <i class="fas fa-plus me-2"></i>Crear Área
             </a>
         </div>
@@ -113,7 +113,7 @@
                                     {% if forloop.first %}
                                     <td class="actions-cell" rowspan="{{ area.ponderaciones|length|add:1 }}">
                                         <!-- 👇 BOTÓN CORREGIDO 👇 -->
-                                        <a href="{% url 'gestion_materias' %}" class="btn btn-sm btn-outline-info">
+                                        <a href="{% url 'notas:gestion_materias' %}" class="btn btn-sm btn-outline-info">
                                             <i class="fas fa-tasks me-1"></i> Gestionar Materias
                                         </a>
                                     </td>
@@ -135,7 +135,7 @@
                                     </td>
                                     <td class="actions-cell">
                                         <!-- 👇 BOTÓN CORREGIDO 👇 -->
-                                        <a href="{% url 'gestion_materias' %}" class="btn btn-sm btn-info">
+                                        <a href="{% url 'notas:gestion_materias' %}" class="btn btn-sm btn-info">
                                             <i class="fas fa-tasks me-1"></i> Gestionar Materias
                                         </a>
                                     </td>
@@ -148,7 +148,7 @@
                                 <div class="alert alert-info mb-0">
                                     <h4 class="alert-heading">¡No se encontraron áreas de conocimiento!</h4>
                                     <p>Para comenzar, por favor, crea tu primera área de conocimiento.</p>
-                                    <a href="{% url 'crear_area' %}" class="btn btn-primary">
+                                    <a href="{% url 'notas:crear_area' %}" class="btn btn-primary">
                                         <i class="fas fa-plus me-2"></i>Crear la primera Área
                                     </a>
                                 </div>

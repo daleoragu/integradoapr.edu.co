@@ -122,24 +122,24 @@
     </div>
 
     <div class="app-grid">
-        <a href="{% url 'mi_observador' %}" class="app-icon">
+        <a href="{% url 'notas:mi_observador' %}" class="app-icon">
             <div class="icon-container bg-est-observador"><i class="fas fa-eye"></i></div>
             <span class="app-label">Mi Observador</span>
         </a>
-        <a href="{% url 'mi_boletin' %}" class="app-icon">
+        <a href="{% url 'notas:mi_boletin' %}" class="app-icon">
             <div class="icon-container bg-est-boletin"><i class="fas fa-file-pdf"></i></div>
             <span class="app-label">Mis Boletines</span>
         </a>
-        <a href="{% url 'bandeja_entrada' %}" class="app-icon">
+        <a href="{% url 'notas:bandeja_entrada' %}" class="app-icon">
             <div class="icon-container bg-est-mail"><i class="fas fa-envelope"></i></div>
             <span class="app-label">CofraMail</span>
         </a>
-        <a href="{% url 'portal' %}" class="app-icon">
+        <a href="{% url 'notas:portal' %}" class="app-icon">
             <div class="icon-container bg-est-portal"><i class="fas fa-globe"></i></div>
             <span class="app-label">Ir al Portal</span>
         </a>
         {% if user.estudiante %} {# Asegurarse de que el usuario es un estudiante antes de mostrar el enlace #}
-            <a href="{% url 'acta_reporte_parcial_estudiante' user.estudiante.id %}" class="app-icon">
+            <a href="{% url 'notas:acta_reporte_parcial_estudiante' user.estudiante.id %}" class="app-icon">
                 <div class="icon-container bg-est-reporte-parcial"><i class="fas fa-file-alt"></i></div>
                 <span class="app-label">Mi Reporte Parcial</span>
             </a>

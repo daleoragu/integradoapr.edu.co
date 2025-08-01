@@ -1,5 +1,5 @@
 # notas/urls.py
-# Este es el archivo final y completo que conecta todas tus vistas.
+# Este archivo define todas las URLs específicas de tu aplicación "notas".
 
 from django.urls import path
 from .views import (
@@ -30,12 +30,13 @@ from .views import (
     carnet_views,
     certificados_views,
     import_export_planillas_views,
-    # --- ¡CORRECCIÓN! Se añade la importación que faltaba ---
     sabana_views,
-    # --- Se importa el nuevo archivo de vistas de gestión de usuarios ---
     gestion_docentes_views,
     gestion_estudiantes_views
 )
+
+# El nombre 'app_name' ayuda a Django a organizar las URLs. Es una buena práctica.
+app_name = 'notas'
 
 urlpatterns = [
     # --- Rutas del Portal Público y Autenticación ---
@@ -51,8 +52,10 @@ urlpatterns = [
     path('panel-estudiante/', dashboard_views.estudiante_dashboard_vista, name='panel_estudiante'),
 
     # ==========================================================================
-    # --- RUTAS PARA GESTIÓN DE USUARIOS (DOCENTES Y ESTUDIANTES) ---
+    # --- VISTAS PERSONALIZADAS DE ADMINISTRACIÓN ---
     # ==========================================================================
+    
+    # --- Gestión de Usuarios (Docentes y Estudiantes) ---
     path('admin/gestion-docentes/', gestion_docentes_views.gestion_docentes_vista, name='gestion_docentes'),
     path('admin/gestion-docentes/crear/', gestion_docentes_views.crear_docente_vista, name='crear_docente'),
     path('admin/gestion-docentes/editar/<int:docente_id>/', gestion_docentes_views.editar_docente_vista, name='editar_docente'),
@@ -63,7 +66,7 @@ urlpatterns = [
     path('admin/gestion-estudiantes/editar/<int:estudiante_id>/', gestion_estudiantes_views.editar_estudiante_vista, name='editar_estudiante'),
     path('admin/gestion-estudiantes/eliminar/<int:estudiante_id>/', gestion_estudiantes_views.eliminar_estudiante_vista, name='eliminar_estudiante'),
     
-    # --- Rutas de Herramientas de Administración ---
+    # --- Herramientas de Administración ---
     path('admin/panel-control-periodos/', admin_tools_views.panel_control_periodos_vista, name='panel_control_periodos'),
     path('admin/panel-control-promocion/', admin_tools_views.panel_control_promocion_vista, name='panel_control_promocion'),
     path('admin/configuracion-calificaciones/', admin_tools_views.configuracion_calificaciones_vista, name='configuracion_calificaciones'),
@@ -128,7 +131,7 @@ urlpatterns = [
     path('indicador/editar/<int:indicador_id>/', indicador_views.editar_indicador_vista, name='editar_indicador'),
     path('indicador/eliminar/<int:indicador_id>/', indicador_views.eliminar_indicador_vista, name='eliminar_indicador'),
     
-    # --- ¡NUEVO! Rutas para Sábana de Notas ---
+    # --- Rutas para Sábana de Notas ---
     path('docente/selector-sabana/', sabana_views.selector_sabana_vista, name='selector_sabana'),
     path('docente/generar-sabana/', sabana_views.generar_sabana_vista, name='generar_sabana'),
     path('docente/exportar-sabana-excel/', sabana_views.exportar_sabana_excel, name='exportar_sabana_excel'),

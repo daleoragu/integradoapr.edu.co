@@ -50,7 +50,7 @@ def componer_mensaje_vista(request):
                 nuevo_mensaje.estado = 'BORRADOR'
                 nuevo_mensaje.save()
                 messages.success(request, '¡Borrador guardado correctamente!')
-                return redirect('borradores')
+                return redirect('notas:borradores')
             else:
                 nuevo_mensaje.estado = 'ENVIADO'
                 nuevo_mensaje.save()
@@ -68,7 +68,7 @@ def componer_mensaje_vista(request):
                 # --- FIN: CORRECCIÓN ---
                 
                 messages.success(request, '¡Mensaje enviado correctamente!')
-                return redirect('mensajes_enviados')
+                return redirect('notas:mensajes_enviados')
     else:
         form = MensajeForm(user=request.user, colegio=request.colegio, initial=initial_data)
 
@@ -134,7 +134,7 @@ def borrar_mensaje_vista(request, mensaje_id):
         mensaje.fecha_eliminacion = timezone.now()
     mensaje.save()
     messages.success(request, "El mensaje ha sido movido a la papelera.")
-    return redirect(vista_origen if vista_origen != 'detalle' else 'bandeja_entrada')
+    return redirect(vista_origen if vista_origen != 'detalle' else 'notas:bandeja_entrada')
 
 @login_required
 def papelera_vista(request):
@@ -160,7 +160,7 @@ def restaurar_mensaje_vista(request, mensaje_id):
         messages.success(request, "El mensaje ha sido restaurado a tus mensajes enviados.")
     else: raise PermissionDenied("No puedes restaurar este mensaje.")
     mensaje.save()
-    return redirect('papelera')
+    return redirect('notas:papelera')
 
 @require_POST
 @login_required
@@ -171,7 +171,7 @@ def borrar_definitivamente_vista(request, mensaje_id):
         mensaje.delete()
         messages.success(request, "El mensaje ha sido eliminado permanentemente.")
     else: raise PermissionDenied("No tienes permiso para eliminar este mensaje.")
-    return redirect('papelera')
+    return redirect('notas:papelera')
 
 @login_required
 def borradores_vista(request):

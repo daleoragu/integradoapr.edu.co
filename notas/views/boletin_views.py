@@ -47,7 +47,7 @@ def selector_boletin_vista(request):
             context['cursos'] = Curso.objects.filter(id__in=cursos_ids, colegio=request.colegio).order_by('nombre')
         except Docente.DoesNotExist:
             messages.error(request, "Acceso denegado. Su perfil no está asociado a un docente en este colegio.")
-            return redirect('dashboard')
+            return redirect('notas:dashboard')
 
     # Filtra periodos y años por el colegio actual
     context['periodos'] = PeriodoAcademico.objects.filter(colegio=request.colegio).order_by('-ano_lectivo', 'nombre')

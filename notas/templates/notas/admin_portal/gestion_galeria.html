@@ -2,7 +2,7 @@
 
 {% block page_title %}
     <h1>Gestión de Galería</h1>
-    <a href="{% url 'configuracion_portal' %}" class="btn btn-secondary btn-sm"><i class="fas fa-arrow-left me-2"></i>Volver al Panel</a>
+    <a href="{% url 'notas:configuracion_portal' %}" class="btn btn-secondary btn-sm"><i class="fas fa-arrow-left me-2"></i>Volver al Panel</a>
 {% endblock %}
 
 {% block content %}
@@ -29,7 +29,7 @@
                         <p class="card-text small">{{ foto.titulo|default:"Sin título" }}</p>
                     </div>
                     <div class="card-footer">
-                        <form action="{% url 'eliminar_foto' foto.pk %}" method="POST">
+                        <form action="{% url 'notas:eliminar_foto' foto.pk %}" method="POST">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-danger btn-sm w-100" onclick="return confirm('¿Está seguro?');">Eliminar</button>
                         </form>

@@ -35,7 +35,7 @@ def portal_vista(request):
                    hasattr(user, 'estudiante') and user.estudiante.colegio == colegio_actual or \
                    user.is_superuser:
                     login(request, user)
-                    return redirect('dashboard')
+                    return redirect('notas:dashboard')
                 else:
                     messages.error(request, "El usuario no pertenece a este colegio.")
             else:
