@@ -10,7 +10,6 @@ from django.db import transaction, IntegrityError
 from django.http import HttpResponseNotFound
 from django.utils.text import slugify
 from unidecode import unidecode
-# Se importa make_password para hashear contraseñas manualmente antes de la creación en bloque
 from django.contrib.auth.hashers import make_password
 
 try:
@@ -40,15 +39,14 @@ def importacion_vista(request):
         archivo = request.FILES['archivo_importacion']
 
         try:
-            # Usamos transaction.atomic() para asegurar que toda la operación
-            # sea un éxito o un fracaso, manteniendo la integridad de los datos.
             with transaction.atomic():
                 if tipo_importacion == 'estudiantes':
                     if not EXCEL_SUPPORT:
                         raise Exception("La librería 'openpyxl' es necesaria. Instálela con 'pip install openpyxl'.")
                     if not archivo.name.endswith('.xlsx'):
                         raise Exception("Para importar estudiantes, seleccione un archivo Excel válido (.xlsx).")
-                    _procesar_excel_estudiantes_optimizado(request, archivo, request.colegio)
+                    # Se llama a la versión súper optimizada
+                    _procesar_excel_estudiantes_super_optimizado(request, archivo, request.colegio)
                 
                 elif tipo_importacion == 'materias':
                     if not EXCEL_SUPPORT:
@@ -72,12 +70,12 @@ def importacion_vista(request):
 
     return redirect('notas:admin_dashboard')
 
-def _procesar_excel_estudiantes_optimizado(request, archivo, colegio):
+def _procesar_excel_estudiantes_super_optimizado(request, archivo, colegio):
     """
-    Lógica OPTIMIZADA para procesar el archivo Excel de estudiantes de forma segura y eficiente.
-    Utiliza bulk_create para minimizar las consultas a la base de datos y evitar timeouts.
+    Lógica SÚPER OPTIMIZADA. Realiza todas las operaciones de base de datos en bloque.
+    Este es el enfoque síncrono más rápido posible.
     """
-    creados, errores, omitidos = 0, 0, 0
+    creados_count, errores_count = 0, 0
     grupo_estudiantes, _ = Group.objects.get_or_create(name="Estudiantes")
     
     wb = load_workbook(archivo, data_only=True)
@@ -85,22 +83,18 @@ def _procesar_excel_estudiantes_optimizado(request, archivo, colegio):
     map_tipo_doc = {v.upper(): k for k, v in FichaEstudiante.TIPO_DOCUMENTO_CHOICES}
     map_grupo_sang = {v: k for k, v in FichaEstudiante.GRUPO_SANGUINEO_CHOICES}
     
-    # --- PASO 1: Leer todos los datos y preparar los objetos User en memoria ---
+    # --- PASO 1: Preparar datos de usuario en memoria ---
     usuarios_a_crear = []
-    datos_filas = [] # Guardaremos los datos de cada fila para el segundo paso
-    
-    # Obtenemos todos los usernames existentes para evitar colisiones en una sola consulta
+    datos_para_pasos_siguientes = []
     existing_usernames = set(User.objects.values_list('username', flat=True))
 
     for i, row in enumerate(sheet.iter_rows(min_row=2, values_only=True), 2):
         if not any(row) or not row[0] or not row[1]:
             continue
-
         row_data = list(row) + [None] * (20 - len(row))
-        nombres, apellidos, *_ = row_data[:20]
+        nombres, apellidos, _, _, nombre_curso, *_ = row_data
 
         try:
-            # Generación de un nombre de usuario único
             primer_nombre = unidecode(str(nombres).split(' ')[0].lower())
             primer_apellido = unidecode(str(apellidos).split(' ')[0].lower())
             username_base = f"{slugify(primer_nombre)}.{slugify(primer_apellido)}"
@@ -109,92 +103,100 @@ def _procesar_excel_estudiantes_optimizado(request, archivo, colegio):
             while username_final in existing_usernames:
                 username_final = f"{username_base}{counter}"
                 counter += 1
-            
-            # Añadimos el nuevo username al set para que no se repita en este mismo lote
             existing_usernames.add(username_final)
 
-            # Preparamos el objeto User.
-            # IMPORTANTE: bulk_create no llama a .save(), por lo que debemos hashear la contraseña manualmente.
             user = User(
                 username=username_final, 
-                password=make_password(username_final), # Hasheamos la contraseña
+                password=make_password(username_final),
                 first_name=str(nombres or '').strip().upper(), 
                 last_name=str(apellidos or '').strip().upper()
             )
             usuarios_a_crear.append(user)
-            datos_filas.append({'username': username_final, 'data': row_data, 'fila_num': i})
+            datos_para_pasos_siguientes.append({'user_obj': user, 'curso_nombre': nombre_curso, 'data': row_data, 'fila_num': i})
 
         except Exception as e:
-            messages.warning(request, f"Error preparando la fila {i} del Excel: {e}")
-            errores += 1
+            messages.warning(request, f"Error preparando la fila {i}: {e}")
+            errores_count += 1
 
-    # --- PASO 2: Crear todos los usuarios en una sola consulta a la base de datos ---
-    if usuarios_a_crear:
-        User.objects.bulk_create(usuarios_a_crear)
-        creados = len(usuarios_a_crear)
-
-        # --- PASO 3: Recuperar los usuarios creados y crear los objetos relacionados ---
-        # Creamos un mapa de username -> user_object para un acceso rápido
-        usernames_creados = [d['username'] for d in datos_filas]
-        mapa_usuarios = {u.username: u for u in User.objects.filter(username__in=usernames_creados)}
+    # --- PASO 2: Creación masiva de Usuarios ---
+    if not usuarios_a_crear:
+        messages.warning(request, "No se encontraron nuevos estudiantes para procesar.")
+        return
         
-        # Asignar todos los nuevos usuarios al grupo "Estudiantes" de forma masiva
-        grupo_estudiantes.user_set.add(*mapa_usuarios.values())
+    usuarios_creados = User.objects.bulk_create(usuarios_a_crear)
+    mapa_usuarios = {u.username: u for u in usuarios_creados}
+    grupo_estudiantes.user_set.add(*mapa_usuarios.values())
 
-        for datos in datos_filas:
-            fila_num = datos['fila_num']
-            try:
-                user_obj = mapa_usuarios.get(datos['username'])
-                if not user_obj: continue # Si por alguna razón no se encontró, lo saltamos
+    # --- PASO 3: Preparar y crear masivamente Estudiantes y Fichas ---
+    estudiantes_a_crear = []
+    fichas_a_crear = []
+    mapa_cursos = {c.nombre: c for c in Curso.objects.filter(colegio=colegio)}
 
-                (nombres, apellidos, tipo_doc_str, num_doc, nombre_curso, fecha_nac_str, 
-                 lugar_nac, eps, grupo_sang_str, enfermedades, nombre_padre, cel_padre,
-                 nombre_madre, cel_madre, nombre_acud, cel_acud, email_acud, 
-                 espera_porteria_str, colegio_ant, grado_ant) = datos['data'][:20]
+    for datos in datos_para_pasos_siguientes:
+        fila_num = datos['fila_num']
+        try:
+            user_obj = mapa_usuarios.get(datos['user_obj'].username)
+            if not user_obj: continue
 
-                # Buscamos el curso dentro del colegio actual
-                curso = Curso.objects.filter(nombre=str(nombre_curso).strip().upper(), colegio=colegio).first()
-                if not curso:
-                    raise ValueError(f"El curso '{nombre_curso}' no existe en este colegio.")
+            curso_obj = mapa_cursos.get(str(datos['curso_nombre']).strip().upper())
+            if not curso_obj:
+                raise ValueError(f"El curso '{datos['curso_nombre']}' no existe en este colegio.")
 
-                # Creamos el Estudiante y la FichaEstudiante
-                estudiante_obj = Estudiante.objects.create(user=user_obj, curso=curso, colegio=colegio)
-                
-                fecha_nacimiento = None
-                if isinstance(fecha_nac_str, datetime):
-                    fecha_nacimiento = fecha_nac_str.date()
-                elif isinstance(fecha_nac_str, str):
-                    try:
-                        fecha_nacimiento = datetime.strptime(fecha_nac_str, '%Y-%m-%d').date()
-                    except (ValueError, TypeError):
-                        fecha_nacimiento = None
+            estudiante_obj = Estudiante(user=user_obj, curso=curso_obj, colegio=colegio)
+            estudiantes_a_crear.append(estudiante_obj)
+            # Guardamos la referencia para el siguiente paso
+            datos['estudiante_obj_preparado'] = estudiante_obj
 
-                FichaEstudiante.objects.create(
-                    estudiante=estudiante_obj,
-                    tipo_documento=map_tipo_doc.get(str(tipo_doc_str).strip().upper(), 'OT') if tipo_doc_str else 'OT',
-                    numero_documento=str(num_doc).strip() if num_doc else None,
-                    fecha_nacimiento=fecha_nacimiento,
-                    lugar_nacimiento=lugar_nac,
-                    eps=eps,
-                    grupo_sanguineo=map_grupo_sang.get(str(grupo_sang_str).strip(), None) if grupo_sang_str else None,
-                    enfermedades_alergias=enfermedades,
-                    nombre_padre=nombre_padre,
-                    celular_padre=cel_padre,
-                    nombre_madre=nombre_madre,
-                    celular_madre=cel_madre,
-                    nombre_acudiente=nombre_acud,
-                    celular_acudiente=cel_acud,
-                    email_acudiente=email_acud,
-                    espera_en_porteria=True if espera_porteria_str and 'SI' in str(espera_porteria_str).upper() else False,
-                    colegio_anterior=colegio_ant,
-                    grado_anterior=grado_ant
-                )
-            except Exception as e:
-                messages.warning(request, f"Error procesando datos relacionados en la fila {fila_num}: {e}")
-                errores += 1
-                creados -= 1 # Restamos del contador de éxito
+        except Exception as e:
+            messages.warning(request, f"Error preparando datos de Estudiante en fila {fila_num}: {e}")
+            errores_count += 1
+    
+    # Creación masiva de Estudiantes
+    estudiantes_creados = Estudiante.objects.bulk_create(estudiantes_a_crear)
+    mapa_estudiantes = {e.user.username: e for e in estudiantes_creados}
 
-    messages.success(request, f"Proceso de estudiantes completado. Creados: {creados}. Errores: {errores}. Omitidos (ya existían): {omitidos}.")
+    # Preparación masiva de Fichas
+    for datos in datos_para_pasos_siguientes:
+        fila_num = datos['fila_num']
+        try:
+            estudiante_final = mapa_estudiantes.get(datos['user_obj'].username)
+            if not estudiante_final: continue
+
+            (_, _, tipo_doc_str, num_doc, _, fecha_nac_str, 
+             lugar_nac, eps, grupo_sang_str, enfermedades, nombre_padre, cel_padre,
+             nombre_madre, cel_madre, nombre_acud, cel_acud, email_acud, 
+             espera_porteria_str, colegio_ant, grado_ant) = datos['data']
+
+            fecha_nacimiento = None
+            if isinstance(fecha_nac_str, datetime): fecha_nacimiento = fecha_nac_str.date()
+            elif isinstance(fecha_nac_str, str):
+                try: fecha_nacimiento = datetime.strptime(fecha_nac_str, '%Y-%m-%d').date()
+                except (ValueError, TypeError): fecha_nacimiento = None
+
+            ficha = FichaEstudiante(
+                estudiante=estudiante_final,
+                tipo_documento=map_tipo_doc.get(str(tipo_doc_str).strip().upper(), 'OT') if tipo_doc_str else 'OT',
+                numero_documento=str(num_doc).strip() if num_doc else None,
+                fecha_nacimiento=fecha_nacimiento,
+                lugar_nacimiento=lugar_nac, eps=eps,
+                grupo_sanguineo=map_grupo_sang.get(str(grupo_sang_str).strip(), None) if grupo_sang_str else None,
+                enfermedades_alergias=enfermedades, nombre_padre=nombre_padre, celular_padre=cel_padre,
+                nombre_madre=nombre_madre, celular_madre=cel_madre, nombre_acudiente=nombre_acud,
+                celular_acudiente=cel_acud, email_acudiente=email_acud,
+                espera_en_porteria=True if espera_porteria_str and 'SI' in str(espera_porteria_str).upper() else False,
+                colegio_anterior=colegio_ant, grado_anterior=grado_ant
+            )
+            fichas_a_crear.append(ficha)
+        except Exception as e:
+            messages.warning(request, f"Error preparando Ficha en fila {fila_num}: {e}")
+            errores_count += 1
+
+    # Creación masiva de Fichas
+    if fichas_a_crear:
+        FichaEstudiante.objects.bulk_create(fichas_a_crear)
+    
+    creados_count = len(fichas_a_crear)
+    messages.success(request, f"Proceso de estudiantes completado. Creados: {creados_count}. Errores: {errores_count}.")
 
 
 def _procesar_excel_materias(request, archivo, colegio):
@@ -238,7 +240,6 @@ def _procesar_excel_materias(request, archivo, colegio):
             
     messages.success(request, f"Proceso de materias completado. Materias creadas: {creadas}. Asociaciones a áreas creadas: {asociaciones_creadas}. Errores: {errores}.")
 
-# La función para procesar docentes se mantiene igual si se usa en el futuro.
 def _procesar_csv_docentes(request, reader, colegio):
     """Lógica para procesar el CSV de docentes para el colegio actual (preservada)."""
     creados, errores = 0, 0
