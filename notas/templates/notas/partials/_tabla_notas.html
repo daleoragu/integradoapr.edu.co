@@ -31,16 +31,23 @@
             <div class="row align-items-center">
                 <div class="col-md-3">
                     <label for="p-ser" class="form-label mb-0">Ser (%):</label>
-                    <input type="number" class="form-control form-control-sm porcentaje-input" id="p-ser" value="{{ asignacion_seleccionada.porcentaje_ser }}" min="0" max="100">
+                    <!-- ================================================================== -->
+                    <!-- INICIO DE LA CORRECCIÓN -->
+                    <!-- Se usa la propiedad _calc para mostrar el valor correcto inicial. -->
+                    <!-- ================================================================== -->
+                    <input type="number" class="form-control form-control-sm porcentaje-input" id="p-ser" value="{{ asignacion_seleccionada.ser_calc|floatformat:0 }}" min="0" max="100">
                 </div>
                 <div class="col-md-3">
                     <label for="p-saber" class="form-label mb-0">Saber (%):</label>
-                    <input type="number" class="form-control form-control-sm porcentaje-input" id="p-saber" value="{{ asignacion_seleccionada.porcentaje_saber }}" min="0" max="100">
+                    <input type="number" class="form-control form-control-sm porcentaje-input" id="p-saber" value="{{ asignacion_seleccionada.saber_calc|floatformat:0 }}" min="0" max="100">
                 </div>
                 <div class="col-md-3">
                     <label for="p-hacer" class="form-label mb-0">Hacer (%):</label>
-                    <input type="number" class="form-control form-control-sm porcentaje-input" id="p-hacer" value="{{ asignacion_seleccionada.porcentaje_hacer }}" min="0" max="100">
+                    <input type="number" class="form-control form-control-sm porcentaje-input" id="p-hacer" value="{{ asignacion_seleccionada.hacer_calc|floatformat:0 }}" min="0" max="100">
                 </div>
+                <!-- ================================================================== -->
+                <!-- FIN DE LA CORRECCIÓN -->
+                <!-- ================================================================== -->
                 <div class="col-md-3">
                     <label class="form-label mb-0">Suma Total:</label>
                     <div id="suma-porcentajes" class="fw-bold fs-5 p-1 border rounded text-center bg-white">100%</div>
