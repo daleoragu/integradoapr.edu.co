@@ -27,7 +27,15 @@ def personalizacion_portal_vista(request):
             messages.success(request, '¡La personalización del portal se ha guardado correctamente!')
             return redirect('notas:personalizacion_portal')
         else:
-            messages.error(request, 'Por favor, corrija los errores en el formulario.')
+            # --- INICIO DE LA CORRECCIÓN ---
+            # En lugar de un mensaje genérico, ahora mostramos el error de cada campo.
+            for field, errors in form.errors.items():
+                for error in errors:
+                    # Obtenemos la etiqueta del campo para que el mensaje sea más claro.
+                    # Por ejemplo, en lugar de 'nombre', dirá 'Nombre del Colegio'.
+                    field_label = form.fields.get(field).label if form.fields.get(field) else field.capitalize()
+                    messages.error(request, f"Error en '{field_label}': {error}")
+            # --- FIN DE LA CORRECCIÓN ---
     else:
         form = ColegioPersonalizacionForm(instance=colegio)
 
@@ -237,7 +245,7 @@ def editar_imagen_carrusel_vista(request, pk):
     context = {
         'form': form,
         'page_title': f'Editando Imagen: {imagen.titulo}',
-        'colegio': request.colegio
+        'colegio': colegio
     }
     return render(request, 'notas/admin_portal/editar_imagen_carrusel.html', context)
 

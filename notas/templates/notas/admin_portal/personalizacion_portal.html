@@ -42,6 +42,13 @@
                     </h2>
                     <div id="collapseContenido" class="accordion-collapse collapse" aria-labelledby="headingContenido" data-bs-parent="#accordionPersonalizacion">
                         <div class="accordion-body">
+                            
+                            <!-- INICIO DE LA CORRECCIÓN: Se añade el campo 'nombre' -->
+                            <div class="mb-3">
+                                {{ form.nombre|as_crispy_field }}
+                            </div>
+                            <!-- FIN DE LA CORRECCIÓN -->
+
                             {{ form.lema|as_crispy_field }}
                             <hr>
                             {{ form.historia|as_crispy_field }}

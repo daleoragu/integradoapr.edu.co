@@ -47,24 +47,25 @@ class ImagenCarruselForm(forms.ModelForm):
         }
 
 # --- INICIO: FORMULARIO DEFINITIVO Y CORREGIDO ---
-# Este formulario ahora coincide con los campos de tu modelo Colegio en perfiles.py
 class ColegioPersonalizacionForm(forms.ModelForm):
     class Meta:
         model = Colegio
-        # Se listan los campos que se quieren editar desde el formulario de personalización.
-        # Estos campos SÍ existen en tu modelo Colegio.
         fields = [
             'nombre', 'lema',
             'historia', 'mision', 'vision', 'modelo_pedagogico',
             'escudo', 'favicon',
-            'color_primario', 'color_secundario', 'color_fondo', 'color_topbar', 'color_topbar_texto',
+            'color_primario', 'color_texto_primario', 'color_secundario', 'color_fondo', 
+            'color_topbar', 'color_topbar_texto', 'color_footer', 'color_footer_texto',
             'telefono', 'email_contacto', 'whatsapp_numero',
             'url_facebook', 'url_instagram', 'url_twitter_x', 'url_youtube',
+            'layout_portal', 
             'portal_publico_activo'
         ]
         widgets = {
             # --- Textos y Contenidos ---
-            'nombre': forms.TextInput(attrs={'class': 'form-control'}),
+            # --- LÍNEA CORREGIDA ---
+            # Se añade 'readonly': True para que el campo no sea editable pero su valor se envíe.
+            'nombre': forms.TextInput(attrs={'class': 'form-control', 'readonly': True}),
             'lema': forms.TextInput(attrs={'class': 'form-control'}),
             'historia': forms.Textarea(attrs={'class': 'form-control', 'rows': 8}),
             'mision': forms.Textarea(attrs={'class': 'form-control', 'rows': 5}),
@@ -76,12 +77,14 @@ class ColegioPersonalizacionForm(forms.ModelForm):
             'favicon': forms.ClearableFileInput(attrs={'class': 'form-control'}),
 
             # --- Paleta de Colores ---
-            # Se usa el widget de tipo 'color' para una mejor experiencia de usuario
             'color_primario': forms.TextInput(attrs={'type': 'color', 'class': 'form-control form-control-color'}),
+            'color_texto_primario': forms.TextInput(attrs={'type': 'color', 'class': 'form-control form-control-color'}),
             'color_secundario': forms.TextInput(attrs={'type': 'color', 'class': 'form-control form-control-color'}),
             'color_fondo': forms.TextInput(attrs={'type': 'color', 'class': 'form-control form-control-color'}),
             'color_topbar': forms.TextInput(attrs={'type': 'color', 'class': 'form-control form-control-color'}),
             'color_topbar_texto': forms.TextInput(attrs={'type': 'color', 'class': 'form-control form-control-color'}),
+            'color_footer': forms.TextInput(attrs={'type': 'color', 'class': 'form-control form-control-color'}),
+            'color_footer_texto': forms.TextInput(attrs={'type': 'color', 'class': 'form-control form-control-color'}),
 
             # --- Contacto y Redes Sociales ---
             'telefono': forms.TextInput(attrs={'class': 'form-control'}),
@@ -93,6 +96,7 @@ class ColegioPersonalizacionForm(forms.ModelForm):
             'url_youtube': forms.URLInput(attrs={'class': 'form-control'}),
 
             # --- Configuración ---
+            'layout_portal': forms.Select(attrs={'class': 'form-select'}),
             'portal_publico_activo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
         help_texts = {
