@@ -1,0 +1,97 @@
+{% extends "notas/base.html" %}
+
+{% block page_title %}
+    <h1>Detalle del Área: {{ area.nombre }}</h1>
+{% endblock %}
+
+{% block content %}
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message|safe }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div class="card shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-sitemap me-2"></i>
+            Carga Académica de {{ area.nombre }}
+        </h5>
+        <div class="d-flex align-items-center">
+             <button id="add-assignment-btn" class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#asignacionModal">
+                <i class="fas fa-plus me-2"></i>Añadir
+            </button>
+            <a href="{% url 'notas:gestion_asignacion_academica' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Volver
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Curso</th>
+                        <th>Materia</th>
+                        <th>Docente Asignado</th>
+                        <th class="text-center">I.H.</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for asignacion in asignaciones %}
+                    <tr>
+                        <td class="align-middle"><strong>{{ asignacion.curso.nombre }}</strong></td>
+                        <td class="align-middle">{{ asignacion.materia.nombre }}</td>
+                        <td class="align-middle">{{ asignacion.docente.user.get_full_name }}</td>
+                        <td class="align-middle text-center">{{ asignacion.intensidad_horaria_semanal }}h</td>
+                        <td class="align-middle text-center">
+                            <button class="btn btn-sm btn-outline-info border-0 edit-btn"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#asignacionModal"
+                                    data-id="{{ asignacion.id }}"
+                                    data-curso-id="{{ asignacion.curso.id }}"
+                                    data-materia-id="{{ asignacion.materia.id }}"
+                                    data-docente-id="{{ asignacion.docente.id }}"
+                                    data-ihs="{{ asignacion.intensidad_horaria_semanal }}"
+                                    title="Editar Asignación">
+                                <i class="fas fa-pencil-alt"></i>
+                            </button>
+                            <form action="{% url 'notas:eliminar_asignacion' asignacion.id %}" method="POST" class="d-inline" onsubmit="return confirm('¿Eliminar esta asignación?')">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-danger border-0" title="Eliminar Asignación"><i class="fas fa-trash-alt"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">
+                            Esta área aún no tiene materias asignadas.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="table-group-divider">
+                    <tr>
+                        <th colspan="4" class="text-end">Total de Horas Semanales en el Área:</th>
+                        <th class="text-center fs-5">{{ total_ih_area }}h</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Añadir/Editar Asignación -->
+{% include "notas/admin_crud/includes/modal_asignacion.html" %}
+<!-- FIN MODAL -->
+
+{% endblock %}
+
+{% block extra_js %}
+{% include "notas/admin_crud/includes/modal_asignacion_js.html" %}
+{% endblock %}

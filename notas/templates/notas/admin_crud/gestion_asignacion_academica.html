@@ -17,7 +17,7 @@
 
 <div class="row">
     <!-- Columna Principal: Asignación por Docente -->
-    <div class="col-lg-9">
+    <div class="col-lg-8">
         <div class="card shadow-sm">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Carga Académica por Docente</h5>
@@ -30,23 +30,31 @@
                     <table class="table table-bordered table-hover">
                         <thead class="table-light">
                             <tr>
-                                <th style="width: 25%;">Docente</th>
-                                <th style="width: 15%;">Director de Grado</th>
+                                <th>Docente</th>
+                                <th>Director de Grado</th>
                                 <th>Asignaturas (Materia - Curso - I.H.)</th>
-                                <th class="text-center" style="width: 10%;">Total I.H.</th>
+                                <th class="text-center">Total I.H.</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for data in docentes_list %}
                             <tr>
                                 <td class="align-middle">
-                                    <strong>{{ data.user.get_full_name }}</strong>
+                                    <a href="{% url 'notas:detalle_docente' data.id %}">
+                                        <strong>{{ data.user.get_full_name }}</strong>
+                                    </a>
                                 </td>
                                 <td class="align-middle">
                                     {% for curso in data.cursos_dirigidos.all %}
                                         <span class="badge bg-info">{{ curso.nombre }}</span>
                                     {% empty %}
-                                        <span class="text-muted">N/A</span>
+                                        <!-- NUEVO: Botón para asignar como director -->
+                                        <button class="btn btn-sm btn-outline-success assign-director-btn" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#directorGradoModal"
+                                                data-docente-id="{{ data.id }}">
+                                            <i class="fas fa-user-plus me-1"></i> Asignar
+                                        </button>
                                     {% endfor %}
                                 </td>
                                 <td>
@@ -58,20 +66,13 @@
                                                 {{ asignacion.materia.nombre }} - <strong>{{ asignacion.curso.nombre }}</strong> ({{ asignacion.intensidad_horaria_semanal }}h)
                                             </span>
                                             <div>
-                                                <!-- BOTÓN EDITAR (NUEVO) -->
                                                 <button class="btn btn-sm btn-outline-info border-0 edit-btn"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#asignacionModal"
-                                                        data-id="{{ asignacion.id }}"
-                                                        data-curso-id="{{ asignacion.curso.id }}"
-                                                        data-materia-id="{{ asignacion.materia.id }}"
-                                                        data-docente-id="{{ asignacion.docente.id }}"
-                                                        data-ihs="{{ asignacion.intensidad_horaria_semanal }}"
-                                                        title="Editar Asignación">
+                                                        data-bs-toggle="modal" data-bs-target="#asignacionModal"
+                                                        data-id="{{ asignacion.id }}" data-curso-id="{{ asignacion.curso.id }}"
+                                                        data-materia-id="{{ asignacion.materia.id }}" data-docente-id="{{ asignacion.docente.id }}"
+                                                        data-ihs="{{ asignacion.intensidad_horaria_semanal }}" title="Editar Asignación">
                                                     <i class="fas fa-pencil-alt"></i>
                                                 </button>
-                                                <!-- FIN BOTÓN EDITAR -->
-
                                                 <form action="{% url 'notas:eliminar_asignacion' asignacion.id %}" method="POST" class="d-inline" onsubmit="return confirm('¿Eliminar esta asignación?')">
                                                     {% csrf_token %}
                                                     <button type="submit" class="btn btn-sm btn-outline-danger border-0" title="Eliminar Asignación"><i class="fas fa-trash-alt"></i></button>
@@ -83,14 +84,10 @@
                                         {% endfor %}
                                     </ul>
                                 </td>
-                                <td class="align-middle text-center fs-5">
-                                    <strong>{{ data.total_ih }}</strong>
-                                </td>
+                                <td class="align-middle text-center fs-5"><strong>{{ data.total_ih }}</strong></td>
                             </tr>
                             {% empty %}
-                            <tr>
-                                <td colspan="4" class="text-center text-muted py-4">No hay docentes registrados.</td>
-                            </tr>
+                            <tr><td colspan="4" class="text-center text-muted py-4">No hay docentes registrados.</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
@@ -100,11 +97,9 @@
     </div>
 
     <!-- Columna Lateral: Resúmenes y Acciones -->
-    <div class="col-lg-3">
+    <div class="col-lg-4">
         <div class="card shadow-sm mb-4">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-tasks me-2"></i>Acciones Rápidas</h5>
-            </div>
+            <div class="card-header"><h5 class="mb-0"><i class="fas fa-tasks me-2"></i>Acciones Rápidas</h5></div>
             <div class="list-group list-group-flush">
                 <a href="{% url 'notas:gestion_docentes' %}" class="list-group-item list-group-item-action">Gestionar Docentes</a>
                 <a href="{% url 'notas:gestion_cursos' %}" class="list-group-item list-group-item-action">Gestionar Cursos / Grados</a>
@@ -112,14 +107,10 @@
             </div>
         </div>
 
-        <!-- SECCIÓN MODIFICADA -->
-        <div class="card shadow-sm">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-search me-2"></i>Ver Carga por Curso</h5>
-            </div>
+        <div class="card shadow-sm mb-4">
+            <div class="card-header"><h5 class="mb-0"><i class="fas fa-search me-2"></i>Ver Carga por Curso</h5></div>
             <div class="list-group list-group-flush">
                  {% for curso in cursos_list %}
-                    <!-- Cada curso ahora es un enlace a su página de detalle -->
                     <a href="{% url 'notas:detalle_curso' curso.id %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
                         <span><i class="fas fa-chalkboard me-2"></i>{{ curso.nombre }}</span>
                         <span class="badge bg-primary rounded-pill fs-6">{{ curso.total_ih }}h</span>
@@ -129,138 +120,75 @@
                 {% endfor %}
             </div>
         </div>
-        <!-- FIN SECCIÓN MODIFICADA -->
+        
+        <div class="card shadow-sm">
+            <div class="card-header"><h5 class="mb-0"><i class="fas fa-sitemap me-2"></i>Ver Carga por Área</h5></div>
+            <div class="list-group list-group-flush">
+                 {% for area in areas_list %}
+                    <a href="{% url 'notas:detalle_area' area.id %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-layer-group me-2"></i>{{ area.nombre }}</span>
+                        <span class="badge bg-success rounded-pill fs-6">{{ area.total_ih }}h</span>
+                    </a>
+                {% empty %}
+                    <li class="list-group-item">No hay áreas para mostrar.</li>
+                {% endfor %}
+            </div>
+        </div>
     </div>
 </div>
 
-<!-- Modal para Añadir/Editar Asignación -->
-<div class="modal fade" id="asignacionModal" tabindex="-1" aria-labelledby="asignacionModalLabel" aria-hidden="true">
+<!-- Incluimos el modal para asignación de materias -->
+{% include "notas/admin_crud/includes/modal_asignacion.html" %}
+
+<!-- NUEVO: Modal para asignar Director de Grado -->
+<div class="modal fade" id="directorGradoModal" tabindex="-1" aria-labelledby="directorGradoModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="asignacionModalLabel">Crear Nueva Asignación</h5>
+                <h5 class="modal-title" id="directorGradoModalLabel">Asignar Director de Grado</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <!-- El 'action' del formulario se cambiará dinámicamente con JavaScript -->
-            <form id="assignment-form" action="{% url 'notas:crear_asignacion' %}" method="post">
+            <form id="director-form" action="{% url 'notas:asignar_director_grado' %}" method="post">
                 {% csrf_token %}
+                <input type="hidden" name="docente_id" id="form-docente-id">
                 <div class="modal-body">
+                    <p>Seleccione el curso que será dirigido por el docente:</p>
                     <div class="mb-3">
-                        <label for="id_curso" class="form-label">Curso / Grado:</label>
-                        <select id="id_curso" name="curso" class="form-select" required>
-                            <option value="">Seleccione un curso</option>
-                            {% for curso in cursos %}
+                        <label for="id_curso_director" class="form-label">Cursos sin director asignado:</label>
+                        <select id="id_curso_director" name="curso_id" class="form-select" required>
+                            <option value="">Seleccione un curso...</option>
+                            {% for curso in cursos_sin_director %}
                                 <option value="{{ curso.id }}">{{ curso.nombre }}</option>
                             {% endfor %}
                         </select>
                     </div>
-
-                    <div class="mb-3">
-                        <label for="id_materia" class="form-label">Materia:</label>
-                        <select id="id_materia" name="materia" class="form-select" required>
-                            <option value="">Seleccione una materia</option>
-                            {% for materia in materias %}
-                                <option value="{{ materia.id }}" data-area-id="{{ materia.area_id_display }}" data-area-nombre="{{ materia.area_nombre_display }}">{{ materia.nombre }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="id_area" class="form-label">Área:</label>
-                        <input type="text" id="id_area" name="area_display" class="form-control" readonly>
-                        <input type="hidden" id="id_area_hidden" name="area">
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="id_docente" class="form-label">Docente:</label>
-                        <select id="id_docente" name="docente" class="form-select" required>
-                            <option value="">Seleccione un docente</option>
-                            {% for docente in docentes %}
-                                <option value="{{ docente.id }}">{{ docente.user.get_full_name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="id_intensidad_horaria" class="form-label">Intensidad Horaria Semanal (horas):</label>
-                        <input type="number" id="id_intensidad_horaria" name="intensidad_horaria_semanal" class="form-control" min="1" required>
-                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar</button>
+                    <button type="submit" class="btn btn-primary">Asignar</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
-<!-- FIN MODAL -->
 
 {% endblock %}
 
 {% block extra_js %}
+{% include "notas/admin_crud/includes/modal_asignacion_js.html" %}
+
+<!-- NUEVO: JavaScript para el modal de director de grado -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const materiaSelect = document.getElementById('id_materia');
-    const areaInput = document.getElementById('id_area');
-    const areaHiddenInput = document.getElementById('id_area_hidden');
-    const asignacionModal = document.getElementById('asignacionModal');
-    const modalForm = document.getElementById('assignment-form');
-    const modalTitle = document.getElementById('asignacionModalLabel');
-    
-    // URL base para crear, la usaremos para resetear el formulario
-    const createUrl = "{% url 'notas:crear_asignacion' %}";
-
-    // Función para actualizar el campo de área (ya la tenías)
-    function updateAreaField() {
-        const selectedOption = materiaSelect.options[materiaSelect.selectedIndex];
-        if (selectedOption && selectedOption.value) {
-            areaInput.value = selectedOption.dataset.areaNombre || '';
-            areaHiddenInput.value = selectedOption.dataset.areaId || '';
-        } else {
-            areaInput.value = '';
-            areaHiddenInput.value = '';
-        }
+    const directorGradoModal = document.getElementById('directorGradoModal');
+    if (directorGradoModal) {
+        directorGradoModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const docenteId = button.dataset.docenteId;
+            const formDocenteIdInput = document.getElementById('form-docente-id');
+            formDocenteIdInput.value = docenteId;
+        });
     }
-
-    materiaSelect.addEventListener('change', updateAreaField);
-
-    // --- LÓGICA NUEVA PARA EDITAR ---
-    asignacionModal.addEventListener('show.bs.modal', function (event) {
-        // El botón que abrió el modal
-        const button = event.relatedTarget;
-
-        // Verifica si el botón es de 'editar' por su clase
-        if (button.classList.contains('edit-btn')) {
-            // --- MODO EDICIÓN ---
-            const assignmentId = button.dataset.id;
-            
-            // 1. Cambiar título y acción del formulario
-            modalTitle.textContent = 'Editar Asignación Académica';
-            // ¡IMPORTANTE! Debes crear esta URL en tu urls.py. Usamos un placeholder que reemplazamos.
-            modalForm.action = `/admin/gestion-academica/asignacion/editar/${assignmentId}/`;
-
-            // 2. Rellenar el formulario con los datos del botón
-            document.getElementById('id_curso').value = button.dataset.cursoId;
-            document.getElementById('id_materia').value = button.dataset.materiaId;
-            document.getElementById('id_docente').value = button.dataset.docenteId;
-            document.getElementById('id_intensidad_horaria').value = button.dataset.ihs;
-
-            // Actualiza el campo de área después de seleccionar la materia
-            updateAreaField();
-            
-        } else {
-            // --- MODO CREACIÓN ---
-            // 1. Resetear título y acción del formulario
-            modalTitle.textContent = 'Crear Nueva Asignación Académica';
-            modalForm.action = createUrl;
-
-            // 2. Limpiar el formulario
-            modalForm.reset();
-            // Asegurarse de que el campo de área también se limpie
-            updateAreaField();
-        }
-    });
 });
 </script>
 {% endblock %}

@@ -199,5 +199,11 @@ urlpatterns = [
     path('suplantar/detener/', impersonation_views.detener_suplantacion, name='detener_suplantacion'),
 
     path('admin/gestion-academica/curso/<int:curso_id>/', gestion_academica_views.detalle_curso, name='detalle_curso'),
+    path('admin/gestion-academica/asignacion/editar/<int:asignacion_id>/', gestion_academica_views.editar_asignacion_vista, name='editar_asignacion'),
+    path('admin/gestion-academica/asignacion/eliminar/<int:asignacion_id>/', gestion_academica_views.eliminar_asignacion_vista, name='eliminar_asignacion'),
+    path('admin/gestion-academica/cursos/', gestion_academica_views.gestion_cursos_vista, name='gestion_cursos'),   
+    path('admin/gestion-academica/area/<int:area_id>/', gestion_academica_views.detalle_area, name='detalle_area'),
+    path('admin/gestion-academica/docente/<int:docente_id>/', gestion_academica_views.detalle_docente, name='detalle_docente'),
+    path('admin/gestion-academica/asignar-director-grado/', gestion_academica_views.asignar_director_grado_vista, name='asignar_director_grado'),
     
 ]

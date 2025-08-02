@@ -1,0 +1,32 @@
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const asignacionModal = document.getElementById('asignacionModal');
+    if (asignacionModal) {
+        const modalForm = document.getElementById('assignment-form');
+        const modalTitle = document.getElementById('asignacionModalLabel');
+        const createUrl = "{% url 'notas:crear_asignacion' %}";
+
+        asignacionModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+
+            if (button.classList.contains('edit-btn')) {
+                // --- MODO EDICIÓN ---
+                const assignmentId = button.dataset.id;
+                
+                modalTitle.textContent = 'Editar Asignación Académica';
+                modalForm.action = `/admin/gestion-academica/asignacion/editar/${assignmentId}/`;
+
+                document.getElementById('id_curso').value = button.dataset.cursoId;
+                document.getElementById('id_materia').value = button.dataset.materiaId;
+                document.getElementById('id_docente').value = button.dataset.docenteId;
+                document.getElementById('id_intensidad_horaria').value = button.dataset.ihs;
+            } else {
+                // --- MODO CREACIÓN ---
+                modalTitle.textContent = 'Crear Nueva Asignación Académica';
+                modalForm.action = createUrl;
+                modalForm.reset();
+            }
+        });
+    }
+});
+</script>
