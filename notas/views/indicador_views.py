@@ -25,7 +25,7 @@ def crear_indicador_vista(request):
     descripcion = request.POST.get('descripcion', '').strip()
     docente_id_param = request.POST.get('docente_id')
 
-    redirect_url = f"{reverse('ingresar_notas_periodo')}?asignacion_id={asignacion_id or ''}&periodo_id={periodo_id or ''}"
+    redirect_url = f"{reverse('notas:ingresar_notas_periodo')}?asignacion_id={asignacion_id or ''}&periodo_id={periodo_id or ''}"
     if request.user.is_superuser and docente_id_param:
         redirect_url += f"&docente_id={docente_id_param}"
 
@@ -81,7 +81,7 @@ def editar_indicador_vista(request, indicador_id):
         return redirect('notas:ingresar_notas_periodo')
 
     docente_id_param = indicador.asignacion.docente.id if request.user.is_superuser else None
-    redirect_url = f"{reverse('ingresar_notas_periodo')}?asignacion_id={indicador.asignacion.id}&periodo_id={indicador.periodo.id}"
+    redirect_url = f"{reverse('notas:ingresar_notas_periodo')}?asignacion_id={indicador.asignacion.id}&periodo_id={indicador.periodo.id}"
     if docente_id_param:
         redirect_url += f"&docente_id={docente_id_param}"
     
@@ -119,7 +119,7 @@ def eliminar_indicador_vista(request, indicador_id):
         indicador = IndicadorLogroPeriodo.objects.select_related('asignacion__docente').get(id=indicador_id, colegio=request.colegio)
         
         docente_id_param = indicador.asignacion.docente.id if request.user.is_superuser else None
-        redirect_url = f"{reverse('ingresar_notas_periodo')}?asignacion_id={indicador.asignacion.id}&periodo_id={indicador.periodo.id}"
+        redirect_url = f"{reverse('notas:ingresar_notas_periodo')}?asignacion_id={indicador.asignacion.id}&periodo_id={indicador.periodo.id}"
         if docente_id_param:
             redirect_url += f"&docente_id={docente_id_param}"
         

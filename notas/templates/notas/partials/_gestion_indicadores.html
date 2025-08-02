@@ -10,7 +10,7 @@
     {% if periodo_cerrado %}
         <p class="text-muted">No se pueden añadir o editar indicadores porque el periodo está cerrado.</p>
     {% else %}
-        <form method="POST" action="{% url 'notas:crear_indicador_vista' %}" class="form-indicador my-3">
+        <form method="POST" action="{% url 'notas:crear_indicador' %}" class="form-indicador my-3">
             {% csrf_token %}
             <input type="hidden" name="asignacion_id" value="{{ asignacion_seleccionada.id }}">
             <input type="hidden" name="periodo_id" value="{{ periodo_seleccionado.id }}">
@@ -29,21 +29,28 @@
     <h6 class="mt-4">Indicadores Actuales:</h6>
     
     {% if indicadores %}
-        {# --- CAMPO OCULTO ELIMINADO --- #}
         <ul class="list-group">
             {% for indicador in indicadores %}
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     <span>{{ indicador.descripcion }}</span>
                     {% if not periodo_cerrado %}
                         <div class="d-flex">
+                            <!-- ================================================================== -->
+                            <!-- INICIO DE LA CORRECCIÓN CLAVE -->
+                            <!-- ================================================================== -->
+                            <!-- Se añade un nuevo atributo 'data-url' que contiene la URL ya construida por Django -->
                             <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1 me-1" 
                                     title="Editar"
                                     data-bs-toggle="modal" 
                                     data-bs-target="#editarIndicadorModal"
                                     data-indicador-id="{{ indicador.id }}"
-                                    data-descripcion="{{ indicador.descripcion }}">
+                                    data-descripcion="{{ indicador.descripcion }}"
+                                    data-url="{% url 'notas:editar_indicador' indicador.id %}">
                                 <i class="fas fa-pencil-alt"></i>
                             </button>
+                            <!-- ================================================================== -->
+                            <!-- FIN DE LA CORRECCIÓN CLAVE -->
+                            <!-- ================================================================== -->
                             <form action="{% url 'notas:eliminar_indicador' indicador.id %}" method="post" class="d-inline" onsubmit="return confirm('¿Está seguro de que desea eliminar este indicador?');">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-1" title="Eliminar">
@@ -61,7 +68,7 @@
 </div>
 <hr class="separador">
 
-<!-- CÓDIGO DEL MODAL PARA EDITAR INDICADORES (Sin cambios) -->
+<!-- CÓDIGO DEL MODAL PARA EDITAR INDICADORES -->
 <div class="modal fade" id="editarIndicadorModal" tabindex="-1" aria-labelledby="editarIndicadorModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
@@ -69,7 +76,7 @@
         <h5 class="modal-title" id="editarIndicadorModalLabel">Editar Indicador de Logro</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <form id="editarIndicadorForm" method="POST">
+      <form id="editarIndicadorForm" method="POST" action="">
         {% csrf_token %}
         <div class="modal-body">
           <p class="text-muted">Modifique la descripción del indicador y haga clic en "Guardar Cambios".</p>
@@ -83,4 +90,30 @@
     </div>
   </div>
 </div>
+
+<!-- SCRIPT SIMPLIFICADO Y ROBUSTO PARA MANEJAR EL MODAL -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const editarModalEl = document.getElementById('editarIndicadorModal');
+        if (editarModalEl) {
+            editarModalEl.addEventListener('show.bs.modal', function (event) {
+                // Botón que activó el modal
+                const button = event.relatedTarget;
+                
+                // Extraer información de los atributos data-*
+                const descripcion = button.getAttribute('data-descripcion');
+                // Leemos la URL correcta directamente del nuevo atributo 'data-url'
+                const formActionUrl = button.getAttribute('data-url');
+    
+                // Actualizar el formulario del modal
+                const form = document.getElementById('editarIndicadorForm');
+                form.action = formActionUrl; // Asignamos la URL correcta
+    
+                const textarea = document.getElementById('descripcionIndicadorTextarea');
+                textarea.value = descripcion;
+            });
+        }
+    });
+</script>
+
 {% endif %}

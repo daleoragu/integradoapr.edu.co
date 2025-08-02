@@ -76,7 +76,7 @@
 
     <!-- Datos JSON para que JavaScript los lea. -->
     <div id="estudiantes-data-json" style="display: none;">{{ estudiantes_data_json|safe }}</div>
-    <div id="url-get-inasistencias" data-url="{% url 'notas:ajax_get_inasistencias_auto' %}"></div>
+    <div id="url-get-inasistencias" data-url="{% url 'notas:get_inasistencias_auto' %}"></div>
     
     <!-- --- INICIO: DIV AÑADIDO PARA LA ESCALA DE VALORACIÓN --- -->
     <div id="escala-valoracion-json" style="display: none;">{{ escala_valoracion_json|safe }}</div>

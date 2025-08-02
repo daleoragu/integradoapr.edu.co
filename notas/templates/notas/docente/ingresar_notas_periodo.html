@@ -113,6 +113,9 @@
     });
     </script>
 
+    <!-- ================================================================== -->
+    <!-- INICIO DE LA CORRECCIÓN DEL SCRIPT DEL MODAL -->
+    <!-- ================================================================== -->
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         const editarIndicadorModal = document.getElementById('editarIndicadorModal');
@@ -122,14 +125,22 @@
             const textarea = editarIndicadorModal.querySelector('#descripcionIndicadorTextarea');
             
             editarIndicadorModal.addEventListener('show.bs.modal', function(event) {
+                // Botón que activó el modal
                 const button = event.relatedTarget;
-                const indicadorId = button.getAttribute('data-indicador-id');
+                
+                // Extraer información de los atributos data-*
                 const descripcion = button.getAttribute('data-descripcion');
-                const actionUrl = `/indicador/${indicadorId}/editar/`;
+                // CORRECCIÓN: Leemos la URL correcta desde el atributo 'data-url' que Django ya generó
+                const actionUrl = button.getAttribute('data-url');
+                
+                // Asignamos la URL correcta al formulario
                 form.setAttribute('action', actionUrl);
                 textarea.value = descripcion;
             });
         }
     });
     </script>
+    <!-- ================================================================== -->
+    <!-- FIN DE LA CORRECCIÓN -->
+    <!-- ================================================================== -->
 {% endblock %}
