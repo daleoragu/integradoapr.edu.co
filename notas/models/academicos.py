@@ -74,12 +74,48 @@ class AsignacionDocente(models.Model):
             total_porcentaje = (self.porcentaje_ser or 0) + (self.porcentaje_saber or 0) + (self.porcentaje_hacer or 0)
             if total_porcentaje != 100:
                 raise ValidationError(f"La suma de porcentajes debe ser 100. Actualmente es {total_porcentaje}.")
+    
+    # ==================================================================
+    # INICIO DE LA CORRECCIÓN
+    # La lógica ahora depende de la configuración global del colegio.
+    # ==================================================================
     @property
-    def ser_calc(self): return Decimal('33.33') if self.usar_ponderacion_equitativa else Decimal(self.porcentaje_ser)
+    def ser_calc(self):
+        # Primero, obtenemos la configuración global del colegio.
+        config_global, _ = ConfiguracionCalificaciones.objects.get_or_create(colegio=self.colegio)
+
+        # REGLA 1: ¿El administrador permite que los docentes modifiquen?
+        if config_global.docente_puede_modificar:
+            # SI, entonces usamos la configuración de ESTA ASIGNACIÓN específica.
+            # Si el docente marcó equitativa para esta asignación, es 33.33.
+            # Si no, es el porcentaje que el docente guardó para esta asignación.
+            return Decimal('33.33') if self.usar_ponderacion_equitativa else Decimal(self.porcentaje_ser)
+        
+        # REGLA 2: El administrador NO permite modificar.
+        else:
+            # NO, entonces IGNORAMOS la configuración de la asignación y usamos la de la MATERIA.
+            # Si la materia está configurada como equitativa, es 33.33.
+            # Si no, es el porcentaje por defecto que el admin guardó para la materia.
+            return Decimal('33.33') if self.materia.usar_ponderacion_equitativa else Decimal(self.materia.porcentaje_ser)
+
     @property
-    def saber_calc(self): return Decimal('33.33') if self.usar_ponderacion_equitativa else Decimal(self.porcentaje_saber)
+    def saber_calc(self):
+        config_global, _ = ConfiguracionCalificaciones.objects.get_or_create(colegio=self.colegio)
+        if config_global.docente_puede_modificar:
+            return Decimal('33.33') if self.usar_ponderacion_equitativa else Decimal(self.porcentaje_saber)
+        else:
+            return Decimal('33.33') if self.materia.usar_ponderacion_equitativa else Decimal(self.materia.porcentaje_saber)
+
     @property
-    def hacer_calc(self): return Decimal('33.34') if self.usar_ponderacion_equitativa else Decimal(self.porcentaje_hacer)
+    def hacer_calc(self):
+        config_global, _ = ConfiguracionCalificaciones.objects.get_or_create(colegio=self.colegio)
+        if config_global.docente_puede_modificar:
+            return Decimal('33.34') if self.usar_ponderacion_equitativa else Decimal(self.porcentaje_hacer)
+        else:
+            return Decimal('33.34') if self.materia.usar_ponderacion_equitativa else Decimal(self.materia.porcentaje_hacer)
+    # ==================================================================
+    # FIN DE LA CORRECCIÓN
+    # ==================================================================
 
 class Calificacion(models.Model):
     colegio = models.ForeignKey(Colegio, on_delete=models.CASCADE, related_name="calificaciones", null=True)
@@ -87,14 +123,10 @@ class Calificacion(models.Model):
     materia = models.ForeignKey(Materia, on_delete=models.CASCADE)
     periodo = models.ForeignKey(PeriodoAcademico, on_delete=models.CASCADE)
     docente = models.ForeignKey(Docente, on_delete=models.SET_NULL, null=True)
-    # --- INICIO: CAMBIO ---
-    # Se añade 'NIVELACION' a las opciones para consistencia
     TIPO_NOTA_CHOICES = [('SER', 'Promedio Ser'), ('SABER', 'Promedio Saber'), ('HACER', 'Promedio Hacer'), ('PROM_PERIODO', 'Promedio del Periodo'), ('NIVELACION', 'Nota de Nivelación')]
     tipo_nota = models.CharField(max_length=12, choices=TIPO_NOTA_CHOICES)
     valor_nota = models.DecimalField(max_digits=4, decimal_places=2, validators=[MinValueValidator(Decimal('1.0')), MaxValueValidator(Decimal('5.0'))])
-    # Se añade el campo 'es_recuperada' que faltaba en el modelo
     es_recuperada = models.BooleanField(default=False, help_text="Indica si esta calificación de periodo fue recuperada con una nivelación.")
-    # --- FIN: CAMBIO ---
     class Meta:
         unique_together = ('estudiante', 'materia', 'periodo', 'tipo_nota', 'colegio')
         verbose_name = "Calificación (Promedio)"; verbose_name_plural = "Calificaciones (Promedios)"

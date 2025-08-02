@@ -112,21 +112,21 @@ def panel_control_periodos_vista(request):
                 estado = "abierto" if periodo.esta_activo else "cerrado"
                 messages.success(request, f"El Ingreso de Notas para '{periodo}' ha sido {estado}.")
                 mensaje_notificacion = f"El plazo para Ingresar Notas del {periodo} ha sido {estado}."
-                url_notificacion = reverse('ingresar_notas_periodo')
+                url_notificacion = reverse('notas:ingresar_notas_periodo')
             
             elif action == 'toggle_reporte_parcial':
                 periodo.reporte_parcial_activo = not periodo.reporte_parcial_activo
                 estado = "abierto" if periodo.reporte_parcial_activo else "cerrado"
                 messages.success(request, f"El plazo para el Reporte Parcial de '{periodo}' ha sido {estado}.")
                 mensaje_notificacion = f"El plazo para generar Reportes Parciales del {periodo} ha sido {estado}."
-                url_notificacion = reverse('reporte_parcial')
+                url_notificacion = reverse('notas:reporte_parcial')
 
             elif action == 'toggle_nivelaciones':
                 periodo.nivelaciones_activas = not periodo.nivelaciones_activas
                 estado = "abierto" if periodo.nivelaciones_activas else "cerrado"
                 messages.success(request, f"El plazo para las Nivelaciones de '{periodo}' ha sido {estado}.")
                 mensaje_notificacion = f"El plazo para registrar Nivelaciones del {periodo} ha sido {estado}."
-                url_notificacion = reverse('plan_mejoramiento')
+                url_notificacion = reverse('notas:plan_mejoramiento')
             
             else:
                 messages.error(request, "Acción no reconocida.")
@@ -160,29 +160,19 @@ def panel_control_periodos_vista(request):
     return render(request, 'notas/admin_tools/panel_control_periodos.html', context)
 
 
-# --- INICIO: FUNCIÓN CORREGIDA Y ACTUALIZADA ---
 @login_required
 @user_passes_test(es_superusuario)
 def panel_control_promocion_vista(request):
-    """
-    Gestiona la configuración de la regla de promoción basada en áreas.
-    """
     if not request.colegio:
         return HttpResponseNotFound("<h1>Colegio no configurado</h1>")
 
-    # Usamos get_or_create para asegurar que siempre haya una instancia de configuración.
     config, created = ConfiguracionSistema.objects.get_or_create(colegio=request.colegio)
 
     if request.method == 'POST':
-        # Obtenemos el valor del campo 'max_areas_reprobadas' del formulario.
-        # El 'name' en el <input> del HTML debe coincidir con esta cadena.
         max_reprobadas_str = request.POST.get('max_areas_reprobadas')
         
-        # Validamos que el valor recibido sea un número.
         if max_reprobadas_str is not None and max_reprobadas_str.isdigit():
-            # Actualizamos el campo en el objeto de configuración.
             config.max_areas_reprobadas = int(max_reprobadas_str)
-            # Guardamos el objeto en la base de datos.
             config.save()
             messages.success(request, "La regla de promoción ha sido actualizada correctamente.")
             return redirect('notas:panel_control_promocion')
@@ -194,7 +184,6 @@ def panel_control_promocion_vista(request):
         'colegio': request.colegio,
     }
     return render(request, 'notas/admin_tools/panel_control_promocion.html', context)
-# --- FIN: FUNCIÓN CORREGIDA ---
 
 
 class MateriaPorcentajeForm(forms.ModelForm):
@@ -226,11 +215,36 @@ def configuracion_calificaciones_vista(request):
     if request.method == 'POST':
         formset = MateriaFormSet(request.POST, queryset=materias_colegio)
         form_global = ConfiguracionGlobalForm(request.POST, instance=config_global)
+        
+        # Se añade la variable para forzar la sincronización
+        forzar_sincronizacion = request.POST.get('forzar_sincronizacion') == 'on'
 
         if formset.is_valid() and form_global.is_valid():
-            formset.save()
+            materias_guardadas = formset.save()
             form_global.save()
-            messages.success(request, 'La configuración de calificaciones ha sido actualizada correctamente.')
+
+            # ==================================================================
+            # INICIO DE LA CORRECCIÓN
+            # ==================================================================
+            # Si el administrador marcó la casilla, se forzará la actualización
+            # de TODAS las asignaciones, eliminando personalizaciones de docentes.
+            if forzar_sincronizacion:
+                with transaction.atomic():
+                    for materia in materias_guardadas:
+                        AsignacionDocente.objects.filter(materia=materia).update(
+                            # Se resetea el 'usar_ponderacion_equitativa' de la asignación
+                            # para que dependa de la configuración de la materia.
+                            usar_ponderacion_equitativa=True, 
+                            porcentaje_ser=materia.porcentaje_ser,
+                            porcentaje_saber=materia.porcentaje_saber,
+                            porcentaje_hacer=materia.porcentaje_hacer
+                        )
+                messages.success(request, 'Configuración guardada y sincronizada forzosamente con todas las asignaciones.')
+            else:
+                messages.success(request, 'La configuración de calificaciones por defecto ha sido actualizada.')
+            # ==================================================================
+            # FIN DE LA CORRECCIÓN
+            # ==================================================================
             return redirect('notas:configuracion_calificaciones')
         else:
             messages.error(request, 'Por favor, corrija los errores en el formulario.')
@@ -300,9 +314,6 @@ def configuracion_escala_valoracion_vista(request):
 @user_passes_test(es_superusuario)
 @require_POST
 def editar_escala_valoracion_vista(request, escala_id):
-    """
-    Procesa la edición de un nivel de la escala de valoración desde un modal.
-    """
     if not request.colegio:
         return HttpResponseNotFound("<h1>Colegio no configurado</h1>")
     
