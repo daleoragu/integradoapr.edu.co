@@ -2,8 +2,9 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils.text import slugify
-from django.conf import settings # <--- IMPORTANTE: Importar settings
-from django.urls import reverse # <--- IMPORTANTE: Importar reverse
+from django.conf import settings 
+from django.urls import reverse 
+from django.db.models import Max # <--- IMPORTADO PARA EL ORDEN
 
 # ==============================================================================
 # MODELO CENTRAL PARA MULTI-COLEGIO (VERSIÓN COMPLETA Y CORREGIDA)
@@ -123,34 +124,18 @@ class Colegio(models.Model):
             self.slug = slugify(self.nombre)
         super().save(*args, **kwargs)
         
-    # ======================================================================
-    #               MÉTODO CORREGIDO
-    # ======================================================================
     def get_absolute_url(self):
-        """
-        Devuelve la URL completa del portal del colegio.
-        Distingue entre el entorno de desarrollo (localhost) y producción.
-        """
         if not settings.DEBUG:
-            # En producción, usa el subdominio real.
-            # Asegúrate de que tu dominio principal esté configurado correctamente.
             main_domain = "mcolegio.com.co"
             return f"https://{self.slug}.{main_domain}"
         else:
-            # En desarrollo, usa localhost.
-            # Puedes ajustar el puerto si usas uno diferente.
             return f"http://{self.slug}.localhost:8000"
-
 
     class Meta:
         verbose_name = "Colegio"
         verbose_name_plural = "Colegios"
         ordering = ['nombre']
 
-
-# ======================================================================
-#               CAMBIO: Campo "nivel" agregado a Curso
-# ======================================================================
 NIVEL_CHOICES = [
     ('PRE', 'Preescolar'),
     ('PRI', 'Primaria'),
@@ -161,25 +146,30 @@ NIVEL_CHOICES = [
 class Curso(models.Model):
     colegio = models.ForeignKey(Colegio, on_delete=models.CASCADE, related_name="cursos")
     nombre = models.CharField(max_length=100, verbose_name="Nombre del Curso")
-    nivel = models.CharField(max_length=4, choices=NIVEL_CHOICES, default='BAS', verbose_name="Nivel Escolar")  # <-- NUEVO CAMPO
+    nivel = models.CharField(max_length=4, choices=NIVEL_CHOICES, default='BAS', verbose_name="Nivel Escolar")
     director_grado = models.ForeignKey('Docente', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Director de Grado", related_name="cursos_dirigidos")
     
+    # --- CAMPO AÑADIDO ---
+    orden = models.PositiveIntegerField(default=0, db_index=True)
+
     def __str__(self): 
         return self.nombre
         
+    # --- MÉTODO SAVE MODIFICADO ---
     def save(self, *args, **kwargs):
         self.nombre = self.nombre.upper()
+        if self.pk is None: # Si es un curso nuevo
+            # Busca el número de orden más alto que exista y le suma 1
+            max_orden = Curso.objects.filter(colegio=self.colegio).aggregate(Max('orden'))['orden__max']
+            self.orden = (max_orden or 0) + 1
         super().save(*args, **kwargs)
         
+    # --- CLASE META MODIFICADA ---
     class Meta:
         unique_together = ('nombre', 'colegio')
         verbose_name = "Curso"
         verbose_name_plural = "Cursos"
-        ordering = ['nombre']
-
-# ======================================================================
-#                    Resto de modelos sin cambios
-# ======================================================================
+        ordering = ['orden'] # Ordenar por defecto usando el nuevo campo
 
 class Docente(models.Model):
     colegio = models.ForeignKey(Colegio, on_delete=models.CASCADE, related_name="docentes")
@@ -211,7 +201,6 @@ class Estudiante(models.Model):
         verbose_name = "Estudiante"
         verbose_name_plural = "Estudiantes"
         ordering = ['user__last_name', 'user__first_name']
-
 
 class FichaEstudiante(models.Model):
     TIPO_DOCUMENTO_CHOICES = [('CC', 'Cédula de Ciudadanía'), ('TI', 'Tarjeta de Identidad'), ('RC', 'Registro Civil'), ('CE', 'Cédula de Extranjería'), ('OT', 'Otro')]

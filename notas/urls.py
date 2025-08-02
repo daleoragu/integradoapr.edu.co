@@ -205,5 +205,6 @@ urlpatterns = [
     path('admin/gestion-academica/area/<int:area_id>/', gestion_academica_views.detalle_area, name='detalle_area'),
     path('admin/gestion-academica/docente/<int:docente_id>/', gestion_academica_views.detalle_docente, name='detalle_docente'),
     path('admin/gestion-academica/asignar-director-grado/', gestion_academica_views.asignar_director_grado_vista, name='asignar_director_grado'),
+    path('admin/gestion-academica/cursos/reordenar/<int:curso_id>/<str:direccion>/', gestion_academica_views.reordenar_curso_vista, name='reordenar_curso'),
     
 ]

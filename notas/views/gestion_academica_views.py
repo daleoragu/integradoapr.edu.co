@@ -34,18 +34,18 @@ def gestion_asignacion_academica_vista(request):
         total_ih=Sum('asignaciondocente__intensidad_horaria_semanal', default=0)
     ).order_by('user__last_name')
     
+    # Ordena por el nuevo campo 'orden'
     cursos_list = Curso.objects.filter(colegio=request.colegio).annotate(
         total_ih=Sum('asignaciondocente__intensidad_horaria_semanal', default=0)
-    ).order_by('nombre')
+    ).order_by('orden')
     
     areas_list = AreaConocimiento.objects.filter(colegio=request.colegio).annotate(
         total_ih=Sum('ponderacionareamateria__materia__asignaciondocente__intensidad_horaria_semanal', default=0)
     ).order_by('nombre')
 
-    cursos_para_modal = Curso.objects.filter(colegio=request.colegio).order_by('nombre')
+    cursos_para_modal = Curso.objects.filter(colegio=request.colegio).order_by('orden')
     
-    # Obtener cursos que aún no tienen un director asignado para el modal
-    cursos_sin_director = Curso.objects.filter(colegio=request.colegio, director_grado__isnull=True).order_by('nombre')
+    cursos_sin_director = Curso.objects.filter(colegio=request.colegio, director_grado__isnull=True).order_by('orden')
 
     subquery_area_nombre = Subquery(
         PonderacionAreaMateria.objects.filter(materia=OuterRef('pk'), colegio=request.colegio).values('area__nombre')[:1]
@@ -143,7 +143,7 @@ def detalle_curso(request, curso_id):
     curso = get_object_or_404(Curso, pk=curso_id, colegio=request.colegio)
     asignaciones = AsignacionDocente.objects.filter(colegio=request.colegio, curso=curso).select_related('materia', 'docente__user').order_by('materia__nombre')
     total_ih_curso = asignaciones.aggregate(total=Sum('intensidad_horaria_semanal'))['total'] or 0
-    cursos_para_modal = Curso.objects.filter(colegio=request.colegio).order_by('nombre')
+    cursos_para_modal = Curso.objects.filter(colegio=request.colegio).order_by('orden')
     materias_para_modal = Materia.objects.filter(colegio=request.colegio).order_by('nombre')
     docentes_para_modal = Docente.objects.filter(colegio=request.colegio).select_related('user').order_by('user__first_name')
     context = {
@@ -157,9 +157,9 @@ def detalle_area(request, area_id):
     if not request.colegio:
         return HttpResponseNotFound("<h1>Colegio no configurado</h1>")
     area = get_object_or_404(AreaConocimiento, pk=area_id, colegio=request.colegio)
-    asignaciones = AsignacionDocente.objects.filter(colegio=request.colegio, materia__ponderacionareamateria__area=area).select_related('materia', 'curso', 'docente__user').order_by('curso__nombre', 'materia__nombre')
+    asignaciones = AsignacionDocente.objects.filter(colegio=request.colegio, materia__ponderacionareamateria__area=area).select_related('materia', 'curso', 'docente__user').order_by('curso__orden', 'materia__nombre')
     total_ih_area = asignaciones.aggregate(total=Sum('intensidad_horaria_semanal'))['total'] or 0
-    cursos_para_modal = Curso.objects.filter(colegio=request.colegio).order_by('nombre')
+    cursos_para_modal = Curso.objects.filter(colegio=request.colegio).order_by('orden')
     materias_para_modal = Materia.objects.filter(colegio=request.colegio).order_by('nombre')
     docentes_para_modal = Docente.objects.filter(colegio=request.colegio).select_related('user').order_by('user__first_name')
     context = {
@@ -174,9 +174,9 @@ def detalle_docente(request, docente_id):
         return HttpResponseNotFound("<h1>Colegio no configurado</h1>")
     
     docente = get_object_or_404(Docente, pk=docente_id, colegio=request.colegio)
-    asignaciones = AsignacionDocente.objects.filter(colegio=request.colegio, docente=docente).select_related('materia', 'curso').order_by('curso__nombre', 'materia__nombre')
+    asignaciones = AsignacionDocente.objects.filter(colegio=request.colegio, docente=docente).select_related('materia', 'curso').order_by('curso__orden', 'materia__nombre')
     total_ih_docente = asignaciones.aggregate(total=Sum('intensidad_horaria_semanal'))['total'] or 0
-    cursos_para_modal = Curso.objects.filter(colegio=request.colegio).order_by('nombre')
+    cursos_para_modal = Curso.objects.filter(colegio=request.colegio).order_by('orden')
     materias_para_modal = Materia.objects.filter(colegio=request.colegio).order_by('nombre')
     docentes_para_modal = Docente.objects.filter(colegio=request.colegio).select_related('user').order_by('user__first_name')
     context = {
@@ -213,18 +213,59 @@ def asignar_director_grado_vista(request):
         
     return redirect('notas:gestion_asignacion_academica')
 
-
 # ===============================================================
-# VISTAS PARA GESTIÓN DE CURSOS, ÁREAS, MATERIAS, ETC.
+# VISTAS PARA GESTIÓN DE CURSOS
 # ===============================================================
 @user_passes_test(es_personal_admin)
 def gestion_cursos_vista(request):
     if not request.colegio:
         return HttpResponseNotFound("<h1>Colegio no configurado</h1>")
+    
+    cursos_qs = Curso.objects.filter(colegio=request.colegio).order_by('orden', 'nombre')
+
+    # --- INICIO: CORRECCIÓN AUTOMÁTICA DEL ORDEN ---
+    if cursos_qs.count() > 1 and cursos_qs.last().orden == 0:
+        with transaction.atomic():
+            cursos_para_inicializar = Curso.objects.filter(colegio=request.colegio).order_by('nombre')
+            for i, curso in enumerate(cursos_para_inicializar, 1):
+                Curso.objects.filter(pk=curso.pk).update(orden=i)
         
-    cursos = Curso.objects.filter(colegio=request.colegio).select_related('director_grado__user')
+        messages.info(request, "Se ha inicializado el orden de los cursos. Ahora puede usar las flechas.")
+        cursos = Curso.objects.filter(colegio=request.colegio).select_related('director_grado__user').order_by('orden')
+    else:
+        cursos = cursos_qs.select_related('director_grado__user')
+    # --- FIN: CORRECCIÓN AUTOMÁTICA DEL ORDEN ---
+        
     context = {'cursos': cursos, 'titulo': 'Gestión de Cursos y Grados', 'colegio': request.colegio}
     return render(request, 'notas/admin_crud/gestion_cursos.html', context)
+
+@user_passes_test(es_personal_admin)
+@require_POST
+@transaction.atomic
+def reordenar_curso_vista(request, curso_id, direccion):
+    if not request.colegio:
+        return HttpResponseNotFound("<h1>Colegio no configurado</h1>")
+
+    curso_a_mover = get_object_or_404(Curso, id=curso_id, colegio=request.colegio)
+    
+    if direccion == 'subir':
+        curso_adyacente = Curso.objects.filter(
+            colegio=request.colegio, 
+            orden__lt=curso_a_mover.orden
+        ).order_by('-orden').first()
+    else: # Bajar
+        curso_adyacente = Curso.objects.filter(
+            colegio=request.colegio, 
+            orden__gt=curso_a_mover.orden
+        ).order_by('orden').first()
+
+    if curso_adyacente:
+        curso_a_mover.orden, curso_adyacente.orden = curso_adyacente.orden, curso_a_mover.orden
+        curso_a_mover.save()
+        curso_adyacente.save()
+        messages.success(request, f"Se ha cambiado el orden de '{curso_a_mover.nombre}'.")
+    
+    return redirect('notas:gestion_cursos')
 
 @user_passes_test(es_personal_admin)
 def crear_curso_vista(request):
@@ -276,6 +317,9 @@ def eliminar_curso_vista(request, curso_id):
         messages.success(request, f"Curso '{nombre_curso}' eliminado con éxito.")
     return redirect('notas:gestion_cursos')
 
+# ===============================================================
+# VISTAS PARA GESTIÓN DE ÁREAS Y MATERIAS
+# ===============================================================
 @user_passes_test(es_personal_admin)
 def gestion_materias_vista(request):
     if not request.colegio:

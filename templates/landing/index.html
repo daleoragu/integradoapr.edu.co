@@ -23,7 +23,8 @@
                 <!-- Enlace nuevo a la sección de colegios -->
                 <a href="#colegios" class="text-gray-600 hover:text-indigo-600 px-3 py-2">Colegios</a>
                 <a href="#contacto" class="text-gray-600 hover:text-indigo-600 px-3 py-2">Contacto</a>
-                <a href="/admin" class="ml-4 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors">Acceso Admin</a>
+                <!-- ENLACE CORREGIDO -->
+                <a href="/super-admin/" class="ml-4 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors">Acceso Admin</a>
             </div>
         </nav>
     </header>
@@ -71,9 +72,6 @@
         </div>
     </section>
 
-    <!-- ================================================== -->
-    <!-- === INICIO: SECCIÓN DE COLEGIOS CORREGIDA      === -->
-    <!-- ================================================== -->
     {% if colegios %}
     <section id="colegios" class="bg-white py-20">
         <div class="container mx-auto px-6">
@@ -82,7 +80,6 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
                 
                 {% for colegio in colegios %}
-                <!-- LÍNEA CORREGIDA -->
                 <a href="{% if colegio.domain %}https://{{ colegio.domain }}{% else %}https://{{ colegio.slug }}.mcolegio.com.co{% endif %}" target="_blank" class="block bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow p-6 text-center">
                     <div class="h-24 w-24 mx-auto mb-4 flex items-center justify-center">
                         {% if colegio.escudo %}
@@ -100,9 +97,6 @@
         </div>
     </section>
     {% endif %}
-    <!-- ================================================== -->
-    <!-- === FIN: SECCIÓN DE COLEGIOS CORREGIDA         === -->
-    <!-- ================================================== -->
 
     <!-- Contact Section -->
     <section id="contacto" class="bg-gray-100 py-20">
@@ -128,4 +122,3 @@
 
 </body>
 </html>
-

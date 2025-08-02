@@ -27,6 +27,8 @@
             <table class="table table-hover align-middle">
                 <thead class="table-light">
                     <tr>
+                        <!-- NUEVA COLUMNA DE ORDEN -->
+                        <th style="width: 10%;" class="text-center">Orden</th>
                         <th>Nombre del Curso</th>
                         <th>Nivel Escolar</th>
                         <th>Director de Grado</th>
@@ -36,6 +38,17 @@
                 <tbody>
                 {% for curso in cursos %}
                     <tr>
+                        <!-- NUEVA CELDA CON FLECHAS -->
+                        <td class="align-middle text-center">
+                            <form action="{% url 'notas:reordenar_curso' curso.id 'subir' %}" method="post" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-light py-0 px-2" {% if forloop.first %}disabled{% endif %} title="Subir">▲</button>
+                            </form>
+                            <form action="{% url 'notas:reordenar_curso' curso.id 'bajar' %}" method="post" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-light py-0 px-2" {% if forloop.last %}disabled{% endif %} title="Bajar">▼</button>
+                            </form>
+                        </td>
                         <td><strong>{{ curso.nombre }}</strong></td>
                         <td>{{ curso.get_nivel_display }}</td>
                         <td>{{ curso.director_grado.user.get_full_name|default:"No asignado" }}</td>
@@ -54,7 +67,8 @@
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="4" class="text-center text-muted py-4">
+                        <!-- Colspan actualizado a 5 por la nueva columna -->
+                        <td colspan="5" class="text-center text-muted py-4">
                             No hay cursos registrados.
                         </td>
                     </tr>
