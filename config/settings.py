@@ -10,7 +10,7 @@ load_dotenv(dotenv_path=BASE_DIR / '.env')
 
 # --- Configuración General de Django ---
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'clave-secreta-por-defecto-para-local')
-DEBUG =  os.getenv('DJANGO_DEBUG', 'True') == 'True'
+DEBUG = os.getenv('DJANGO_DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = [
     'mcolegio.com.co',
@@ -86,9 +86,6 @@ LANGUAGE_CODE = 'es-co'
 TIME_ZONE = 'America/Bogota'
 USE_I18N = True
 USE_TZ = True
-
-# --- LÍNEA CORREGIDA ---
-# Se apunta a la URL correcta del panel de administración, que es /super-admin/
 LOGIN_URL = '/super-admin/login/'
 
 # --- Archivos Estáticos (CSS, JS) ---
@@ -116,7 +113,10 @@ if USE_SPACES:
     AWS_QUERYSTRING_AUTH = False
     
     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-    MEDIA_URL = f'{AWS_S3_ENDPOINT_URL}/{AWS_LOCATION}/'
+    
+    # --- LÍNEA CORREGIDA ---
+    # Esta es la forma correcta de construir la URL pública, incluyendo el nombre del bucket.
+    MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.{AWS_S3_REGION_NAME}.digitaloceanspaces.com/{AWS_LOCATION}/'
 
 else:
     # --- CONFIGURACIÓN PARA DESARROLLO LOCAL (SIN .env o con él comentado) ---

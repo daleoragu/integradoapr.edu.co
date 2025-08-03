@@ -7,7 +7,8 @@
                  <div class="contact-info mb-3">
                     {% if colegio.telefono %}<i class="fas fa-phone-alt me-2"></i> {{ colegio.telefono }}{% endif %}
                     {% if colegio.email_contacto %}<i class="fas fa-envelope ms-3 me-2"></i> {{ colegio.email_contacto }} {% endif %}
-                    <p class="col-12 text-center">{{ colegio.departamento}}, {{ colegio.ciudad }},{{ colegio.direccion }}</p>
+                    <p class="col-12 text-center">{{ colegio.departamento}}-{{ colegio.ciudad }}</p>
+                    <p class="col-12 text-center">{{ colegio.direccion }}</p>
                 </div>
                 
                 <div>
