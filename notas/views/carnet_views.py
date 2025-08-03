@@ -73,7 +73,7 @@ def impresion_masiva_carnets(request):
         estudiantes = Estudiante.objects.filter(colegio=request.colegio, is_active=True)
 
     for estudiante in estudiantes:
-        qr_url = request.build_absolute_uri(reverse('registrar_asistencia_qr', args=[estudiante.id]))
+        qr_url = request.build_absolute_uri(reverse('notas:registrar_asistencia_qr', args=[estudiante.id]))
         qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=6, border=2)
         qr.add_data(qr_url)
         qr.make(fit=True)

@@ -77,9 +77,7 @@ class DocenteAdmin(BaseColegioAdmin):
 
 @admin.register(Estudiante)
 class EstudianteAdmin(BaseColegioAdmin):
-    # --- INICIO: CAMBIO - Se añade 'acciones_carnet' a la lista ---
     list_display = ('get_full_name', 'get_username', 'curso', 'is_active', 'colegio', 'acciones_carnet')
-    # --- FIN: CAMBIO ---
     list_filter = ('colegio', 'curso', 'is_active')
     search_fields = ('user__first_name', 'user__last_name', 'user__username')
     autocomplete_fields = ['curso', 'user']
@@ -90,14 +88,13 @@ class EstudianteAdmin(BaseColegioAdmin):
     @admin.display(description="Usuario", ordering='user__username')
     def get_username(self, obj): return obj.user.username
 
-    # --- INICIO: CAMBIO - Se añade la función para el botón del carnet ---
     @admin.display(description='Carnet QR')
     def acciones_carnet(self, obj):
-        # Genera la URL para la vista del carnet del estudiante específico
-        url = reverse('generar_carnet_estudiante', args=[obj.id])
-        # Retorna un enlace HTML seguro
+        # --- INICIO DE LA CORRECCIÓN ---
+        # Se añade el prefijo 'notas:' para que Django encuentre la URL correctamente.
+        url = reverse('notas:generar_carnet_estudiante', args=[obj.id])
+        # --- FIN DE LA CORRECCIÓN ---
         return format_html('<a class="button" href="{}" target="_blank">Ver Carnet</a>', url)
-    # --- FIN: CAMBIO ---
 
 
 @admin.register(AsignacionDocente)
