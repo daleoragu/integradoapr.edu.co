@@ -159,6 +159,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (!periodoSelect || !mesSelect) return;
 
+    // =================================================================================
+    // NOTA IMPORTANTE: La línea de abajo causa el error "NoReverseMatch"
+    // si la URL con el nombre 'ajax_obtener_meses' no existe en tu archivo urls.py.
+    //
+    // ASEGÚRATE de que tu archivo 'notas/urls.py' contenga la ruta correcta.
+    // Si el error persiste, reinicia el servidor de desarrollo de Django.
+    // =================================================================================
     const url = "{% url 'notas:ajax_obtener_meses' %}";
 
     function cargarMeses() {

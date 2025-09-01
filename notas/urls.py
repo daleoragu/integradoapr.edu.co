@@ -71,7 +71,7 @@ urlpatterns = [
     path('admin/panel-control-promocion/', admin_tools_views.panel_control_promocion_vista, name='panel_control_promocion'),
     path('admin/configuracion-calificaciones/', admin_tools_views.configuracion_calificaciones_vista, name='configuracion_calificaciones'),
     path('admin/configuracion-escala/', admin_tools_views.configuracion_escala_valoracion_vista, name='configuracion_escala_valoracion'),
-    path('admin/escala/editar/<int:escala_id>/', admin_tools_views.editar_escala_valoracion_vista, name='editar_escala_valoracion'),
+    path('panel-administrador/configuracion/escala-valoracion/editar/<int:escala_id>/', admin_tools_views.editar_escala_valoracion_vista, name='editar_escala_valoracion'),
     path('admin/periodo/crear/', admin_tools_views.crear_periodo_vista, name='crear_periodo'),
     path('admin/periodo/editar/<int:periodo_id>/', admin_tools_views.editar_periodo_vista, name='editar_periodo'),
     path('admin/periodo/eliminar/<int:periodo_id>/', admin_tools_views.eliminar_periodo_vista, name='eliminar_periodo'),
@@ -118,6 +118,10 @@ urlpatterns = [
     path('admin/exportar-materias/', export_views.exportar_materias_excel, name='exportar_materias_excel'),
     path('admin/descargar-plantilla-docentes/', export_views.descargar_plantilla_docentes, name='descargar_plantilla_docentes'),
     path('admin/descargar-plantilla-materias/', export_views.descargar_plantilla_materias, name='descargar_plantilla_materias'),   
+
+    # Se añaden las rutas que faltaban para generar los reportes de asistencia.
+    path('docente/reportes/asistencia/excel/', export_views.generar_reporte_individual_excel_vista, name='generar_reporte_individual_excel'),
+    path('docente/reportes/asistencia/pdf/', export_views.generar_reporte_individual_pdf_vista, name='generar_reporte_individual_pdf'),
 
     # --- Rutas para Docentes ---
     path('docente/ingresar-notas/', ingreso_notas_views.IngresoNotasView.as_view(), name='ingresar_notas_periodo'),
@@ -193,6 +197,7 @@ urlpatterns = [
     path('ajax/recursos-educativos/', portal_views.ajax_recursos_educativos, name='ajax_recursos_educativos'),
     path('ajax/redes-sociales/', portal_views.ajax_redes_sociales, name='ajax_redes_sociales'),
     path('ajax/galeria-fotos/', portal_views.ajax_galeria_vista, name='ajax_galeria_fotos'),
+    path('ajax/obtener-meses/', consulta_views.ajax_obtener_meses_vista, name='ajax_obtener_meses'),
 
     # --- Rutas de Suplantación ---
     path('suplantar/iniciar/<int:user_id>/', impersonation_views.iniciar_suplantacion, name='iniciar_suplantacion'),
@@ -205,6 +210,8 @@ urlpatterns = [
     path('admin/gestion-academica/area/<int:area_id>/', gestion_academica_views.detalle_area, name='detalle_area'),
     path('admin/gestion-academica/docente/<int:docente_id>/', gestion_academica_views.detalle_docente, name='detalle_docente'),
     path('admin/gestion-academica/asignar-director-grado/', gestion_academica_views.asignar_director_grado_vista, name='asignar_director_grado'),
+    # === INICIO DE LA CORRECCIÓN ===
+    # Se corrigió el error de tipeo de 'gestion_acemica_views' a 'gestion_academica_views'.
     path('admin/gestion-academica/cursos/reordenar/<int:curso_id>/<str:direccion>/', gestion_academica_views.reordenar_curso_vista, name='reordenar_curso'),
-    
+    # === FIN DE LA CORRECCIÓN ===
 ]

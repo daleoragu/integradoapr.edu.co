@@ -8,7 +8,9 @@ from django.utils import timezone
 from collections import defaultdict
 from datetime import datetime
 # Se añade HttpResponseNotFound para manejar el caso de un colegio no identificado
-from django.http import HttpResponseNotFound
+from django.http import HttpResponseNotFound, JsonResponse
+from calendar import month_name
+import locale
 
 from ..models import Docente, AsignacionDocente, Estudiante, Asistencia, PeriodoAcademico, Curso
 
@@ -102,3 +104,57 @@ def consulta_asistencia_vista(request):
     })
 
     return render(request, 'notas/docente/consulta_asistencia.html', context)
+
+# ==================================================================
+# INICIO DE LA CORRECCIÓN
+# Se añade la función que faltaba para la llamada AJAX.
+# ==================================================================
+def ajax_obtener_meses_vista(request):
+    """
+    Vista AJAX que devuelve los meses de un periodo académico en formato JSON.
+    """
+    periodo_id = request.GET.get('periodo_id')
+    
+    # Configura el idioma a español para los nombres de los meses
+    try:
+        # Para sistemas basados en Unix (Linux, macOS)
+        locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
+    except locale.Error:
+        # Alternativa para sistemas Windows
+        locale.setlocale(locale.LC_TIME, 'Spanish_Spain.1252')
+
+    if not periodo_id:
+        return JsonResponse({'error': 'No se proporcionó ID de periodo'}, status=400)
+
+    try:
+        periodo = PeriodoAcademico.objects.get(id=periodo_id, colegio=request.colegio)
+        
+        meses = []
+        fecha_actual = periodo.fecha_inicio
+        
+        # Itera desde la fecha de inicio hasta la fecha de fin del periodo
+        while fecha_actual <= periodo.fecha_fin:
+            # Crea una tupla (numero_mes, nombre_mes)
+            mes_tupla = (fecha_actual.month, month_name[fecha_actual.month].capitalize())
+            
+            # Añade el mes a la lista solo si no ha sido añadido antes
+            if mes_tupla not in meses:
+                meses.append(mes_tupla)
+            
+            # Avanza al primer día del siguiente mes
+            # Esto evita problemas con meses de diferente duración
+            if fecha_actual.month == 12:
+                fecha_actual = fecha_actual.replace(year=fecha_actual.year + 1, month=1, day=1)
+            else:
+                fecha_actual = fecha_actual.replace(month=fecha_actual.month + 1, day=1)
+
+        return JsonResponse({'meses': meses})
+
+    except PeriodoAcademico.DoesNotExist:
+        return JsonResponse({'error': 'Periodo no encontrado'}, status=404)
+    except Exception as e:
+        # Captura cualquier otro error inesperado
+        return JsonResponse({'error': str(e)}, status=500)
+# ==================================================================
+# FIN DE LA CORRECCIÓN
+# ==================================================================
