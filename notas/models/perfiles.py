@@ -239,6 +239,18 @@ class FichaDocente(models.Model):
     titulo_profesional = models.CharField(max_length=200, blank=True, null=True, verbose_name="Título Profesional")
     foto = models.ImageField(upload_to='fotos_docentes/', null=True, blank=True, verbose_name="Foto del Docente")
     
+    # === INICIO DE LA CORRECCIÓN ===
+    def save(self, *args, **kwargs):
+        """
+        Sobrescribe el método de guardado para convertir cadenas vacías en None.
+        Esto previene errores de 'unique constraint' cuando se crean múltiples
+        docentes sin número de documento.
+        """
+        if not self.numero_documento:
+            self.numero_documento = None
+        super().save(*args, **kwargs)
+    # === FIN DE LA CORRECCIÓN ===
+
     def __str__(self): 
         return f"Ficha de {self.docente.user.get_full_name()}"
         
