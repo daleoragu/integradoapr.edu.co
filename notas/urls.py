@@ -32,7 +32,8 @@ from .views import (
     import_export_planillas_views,
     sabana_views,
     gestion_docentes_views,
-    gestion_estudiantes_views
+    gestion_estudiantes_views,
+    reporte_views # <--- === CORRECCIÓN 1: IMPORTAMOS EL ARCHIVO CORRECTO ===
 )
 
 # El nombre 'app_name' ayuda a Django a organizar las URLs. Es una buena práctica.
@@ -119,9 +120,9 @@ urlpatterns = [
     path('admin/descargar-plantilla-docentes/', export_views.descargar_plantilla_docentes, name='descargar_plantilla_docentes'),
     path('admin/descargar-plantilla-materias/', export_views.descargar_plantilla_materias, name='descargar_plantilla_materias'),   
 
-    # Se añaden las rutas que faltaban para generar los reportes de asistencia.
-    path('docente/reportes/asistencia/excel/', export_views.generar_reporte_individual_excel_vista, name='generar_reporte_individual_excel'),
-    path('docente/reportes/asistencia/pdf/', export_views.generar_reporte_individual_pdf_vista, name='generar_reporte_individual_pdf'),
+    # === CORRECCIÓN 2: Se usa el módulo y el nombre de función correctos ===
+    path('docente/reportes/asistencia/excel/', reporte_views.generar_reporte_individual_excel, name='generar_reporte_individual_excel'),
+    path('docente/reportes/asistencia/pdf/', reporte_views.generar_reporte_individual_pdf, name='generar_reporte_individual_pdf'),
 
     # --- Rutas para Docentes ---
     path('docente/ingresar-notas/', ingreso_notas_views.IngresoNotasView.as_view(), name='ingresar_notas_periodo'),
