@@ -18,28 +18,8 @@
             border-collapse: collapse;
             width: 100%;
         }
-        .header-wrapper {
-            border: 2px solid #000;
-            margin-bottom: 10px;
-        }
-        .header-table td {
-            vertical-align: middle;
-            padding: 5px;
-            text-align: center;
-        }
-        .logo-cell {
-            width: 20%;
-        }
-        .info-cell {
-            width: 60%;
-            border-left: 1px solid #000;
-            border-right: 1px solid #000;
-        }
-        .escudo {
-            max-width: 70px;
-            height: auto;
-        }
-        .info-institucion p {
+      
+                       .info-institucion p {
             margin: 1px 0;
             font-weight: bold;
             font-size: 11px;
@@ -138,27 +118,22 @@
         .registro-label {
             font-weight: bold;
         }
+        .encabezado { text-align: center; margin-bottom: 10px; }
+        .encabezado-tabla { width: 100%; border-collapse: collapse; border: 1px solid #000; }
+        .encabezado-tabla td { vertical-align: middle; text-align: center; padding: 5px; border: 1px solid #000; }
+        .escudo {max-width: 100px;  max-height: {{ colegio.alto_logos_pdf|default:100 }}px; height: auto; width: auto;}
+        .info-institucion { font-size: 11px; font-weight: bold; }
+        .info-institucion p { margin: 1px 0; }
     </style>
 </head>
 <body>
     <div class="header-wrapper">
-        <table class="header-table">
-            <tr>
-                <td class="logo-cell"><img src="{{ 'img/Logo_govtolima.png'|get_image_base64 }}" class="escudo"></td>
-                <td class="info-cell">
-                    <div class="info-institucion">
-                        <p>INSTITUCION EDUCATIVA TÉCNICA ALFONSO PALACIO RUDAS</p>
-                        <p style="font-size: 9px; font-weight: normal;">Nit. 890.701.233-7</p>
-                        <p style="font-size: 9px; font-weight: normal;">Honda Tolima</p>
-                    </div>
-                </td>
-                <td class="logo-cell"><img src="{{ 'img/logo_colegio.png'|get_image_base64 }}" class="escudo"></td>
-            </tr>
-        </table>
+             <header class="encabezado">
+        {% include "notas/fragmentos/encabezado_pdf.html" %}
+        <div class="titulo-principal">OBSERVADOR DEL ESTUDIANTE {% now "Y" %}</div>
+        </header>
     </div>
-    <div class="titulo-principal">OBSERVADOR DEL ESTUDIANTE {% now "Y" %}</div>
-
-    <table class="ficha-cuerpo-tabla">
+        <table class="ficha-cuerpo-tabla">
         <tr>
             <td class="ficha-datos-principales">
                 <table style="width:100%;">
