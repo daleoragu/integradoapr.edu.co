@@ -17,7 +17,11 @@ urlpatterns = [
     #    Si alguien va a /admin/, lo redirige a la vista correcta del panel de administrador.
     path('admin/', RedirectView.as_view(pattern_name='notas:admin_dashboard', permanent=False)),
 
-    # 3. RUTAS DE TU APLICACIÓN "NOTAS"
+    # 3. RUTA DEL NUEVO MÓDULO DE ELECCIONES
+    #    Todo lo que empiece por /elecciones2026/ será manejado por tu nueva app.
+    path('elecciones2026/', include('elecciones.urls', namespace='elecciones')),
+
+    # 4. RUTAS DE TU APLICACIÓN "NOTAS"
     #    Esta línea incluye todas las URLs de tu archivo 'notas/urls.py'.
     path('', include('notas.urls', namespace='notas')),
 ]
