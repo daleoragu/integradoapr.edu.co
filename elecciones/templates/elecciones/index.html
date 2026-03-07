@@ -10,7 +10,6 @@
     <style> 
         body { font-family: 'Inter', sans-serif; } 
         .bg-elecciones { background: linear-gradient(135deg, #003893 0%, #001a47 100%); } 
-        /* Animación suave para el acordeón */
         .detalle-candidatos { transition: max-height 0.3s ease-out, opacity 0.3s ease-out; }
     </style>
 </head>
@@ -28,16 +27,22 @@
                 <i class="fas fa-vote-yea text-3xl text-[#003893]"></i>
                 <div>
                     <h1 class="text-xl font-bold text-gray-800 leading-tight">Elecciones 2026</h1>
-                    <p class="text-xs text-gray-500">Escrutinio Local - Honda, Tolima</p>
+                    <p class="text-xs text-gray-500">Escrutinio Local - Tolima</p>
                 </div>
             </div>
             
             <div class="flex items-center gap-3">
                 {% if request.user.is_authenticated %}
                     <span class="text-sm font-bold text-gray-600 hidden md:inline">Hola, {{ request.user.first_name|default:request.user.username }}</span>
+                    {% if request.user.is_superuser %}
                     <a href="{% url 'elecciones:panel_admin' %}" class="bg-[#FCD116] text-[#003893] px-4 py-2 rounded-md hover:bg-yellow-400 transition-colors shadow-sm font-bold flex items-center gap-2">
                         <i class="fas fa-clipboard-check"></i> <span class="hidden sm:inline">Mi Panel</span>
                     </a>
+                    {% else %}
+                    <a href="{% url 'elecciones:digitar_votos' %}" class="bg-[#FCD116] text-[#003893] px-4 py-2 rounded-md hover:bg-yellow-400 transition-colors shadow-sm font-bold flex items-center gap-2">
+                        <i class="fas fa-hand-pointer"></i> <span class="hidden sm:inline">Mi Mesa</span>
+                    </a>
+                    {% endif %}
                     <a href="{% url 'elecciones:logout' %}" class="bg-red-100 text-red-700 px-3 py-2 rounded-md hover:bg-red-200 transition-colors shadow-sm font-bold" title="Cerrar Sesión">
                         <i class="fas fa-sign-out-alt"></i>
                     </a>
@@ -50,195 +55,204 @@
         </div>
     </header>
 
-    {% if request.user.is_superuser %}
-        <section class="bg-elecciones text-white py-12 shadow-inner">
-            <div class="container mx-auto px-6 text-center">
-                <h2 class="text-3xl md:text-4xl font-bold mb-2">Conteo Rápido en Tiempo Real</h2>
-                <p class="text-blue-100 mb-8 max-w-2xl mx-auto">Siga la consolidación de los resultados de las mesas de votación asignadas.</p>
-                
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
-                    <div class="bg-white/10 backdrop-blur-sm p-4 rounded-lg border border-white/20">
-                        <p class="text-[#FCD116] text-sm font-semibold uppercase">Mesas Informadas</p>
-                        <p class="text-3xl font-bold">{{ mesas_informadas }} / {{ total_mesas }}</p>
-                        <p class="text-xs text-blue-200 mt-1">{{ porcentaje_mesas }}%</p>
-                    </div>
-                    <div class="bg-white/10 backdrop-blur-sm p-4 rounded-lg border border-white/20">
-                        <p class="text-[#FCD116] text-sm font-semibold uppercase">Votos Válidos</p>
-                        <p class="text-3xl font-bold">{{ votos_validos }}</p>
-                    </div>
-                    <div class="bg-white/10 backdrop-blur-sm p-4 rounded-lg border border-white/20">
-                        <p class="text-[#FCD116] text-sm font-semibold uppercase">Votos en Blanco</p>
-                        <p class="text-3xl font-bold">{{ votos_blancos }}</p>
-                    </div>
-                    <div class="bg-white/10 backdrop-blur-sm p-4 rounded-lg border border-white/20">
-                        <p class="text-[#FCD116] text-sm font-semibold uppercase">Votos Nulos</p>
-                        <p class="text-3xl font-bold">{{ votos_nulos }}</p>
-                    </div>
+    <section class="bg-elecciones text-white py-12 shadow-inner">
+        <div class="container mx-auto px-6 text-center">
+            <h2 class="text-3xl md:text-4xl font-bold mb-2">Conteo Rápido en Tiempo Real</h2>
+            <p class="text-blue-100 mb-8 max-w-2xl mx-auto">Siga la consolidación de los resultados de las mesas de votación.</p>
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+                <div class="bg-white/10 backdrop-blur-sm p-4 rounded-lg border border-white/20">
+                    <p class="text-[#FCD116] text-sm font-semibold uppercase">Mesas Informadas</p>
+                    <p class="text-3xl font-bold">{{ mesas_informadas }} / {{ total_mesas }}</p>
+                    <p class="text-xs text-blue-200 mt-1">{{ porcentaje_mesas }}%</p>
+                </div>
+                <div class="bg-white/10 backdrop-blur-sm p-4 rounded-lg border border-white/20">
+                    <p class="text-[#FCD116] text-sm font-semibold uppercase">Votos Válidos</p>
+                    <p class="text-3xl font-bold">{{ votos_validos }}</p>
+                </div>
+                <div class="bg-white/10 backdrop-blur-sm p-4 rounded-lg border border-white/20">
+                    <p class="text-[#FCD116] text-sm font-semibold uppercase">Votos en Blanco</p>
+                    <p class="text-3xl font-bold">{{ votos_blancos }}</p>
+                </div>
+                <div class="bg-white/10 backdrop-blur-sm p-4 rounded-lg border border-white/20">
+                    <p class="text-[#FCD116] text-sm font-semibold uppercase">Votos Nulos</p>
+                    <p class="text-3xl font-bold">{{ votos_nulos }}</p>
                 </div>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <main class="container mx-auto px-6 py-12 flex-grow">
-            <div class="bg-white rounded-xl shadow-md p-6 md:p-8 max-w-5xl mx-auto">
-                
-                <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 border-b border-gray-200 pb-6">
-                    <div>
-                        <h3 class="text-2xl font-bold text-gray-800 flex items-center gap-3">
-                            Resultados Cámara 
-                            {% if mesas_informadas > 0 %}
-                            <span class="bg-red-100 text-red-800 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-2 animate-pulse">
-                                <span class="w-2 h-2 bg-red-600 rounded-full"></span> En vivo
-                            </span>
-                            {% endif %}
-                        </h3>
-                    </div>
-                    
-                    <!-- BOTONES PARA ALTERNAR VISTAS -->
-                    <div class="flex bg-gray-100 p-1 rounded-lg">
-                        <button id="btn-vista-partidos" class="bg-[#003893] text-white px-4 py-2 rounded-md text-sm font-bold shadow-sm transition-all" onclick="cambiarVista('partidos')">
-                            <i class="fas fa-layer-group mr-1"></i> Por Partido
-                        </button>
-                        <button id="btn-vista-candidatos" class="text-gray-600 hover:text-gray-900 px-4 py-2 rounded-md text-sm font-bold transition-all" onclick="cambiarVista('candidatos')">
-                            <i class="fas fa-list-ol mr-1"></i> Top Candidatos
-                        </button>
-                    </div>
-                </div>
+    <main class="container mx-auto px-6 py-12 flex-grow">
+        
+        <!-- PESTAÑAS DE NAVEGACIÓN PÚBLICA -->
+        <div class="flex flex-wrap justify-center gap-2 sm:gap-4 mb-8">
+            <a href="?corp=CAMARA" class="px-6 py-2 rounded-full font-bold transition-all {% if corp_actual == 'CAMARA' %}bg-[#003893] text-white shadow-md scale-105{% else %}bg-white text-gray-600 border border-gray-300 hover:bg-gray-100{% endif %}">
+                <i class="fas fa-users mr-1"></i> Cámara
+            </a>
+            <a href="?corp=SENADO" class="px-6 py-2 rounded-full font-bold transition-all {% if corp_actual == 'SENADO' %}bg-[#003893] text-white shadow-md scale-105{% else %}bg-white text-gray-600 border border-gray-300 hover:bg-gray-100{% endif %}">
+                <i class="fas fa-landmark mr-1"></i> Senado
+            </a>
+            <a href="?corp=CONSULTA" class="px-6 py-2 rounded-full font-bold transition-all {% if corp_actual == 'CONSULTA' %}bg-[#003893] text-white shadow-md scale-105{% else %}bg-white text-gray-600 border border-gray-300 hover:bg-gray-100{% endif %}">
+                <i class="fas fa-person-booth mr-1"></i> Consultas
+            </a>
+        </div>
 
-                {% if resultados_partidos %}
-                    
-                    <!-- ========================================== -->
-                    <!-- VISTA 1: AGRUPADO POR PARTIDO (ACORDEÓN)   -->
-                    <!-- ========================================== -->
-                    <div id="vista-partidos" class="space-y-4">
-                        <p class="text-xs text-gray-500 text-right mb-2"><i class="fas fa-hand-pointer"></i> Haz clic en un partido para ver sus candidatos</p>
-                        
-                        {% for item in resultados_partidos %}
-                        <div class="border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow bg-white">
-                            
-                            <!-- Cabecera del Partido (Clickable) -->
-                            <div class="p-4 cursor-pointer hover:bg-gray-50 flex items-center justify-between group" onclick="toggleAcordeon('partido_{{ item.partido.id }}', 'icon_{{ item.partido.id }}')">
-                                <div class="flex items-center gap-4 w-2/3">
-                                    
-                                    <!-- MOSTRAR IMAGEN O CIRCULO EN ACORDEÓN -->
-                                    {% if item.partido.logo %}
-                                        <img src="{{ item.partido.logo.url }}" alt="{{ item.partido.siglas }}" class="w-12 h-12 rounded-full object-contain shadow-inner border border-gray-300 flex-shrink-0 bg-white p-1">
-                                    {% else %}
-                                        <div class="w-12 h-12 rounded-full flex items-center justify-center font-bold text-white shadow-inner border border-gray-300 flex-shrink-0" style="background-color: {{ item.partido.logo_color }};">
-                                            {{ item.partido.siglas|default:"P" }}
-                                        </div>
-                                    {% endif %}
-                                    
-                                    <div class="w-full">
-                                        <span class="font-bold text-gray-800 text-lg leading-tight block">{{ item.partido.nombre }}</span>
-                                        <div class="w-full bg-gray-200 rounded-full h-2 mt-2 hidden sm:block">
-                                            <div class="h-2 rounded-full" style="width: {{ item.str_porcentaje }}%; background-color: {{ item.partido.logo_color }};"></div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="flex items-center gap-4 text-right">
-                                    <div>
-                                        <span class="font-black text-gray-900 text-2xl block">{{ item.votos }}</span>
-                                        <span class="text-xs font-bold text-gray-500">{{ item.str_porcentaje }}%</span>
-                                    </div>
-                                    <i class="fas fa-chevron-down text-gray-400 transform transition-transform duration-300" id="icon_{{ item.partido.id }}"></i>
-                                </div>
-                            </div>
-
-                            <!-- Lista de Candidatos Oculta (Se muestra al hacer clic) -->
-                            <div id="partido_{{ item.partido.id }}" class="hidden bg-gray-50 border-t border-gray-200 p-4">
-                                <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 border-b pb-1">Votos Preferentes de la Lista</h4>
-                                <div class="space-y-3">
-                                    {% for cand in item.candidatos %}
-                                    <div class="flex items-center gap-4">
-                                        <div class="w-10 text-right font-black text-gray-500 text-lg">
-                                            {% if cand.candidato.numero_tarjeton %}
-                                                {{ cand.candidato.numero_tarjeton }}
-                                            {% else %}
-                                                <i class="fas fa-flag"></i>
-                                            {% endif %}
-                                        </div>
-                                        <div class="flex-grow">
-                                            <div class="flex justify-between items-end mb-1">
-                                                <span class="text-sm font-semibold text-gray-700">{% if cand.candidato.numero_tarjeton %}Candidato #{{ cand.candidato.numero_tarjeton }}{% else %}Voto Sólo al Partido{% endif %}</span>
-                                                <span class="font-bold text-gray-800">{{ cand.votos }} <span class="text-xs text-gray-400 font-normal">votos</span></span>
-                                            </div>
-                                            <div class="w-full bg-gray-200 rounded-full h-1.5">
-                                                <div class="h-1.5 rounded-full bg-gray-400" style="width: {{ cand.str_porcentaje }}%; background-color: {{ item.partido.logo_color|default:'#9ca3af' }};"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-
-                    <!-- ========================================== -->
-                    <!-- VISTA 2: RANKING GLOBAL DE CANDIDATOS      -->
-                    <!-- ========================================== -->
-                    <div id="vista-candidatos" class="hidden space-y-3">
-                        <p class="text-xs text-gray-500 text-right mb-2"><i class="fas fa-trophy"></i> Los candidatos más votados de todo el municipio</p>
-                        
-                        {% for item in top_candidatos %}
-                        {% if item.votos > 0 %}
-                        <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm flex items-center gap-4 hover:border-gray-300 transition-colors">
-                            
-                            <!-- MOSTRAR IMAGEN O CIRCULO EN VISTA GLOBAL -->
-                            {% if item.partido.logo %}
-                                <img src="{{ item.partido.logo.url }}" alt="{{ item.partido.siglas }}" class="w-10 h-10 rounded-full object-contain flex-shrink-0 shadow-inner border border-gray-300 bg-white p-0.5">
-                            {% else %}
-                                <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white text-sm flex-shrink-0 shadow-inner border border-gray-300" style="background-color: {{ item.partido.logo_color }};">
-                                    {{ item.partido.siglas|default:"P" }}
-                                </div>
-                            {% endif %}
-
-                            <div class="flex-grow">
-                                <div class="flex justify-between items-center mb-1">
-                                    <div>
-                                        <span class="font-black text-gray-800 text-lg">
-                                            {% if item.candidato.numero_tarjeton %}#{{ item.candidato.numero_tarjeton }}{% else %}Voto al Partido{% endif %}
-                                        </span>
-                                        <span class="text-xs text-gray-500 font-normal ml-2 uppercase hidden sm:inline-block">{{ item.partido.nombre }}</span>
-                                    </div>
-                                    <div class="text-right">
-                                        <span class="font-black text-gray-900 text-xl">{{ item.votos }}</span>
-                                        <span class="text-xs text-gray-500 ml-1">({{ item.str_porcentaje }}%)</span>
-                                    </div>
-                                </div>
-                                <div class="w-full bg-gray-100 rounded-full h-2">
-                                    <div class="h-2 rounded-full" style="width: {{ item.str_porcentaje }}%; background-color: {{ item.partido.logo_color }};"></div>
-                                </div>
-                            </div>
-                        </div>
+        <div class="bg-white rounded-xl shadow-md p-6 md:p-8 max-w-5xl mx-auto border-t-4 border-[#003893]">
+            
+            <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4 border-b border-gray-200 pb-6">
+                <div>
+                    <h3 class="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                        Resultados {{ nombre_corporacion }}
+                        {% if mesas_informadas > 0 %}
+                        <span class="bg-red-100 text-red-800 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-2 animate-pulse">
+                            <span class="w-2 h-2 bg-red-600 rounded-full"></span> En vivo
+                        </span>
                         {% endif %}
-                        {% endfor %}
-                    </div>
-
-                {% else %}
-                    <div class="text-center py-10 text-gray-500">
-                        <i class="fas fa-chart-pie text-4xl mb-3 text-gray-300"></i>
-                        <p>Aún no hay resultados transmitidos.</p>
-                    </div>
-                {% endif %}
-            </div>
-        </main>
-    {% else %}
-        <main class="container mx-auto px-6 py-20 flex-grow flex items-center justify-center">
-            <div class="text-center max-w-lg">
-                <div class="w-24 h-24 bg-blue-100 text-[#003893] rounded-full flex items-center justify-center mx-auto mb-6 text-4xl shadow-inner">
-                    <i class="fas fa-user-secret"></i>
+                    </h3>
                 </div>
-                <h2 class="text-3xl font-bold text-gray-800 mb-4">Escrutinio Privado</h2>
-                <p class="text-gray-600 mb-8 leading-relaxed">El conteo general en vivo está restringido por seguridad. Solo el Administrador de las elecciones tiene acceso a la consolidación de datos.</p>
-                {% if not request.user.is_authenticated %}
-                <button onclick="document.getElementById('loginModal').classList.remove('hidden')" class="bg-[#003893] text-white px-8 py-3 rounded-lg hover:bg-blue-800 transition-colors shadow-md font-bold text-lg inline-flex items-center gap-2">
-                    <i class="fas fa-sign-in-alt"></i> Soy Jurado, Ingresar a mi Mesa
-                </button>
-                {% endif %}
+                
+                <div class="flex bg-gray-100 p-1 rounded-lg">
+                    <button id="btn-vista-partidos" class="bg-[#003893] text-white px-4 py-2 rounded-md text-sm font-bold shadow-sm transition-all" onclick="cambiarVista('partidos')">
+                        <i class="fas fa-layer-group mr-1"></i> Agrupado
+                    </button>
+                    <button id="btn-vista-candidatos" class="text-gray-600 hover:text-gray-900 px-4 py-2 rounded-md text-sm font-bold transition-all" onclick="cambiarVista('candidatos')">
+                        <i class="fas fa-list-ol mr-1"></i> Top Candidatos
+                    </button>
+                </div>
             </div>
-        </main>
-    {% endif %}
+
+            {% if resultados_partidos %}
+                
+                <!-- ========================================== -->
+                <!-- VISTA 1: AGRUPADO POR PARTIDO/COALICIÓN    -->
+                <!-- ========================================== -->
+                <div id="vista-partidos" class="space-y-4">
+                    <p class="text-xs text-gray-500 text-right mb-2"><i class="fas fa-hand-pointer"></i> Haz clic en una agrupación para ver el detalle</p>
+                    
+                    {% for item in resultados_partidos %}
+                    <div class="border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow bg-white">
+                        
+                        <!-- Cabecera del Partido/Consulta (Clickable) -->
+                        <div class="p-4 cursor-pointer hover:bg-gray-50 flex items-center justify-between group" onclick="toggleAcordeon('partido_{{ item.partido.id }}', 'icon_{{ item.partido.id }}')">
+                            <div class="flex items-center gap-4 w-2/3">
+                                {% if item.partido.logo %}
+                                    <img src="{{ item.partido.logo.url }}" alt="{{ item.partido.siglas }}" class="w-12 h-12 rounded-full object-contain shadow-inner border border-gray-300 flex-shrink-0 bg-white p-1">
+                                {% else %}
+                                    <div class="w-12 h-12 rounded-full flex items-center justify-center font-bold text-white shadow-inner border border-gray-300 flex-shrink-0" style="background-color: {{ item.partido.logo_color }};">
+                                        {{ item.partido.siglas|default:"P" }}
+                                    </div>
+                                {% endif %}
+                                
+                                <div class="w-full">
+                                    <span class="font-bold text-gray-800 text-sm md:text-lg leading-tight block uppercase">{{ item.partido.nombre }}</span>
+                                    <div class="w-full bg-gray-200 rounded-full h-2 mt-2 hidden sm:block">
+                                        <div class="h-2 rounded-full" style="width: {{ item.str_porcentaje }}%; background-color: {{ item.partido.logo_color }};"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-4 text-right">
+                                <div>
+                                    <span class="font-black text-gray-900 text-2xl block">{{ item.votos }}</span>
+                                    <span class="text-xs font-bold text-gray-500">{{ item.str_porcentaje }}%</span>
+                                </div>
+                                <i class="fas fa-chevron-down text-gray-400 transform transition-transform duration-300" id="icon_{{ item.partido.id }}"></i>
+                            </div>
+                        </div>
+
+                        <!-- Lista de Candidatos Oculta -->
+                        <div id="partido_{{ item.partido.id }}" class="hidden bg-gray-50 border-t border-gray-200 p-4">
+                            <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 border-b pb-1">Desglose de la Opción</h4>
+                            <div class="space-y-3">
+                                {% for cand in item.candidatos %}
+                                <div class="flex items-center gap-4">
+                                    <div class="w-10 text-right font-black text-gray-500 text-lg">
+                                        {% if cand.candidato.numero_tarjeton %}
+                                            #{{ cand.candidato.numero_tarjeton }}
+                                        {% else %}
+                                            <i class="fas fa-flag"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-grow">
+                                        <div class="flex justify-between items-end mb-1">
+                                            <!-- MOSTRAR NOMBRE EN VEZ DE NÚMERO -->
+                                            <span class="text-xs sm:text-sm font-semibold text-gray-700 uppercase">
+                                                {% if cand.candidato.nombre and cand.candidato.nombre != 'Voto a la Lista' and cand.candidato.nombre != 'Voto al Logo' %}
+                                                    {{ cand.candidato.nombre }}
+                                                {% elif cand.candidato.numero_tarjeton %}
+                                                    Candidato #{{ cand.candidato.numero_tarjeton }}
+                                                {% else %}
+                                                    Voto Sólo a la Agrupación
+                                                {% endif %}
+                                            </span>
+                                            <span class="font-bold text-gray-800">{{ cand.votos }} <span class="text-[10px] sm:text-xs text-gray-400 font-normal">votos</span></span>
+                                        </div>
+                                        <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                            <div class="h-1.5 rounded-full bg-gray-400" style="width: {{ cand.str_porcentaje }}%; background-color: {{ item.partido.logo_color|default:'#9ca3af' }};"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- ========================================== -->
+                <!-- VISTA 2: RANKING GLOBAL DE CANDIDATOS      -->
+                <!-- ========================================== -->
+                <div id="vista-candidatos" class="hidden space-y-3">
+                    <p class="text-xs text-gray-500 text-right mb-2"><i class="fas fa-trophy"></i> Los más votados de {{ nombre_corporacion }}</p>
+                    
+                    {% for item in top_candidatos %}
+                    {% if item.votos > 0 %}
+                    <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm flex items-center gap-4 hover:border-gray-300 transition-colors">
+                        
+                        {% if item.partido.logo %}
+                            <img src="{{ item.partido.logo.url }}" alt="{{ item.partido.siglas }}" class="w-10 h-10 rounded-full object-contain flex-shrink-0 shadow-inner border border-gray-300 bg-white p-0.5">
+                        {% else %}
+                            <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white text-sm flex-shrink-0 shadow-inner border border-gray-300" style="background-color: {{ item.partido.logo_color }};">
+                                {{ item.partido.siglas|default:"P" }}
+                            </div>
+                        {% endif %}
+
+                        <div class="flex-grow">
+                            <div class="flex justify-between items-center mb-1">
+                                <div class="w-2/3">
+                                    <!-- MOSTRAR NOMBRE DEL CANDIDATO -->
+                                    <span class="font-black text-gray-800 text-sm sm:text-lg block sm:inline leading-tight uppercase">
+                                        {% if item.candidato.nombre and item.candidato.nombre != 'Voto a la Lista' and item.candidato.nombre != 'Voto al Logo' %}
+                                            {{ item.candidato.nombre }}
+                                        {% elif item.candidato.numero_tarjeton %}
+                                            #{{ item.candidato.numero_tarjeton }}
+                                        {% else %}
+                                            Voto a la Agrupación
+                                        {% endif %}
+                                    </span>
+                                    <span class="text-[10px] text-gray-500 font-normal sm:ml-2 uppercase truncate block">{{ item.partido.nombre }}</span>
+                                </div>
+                                <div class="text-right">
+                                    <span class="font-black text-gray-900 text-xl">{{ item.votos }}</span>
+                                    <span class="text-xs text-gray-500 ml-1 block sm:inline">({{ item.str_porcentaje }}%)</span>
+                                </div>
+                            </div>
+                            <div class="w-full bg-gray-100 rounded-full h-2">
+                                <div class="h-2 rounded-full" style="width: {{ item.str_porcentaje }}%; background-color: {{ item.partido.logo_color }};"></div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+
+            {% else %}
+                <div class="text-center py-10 text-gray-500">
+                    <i class="fas fa-chart-pie text-4xl mb-3 text-gray-300"></i>
+                    <p>Aún no hay resultados transmitidos para {{ nombre_corporacion }}.</p>
+                </div>
+            {% endif %}
+        </div>
+    </main>
 
     <footer class="bg-gray-800 text-gray-400 py-6 mt-auto">
         <div class="container mx-auto px-6 text-center text-sm">
@@ -246,6 +260,7 @@
         </div>
     </footer>
 
+    <!-- MODAL DE LOGIN PARA JURADOS -->
     <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center backdrop-blur-sm">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 relative border-t-4 border-[#003893] animate-fade-in-up">
             <button onclick="document.getElementById('loginModal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-800 transition-colors">
@@ -288,7 +303,7 @@
                         </div>
                     </div>
                     <button class="w-full bg-[#003893] hover:bg-blue-800 text-white font-bold py-3 px-4 rounded-lg focus:outline-none shadow-md flex justify-center items-center gap-2" type="submit">
-                        <i class="fas fa-sign-in-alt"></i> Entrar al Tarjetón
+                        <i class="fas fa-sign-in-alt"></i> Entrar a mi Mesa
                     </button>
                 </form>
             </div>
@@ -320,9 +335,7 @@
                 vp.classList.remove('hidden');
                 vc.classList.add('hidden');
                 
-                // Estilos Botón Activo
                 bp.className = "bg-[#003893] text-white px-4 py-2 rounded-md text-sm font-bold shadow-sm transition-all";
-                // Estilos Botón Inactivo
                 bc.className = "text-gray-600 hover:text-gray-900 px-4 py-2 rounded-md text-sm font-bold transition-all";
             } else {
                 vp.classList.add('hidden');

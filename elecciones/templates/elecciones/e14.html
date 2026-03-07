@@ -20,7 +20,7 @@
             </div>
             <div class="flex items-center gap-4">
                 
-                <a href="{% url 'elecciones:digitar_votos' %}{% if request.user.is_superuser %}?mesa_id={{ mesa.id }}{% endif %}" class="bg-[#FCD116] text-[#003893] px-3 py-1.5 rounded-md text-xs font-bold shadow-sm hover:bg-yellow-500 hidden sm:flex items-center gap-2">
+                <a href="{% url 'elecciones:digitar_votos' %}?corp={{ corporacion.nombre }}{% if request.user.is_superuser %}&mesa_id={{ mesa.id }}{% endif %}" class="bg-[#FCD116] text-[#003893] px-3 py-1.5 rounded-md text-xs font-bold shadow-sm hover:bg-yellow-500 hidden sm:flex items-center gap-2">
                     <i class="fas fa-hand-pointer"></i> Cambiar a Tarjetón Táctil
                 </a>
 
@@ -43,6 +43,19 @@
             {% endfor %}
         {% endif %}
 
+        <!-- PESTAÑAS DE NAVEGACIÓN DE CORPORACIONES -->
+        <div class="flex flex-wrap justify-center gap-2 sm:gap-4 mb-6 print:hidden">
+            <a href="?corp=CAMARA{% if request.user.is_superuser %}&mesa_id={{ mesa.id }}{% endif %}" class="px-5 py-2 rounded-full font-bold transition-all text-sm sm:text-base flex items-center gap-2 {% if corporacion.nombre == 'CAMARA' %}bg-[#003893] text-white shadow-md{% else %}bg-white text-gray-600 border border-gray-300 hover:bg-gray-100{% endif %}">
+                <i class="fas fa-users"></i> Cámara
+            </a>
+            <a href="?corp=SENADO{% if request.user.is_superuser %}&mesa_id={{ mesa.id }}{% endif %}" class="px-5 py-2 rounded-full font-bold transition-all text-sm sm:text-base flex items-center gap-2 {% if corporacion.nombre == 'SENADO' %}bg-[#003893] text-white shadow-md{% else %}bg-white text-gray-600 border border-gray-300 hover:bg-gray-100{% endif %}">
+                <i class="fas fa-landmark"></i> Senado
+            </a>
+            <a href="?corp=CONSULTA{% if request.user.is_superuser %}&mesa_id={{ mesa.id }}{% endif %}" class="px-5 py-2 rounded-full font-bold transition-all text-sm sm:text-base flex items-center gap-2 {% if corporacion.nombre == 'CONSULTA' %}bg-[#003893] text-white shadow-md{% else %}bg-white text-gray-600 border border-gray-300 hover:bg-gray-100{% endif %}">
+                <i class="fas fa-person-booth"></i> Consultas
+            </a>
+        </div>
+
         <!-- LA HOJA BLANCA TIPO DOCUMENTO OFICIAL -->
         <form method="POST" action="" class="bg-white p-2 sm:p-8 shadow-xl border border-gray-300">
             {% csrf_token %}
@@ -50,7 +63,7 @@
             <!-- Encabezado del Documento -->
             <div class="border-4 border-black p-4 mb-6 text-center">
                 <h2 class="text-2xl font-black uppercase tracking-widest text-black">Formulario E-14</h2>
-                <h3 class="text-lg font-bold text-gray-800 uppercase">Cámara de Representantes - Departamento de Tolima</h3>
+                <h3 class="text-lg font-bold text-gray-800 uppercase">{{ corporacion.get_nombre_display }}</h3>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 border-t-2 border-black pt-4 text-sm font-bold">
                     <div>MUNICIPIO: <span class="font-normal">{{ mesa.puesto.municipio|default:"HONDA" }}</span></div>
                     <div>ZONA: <span class="font-normal">01</span></div>
@@ -63,9 +76,9 @@
             <table class="w-full border-collapse border-2 border-black text-black">
                 <thead>
                     <tr class="bg-gray-200">
-                        <th class="border-2 border-black p-2 w-1/3">Partido o Movimiento</th>
-                        <th class="border-2 border-black p-2 w-1/3">Candidato</th>
-                        <th class="border-2 border-black p-2 w-1/3 text-center">Votos</th>
+                        <th class="border-2 border-black p-2 w-1/3 text-xs sm:text-base">Coalición o Partido</th>
+                        <th class="border-2 border-black p-2 w-1/3 text-xs sm:text-base">Candidato / Número</th>
+                        <th class="border-2 border-black p-2 w-1/3 text-center text-xs sm:text-base">Votos</th>
                     </tr>
                 </thead>
                 
@@ -74,35 +87,37 @@
                 <tbody>
                     {% for cand in partido_group.list %}
                     <tr>
-                        <!-- Columna Partido (Se fusiona para todos los candidatos del mismo partido) -->
+                        <!-- Columna Partido/Consulta (Se fusiona) -->
                         {% if forloop.first %}
-                        <td rowspan="{{ partido_group.list|length }}" class="border-2 border-black p-3 text-center align-middle font-bold text-xs sm:text-sm bg-gray-50">
-                            
-                            <!-- MOSTRAR IMAGEN O CIRCULO EN E-14 -->
+                        <td rowspan="{{ partido_group.list|length }}" class="border-2 border-black p-3 text-center align-middle font-bold text-[10px] sm:text-sm bg-gray-50 uppercase">
                             {% if cand.partido.logo %}
-                                <img src="{{ cand.partido.logo.url }}" alt="{{ cand.partido.siglas }}" class="w-12 h-12 mx-auto rounded-full object-contain mb-1 shadow-sm bg-white p-0.5 border border-gray-400">
+                                <img src="{{ cand.partido.logo.url }}" alt="{{ cand.partido.siglas }}" class="w-10 h-10 sm:w-12 sm:h-12 mx-auto rounded-full object-contain mb-1 shadow-sm bg-white p-0.5 border border-gray-400">
                             {% else %}
-                                <div class="w-12 h-12 mx-auto rounded-full flex items-center justify-center mb-1 text-white text-lg shadow-sm border border-gray-400" style="background-color: {{ cand.partido.logo_color|default:'#000' }};">
+                                <div class="w-10 h-10 sm:w-12 sm:h-12 mx-auto rounded-full flex items-center justify-center mb-1 text-white text-lg shadow-sm border border-gray-400" style="background-color: {{ cand.partido.logo_color|default:'#000' }};">
                                     {{ cand.partido.siglas|default:"P" }}
                                 </div>
                             {% endif %}
-                            
                             {{ cand.partido.nombre }}
                         </td>
                         {% endif %}
                         
-                        <!-- Columna Candidato -->
-                        <td class="border-2 border-black p-2 text-center font-black text-lg">
-                            {% if cand.numero_tarjeton %}
-                                {{ cand.numero_tarjeton }}
+                        <!-- Columna Candidato (MODIFICADA para mostrar nombres en consultas) -->
+                        <td class="border-2 border-black p-2 text-center font-black">
+                            {% if cand.nombre and cand.nombre != 'Voto a la Lista' and cand.nombre != 'Voto al Logo' %}
+                                <div class="text-[10px] sm:text-sm uppercase leading-tight">{{ cand.nombre }}</div>
+                                {% if cand.numero_tarjeton %}
+                                    <div class="text-[10px] text-gray-500 font-normal mt-1">#{{ cand.numero_tarjeton }}</div>
+                                {% endif %}
+                            {% elif cand.numero_tarjeton %}
+                                <div class="text-xl">{{ cand.numero_tarjeton }}</div>
                             {% else %}
-                                <span class="text-xs uppercase text-gray-600">Voto Sólo por la Lista</span>
+                                <span class="text-[10px] sm:text-xs uppercase text-gray-600">Voto Sólo por la Lista/Partido</span>
                             {% endif %}
                         </td>
                         
                         <!-- Columna Input -->
                         <td class="border-2 border-black p-0 bg-yellow-50/30 hover:bg-yellow-100/50 transition-colors">
-                            <input type="number" name="votos_{{ cand.id }}" value="{{ cand.votos_actuales }}" min="0" class="w-full h-full py-4 text-center text-2xl font-black bg-transparent focus:outline-none focus:bg-blue-100 e14-input">
+                            <input type="number" name="votos_{{ cand.id }}" value="{{ cand.votos_actuales }}" min="0" class="w-full h-full py-4 text-center text-xl sm:text-2xl font-black bg-transparent focus:outline-none focus:bg-blue-100 e14-input">
                         </td>
                     </tr>
                     {% endfor %}
@@ -113,30 +128,29 @@
             <!-- Votos de Control y Total -->
             <table class="w-full border-collapse border-2 border-black mt-6 text-black">
                 <tr>
-                    <td class="border-2 border-black p-4 font-black text-right w-2/3 uppercase">Votos en Blanco</td>
+                    <td class="border-2 border-black p-2 sm:p-4 font-black text-right w-2/3 uppercase text-sm sm:text-base">Votos en Blanco</td>
                     <td class="border-2 border-black p-0 w-1/3 bg-gray-100">
-                        <input type="number" name="votos_blancos" value="{{ votos_control.blancos }}" min="0" class="w-full h-full py-4 text-center text-2xl font-black bg-transparent focus:outline-none focus:bg-blue-100 e14-input">
+                        <input type="number" name="votos_blancos" value="{{ votos_control.blancos }}" min="0" class="w-full h-full py-4 text-center text-xl sm:text-2xl font-black bg-transparent focus:outline-none focus:bg-blue-100 e14-input">
                     </td>
                 </tr>
                 <tr>
-                    <td class="border-2 border-black p-4 font-black text-right w-2/3 uppercase text-red-700">Votos Nulos</td>
+                    <td class="border-2 border-black p-2 sm:p-4 font-black text-right w-2/3 uppercase text-red-700 text-sm sm:text-base">Votos Nulos</td>
                     <td class="border-2 border-black p-0 w-1/3 bg-gray-100">
-                        <input type="number" name="votos_nulos" value="{{ votos_control.nulos }}" min="0" class="w-full h-full py-4 text-center text-2xl font-black text-red-700 bg-transparent focus:outline-none focus:bg-blue-100 e14-input">
+                        <input type="number" name="votos_nulos" value="{{ votos_control.nulos }}" min="0" class="w-full h-full py-4 text-center text-xl sm:text-2xl font-black text-red-700 bg-transparent focus:outline-none focus:bg-blue-100 e14-input">
                     </td>
                 </tr>
                 <tr>
-                    <td class="border-2 border-black p-4 font-black text-right w-2/3 uppercase">Votos No Marcados</td>
+                    <td class="border-2 border-black p-2 sm:p-4 font-black text-right w-2/3 uppercase text-sm sm:text-base">Votos No Marcados</td>
                     <td class="border-2 border-black p-0 w-1/3 bg-gray-100">
-                        <input type="number" name="votos_no_marcados" value="{{ votos_control.no_marcados }}" min="0" class="w-full h-full py-4 text-center text-2xl font-black bg-transparent focus:outline-none focus:bg-blue-100 e14-input">
+                        <input type="number" name="votos_no_marcados" value="{{ votos_control.no_marcados }}" min="0" class="w-full h-full py-4 text-center text-xl sm:text-2xl font-black bg-transparent focus:outline-none focus:bg-blue-100 e14-input">
                     </td>
                 </tr>
                 <tr class="bg-black text-white">
-                    <td class="border-2 border-black p-4 font-black text-right w-2/3 uppercase text-xl">TOTAL VOTOS MESA</td>
-                    <td class="border-2 border-black p-0 w-1/3 text-center font-black text-3xl" id="e14-total">0</td>
+                    <td class="border-2 border-black p-2 sm:p-4 font-black text-right w-2/3 uppercase text-lg sm:text-xl">TOTAL VOTOS MESA</td>
+                    <td class="border-2 border-black p-0 w-1/3 text-center font-black text-2xl sm:text-3xl" id="e14-total">0</td>
                 </tr>
             </table>
 
-            <!-- Botón Guardar Fijo Abajo -->
             <div class="fixed bottom-0 left-0 right-0 p-4 bg-white border-t-4 border-[#003893] shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.1)] z-50 print:hidden">
                 <div class="container mx-auto max-w-4xl flex justify-between items-center">
                     <p class="font-bold text-gray-800 hidden sm:block">Revise que el total coincida con los sufragantes.</p>
@@ -149,7 +163,6 @@
 
     </main>
 
-    <!-- Script para Auto-Sumar en tiempo real -->
     <script>
         function calcularTotalE14() {
             let total = 0;
@@ -159,12 +172,10 @@
             document.getElementById('e14-total').innerText = total;
         }
 
-        // Ejecutar suma cada vez que se teclee un número
         document.querySelectorAll('.e14-input').forEach(inp => {
             inp.addEventListener('input', calcularTotalE14);
         });
 
-        // Sumar al cargar la página
         window.onload = calcularTotalE14;
     </script>
 </body>
