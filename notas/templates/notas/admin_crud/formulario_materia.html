@@ -34,7 +34,6 @@
                             </div>
                         </div>
                         
-                        <!-- 👇 INICIO: CAMPO NUEVO PARA ASIGNAR ÁREA -->
                         <div class="mb-3">
                             {{ form.area.label_tag }}
                             {{ form.area }}
@@ -42,11 +41,40 @@
                                 <small class="form-text text-muted">{{ form.area.help_text }}</small>
                             {% endif %}
                         </div>
-                        <!-- 👆 FIN: CAMPO NUEVO -->
 
                         <hr class="my-4">
 
-                        <h5 class="mb-3">Ponderación por Defecto</h5>
+                        <!-- 👇 NUEVA SECCIÓN: Opciones de Boletín y Etiquetas 👇 -->
+                        <h5 class="mb-3"><i class="fas fa-cog me-2"></i>Configuración de Promedio y Etiquetas</h5>
+                        
+                        <div class="form-check mb-4 bg-light p-3 rounded border">
+                            {{ form.promedia_en_boletin }}
+                            <label class="form-check-label fw-bold text-primary" for="{{ form.promedia_en_boletin.id_for_label }}">
+                                {{ form.promedia_en_boletin.label }}
+                            </label>
+                            <small class="form-text text-muted d-block">{{ form.promedia_en_boletin.help_text }}</small>
+                        </div>
+
+                        <p class="text-muted small mb-2">Personaliza cómo se llamarán las columnas de calificación para esta materia (Por defecto: Ser, Saber, Hacer). Útil para materias que solo tienen un Examen o nombres distintos.</p>
+                        <div class="row bg-light p-2 rounded border mx-0 mb-4">
+                            <div class="col-md-4 mb-2">
+                                {{ form.etiqueta_ser.label_tag }}
+                                {{ form.etiqueta_ser }}
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                {{ form.etiqueta_saber.label_tag }}
+                                {{ form.etiqueta_saber }}
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                {{ form.etiqueta_hacer.label_tag }}
+                                {{ form.etiqueta_hacer }}
+                            </div>
+                        </div>
+                        <!-- 👆 FIN NUEVA SECCIÓN 👆 -->
+
+                        <hr class="my-4">
+
+                        <h5 class="mb-3"><i class="fas fa-balance-scale me-2"></i>Ponderación por Defecto</h5>
                         <div class="form-check mb-3">
                             {{ form.usar_ponderacion_equitativa }}
                             <label class="form-check-label" for="{{ form.usar_ponderacion_equitativa.id_for_label }}">

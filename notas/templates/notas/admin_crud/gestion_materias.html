@@ -19,7 +19,6 @@
     <a href="{% url 'notas:crear_materia' %}" class="btn btn-primary">
         <i class="fas fa-plus me-2"></i>Añadir Materia
     </a>
-    <!-- BOTÓN MODIFICADO: Ahora dirige a la nueva herramienta de ponderación -->
     <a href="{% url 'notas:gestion_ponderacion_areas' %}" class="btn btn-info">
         <i class="fas fa-balance-scale me-2"></i>Gestionar Ponderación por Áreas
     </a>
@@ -31,7 +30,6 @@
     </a>
 </div>
 
-<!-- NUEVO: Mensaje informativo -->
 <div class="alert alert-info">
     <strong>Nota:</strong> Para asignar una materia a un área y definir su peso porcentual, por favor, utilice la herramienta <strong>"Gestionar Ponderación por Áreas"</strong>.
 </div>
@@ -42,18 +40,27 @@
             <table class="table table-hover align-middle">
                 <thead class="table-light">
                     <tr>
-                        <!-- COLUMNA ELIMINADA: Ya no se muestra el área aquí -->
                         <th>Materia</th>
                         <th>Abreviatura</th>
+                        <th>Estado en Boletín</th>
                         <th class="text-end">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for materia in materias %}
                     <tr>
-                        <!-- CAMPO ELIMINADO: Ya no se muestra materia.area.nombre -->
-                        <td><strong>{{ materia.nombre }}</strong></td>
+                        <td>
+                            <strong>{{ materia.nombre }}</strong>
+                        </td>
                         <td>{{ materia.abreviatura|default_if_none:"" }}</td>
+                        <td>
+                            <!-- 👇 ETIQUETA VISUAL DE PROMEDIO 👇 -->
+                            {% if materia.promedia_en_boletin %}
+                                <span class="badge bg-success">Suma al Promedio</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">No Promedia (Informativa)</span>
+                            {% endif %}
+                        </td>
                         <td class="text-end">
                             <a href="{% url 'notas:editar_materia' materia.id %}" class="btn btn-sm btn-outline-info" title="Editar"><i class="fas fa-pencil-alt"></i></a>
                             <form action="{% url 'notas:eliminar_materia' materia.id %}" method="POST" class="d-inline" onsubmit="return confirm('¿Estás seguro de que quieres eliminar la materia \'{{ materia.nombre|escapejs }}\'?')">
@@ -64,7 +71,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="3" class="text-center text-muted py-4">
+                        <td colspan="4" class="text-center text-muted py-4">
                             No hay materias registradas en el sistema.
                         </td>
                     </tr>
@@ -75,7 +82,7 @@
     </div>
 </div>
 
-<!-- El modal de importación no necesita cambios, pero su lógica de backend sí deberá ser ajustada eventualmente -->
+<!-- Modal de importación -->
 <div class="modal fade" id="importarModal" tabindex="-1" aria-labelledby="importarModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
