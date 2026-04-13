@@ -31,10 +31,6 @@
             <div class="row align-items-center">
                 <div class="col-md-3">
                     <label for="p-ser" class="form-label mb-0">Ser (%):</label>
-                    <!-- ================================================================== -->
-                    <!-- INICIO DE LA CORRECCIÓN -->
-                    <!-- Se usa la propiedad _calc para mostrar el valor correcto inicial. -->
-                    <!-- ================================================================== -->
                     <input type="number" class="form-control form-control-sm porcentaje-input" id="p-ser" value="{{ asignacion_seleccionada.ser_calc|floatformat:0 }}" min="0" max="100">
                 </div>
                 <div class="col-md-3">
@@ -45,9 +41,6 @@
                     <label for="p-hacer" class="form-label mb-0">Hacer (%):</label>
                     <input type="number" class="form-control form-control-sm porcentaje-input" id="p-hacer" value="{{ asignacion_seleccionada.hacer_calc|floatformat:0 }}" min="0" max="100">
                 </div>
-                <!-- ================================================================== -->
-                <!-- FIN DE LA CORRECCIÓN -->
-                <!-- ================================================================== -->
                 <div class="col-md-3">
                     <label class="form-label mb-0">Suma Total:</label>
                     <div id="suma-porcentajes" class="fw-bold fs-5 p-1 border rounded text-center bg-white">100%</div>
@@ -81,14 +74,13 @@
     </div>
     {% endif %}
 
-    <!-- Datos JSON para que JavaScript los lea. -->
+    <!-- Datos JSON (Original Intacto) -->
     <div id="estudiantes-data-json" style="display: none;">{{ estudiantes_data_json|safe }}</div>
     <div id="url-get-inasistencias" data-url="{% url 'notas:get_inasistencias_auto' %}"></div>
-    
-    <!-- --- INICIO: DIV AÑADIDO PARA LA ESCALA DE VALORACIÓN --- -->
     <div id="escala-valoracion-json" style="display: none;">{{ escala_valoracion_json|safe }}</div>
-    <!-- --- FIN: DIV AÑADIDO --- -->
-
+    
+    <!-- NUESTRA MOCHILA DE DATOS DE INCLUSIÓN -->
+    <div id="inclusion-data-json" style="display: none;">{{ inclusion_data_json|safe }}</div>
 
     <div id="asignacion-details" 
          data-usar-ponderacion-equitativa="{{ asignacion_seleccionada.usar_ponderacion_equitativa|yesno:'true,false' }}"
@@ -97,8 +89,30 @@
          data-p-hacer="{{ asignacion_seleccionada.hacer_calc }}">
     </div>
 
+    <!-- MODAL DE INCLUSIÓN -->
+    <div class="modal fade" id="modalInclusion" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title"><i class="fas fa-universal-access me-2"></i>Indicador de Inclusión</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Agrega un indicador o desempeño especial para: <strong id="inc-modal-name"></strong></p>
+                    <textarea id="inc-modal-text" class="form-control" rows="4" placeholder="Ej: El estudiante logró identificar las sumas con apoyo visual..."></textarea>
+                    <input type="hidden" id="inc-modal-id">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-info text-white" id="btnGuardarInclusion">Guardar Indicador</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // --- 1. Lógica Ponderación Original ---
         const panelPonderacion = document.getElementById('panel-ponderacion');
         if (panelPonderacion) {
             const inputs = panelPonderacion.querySelectorAll('.porcentaje-input');
@@ -108,12 +122,8 @@
 
             function validarSuma() {
                 let suma = 0;
-                inputs.forEach(input => {
-                    suma += parseInt(input.value, 10) || 0;
-                });
-
+                inputs.forEach(input => { suma += parseInt(input.value, 10) || 0; });
                 sumaDiv.textContent = suma + '%';
-
                 if (suma === 100) {
                     sumaDiv.classList.remove('text-danger', 'bg-warning-subtle');
                     sumaDiv.classList.add('text-success', 'bg-success-subtle');
@@ -126,11 +136,141 @@
                     if(guardarBtn) guardarBtn.disabled = true;
                 }
             }
-
-            inputs.forEach(input => {
-                input.addEventListener('input', validarSuma);
-            });
+            inputs.forEach(input => input.addEventListener('input', validarSuma));
             validarSuma();
+        }
+
+        // --- 2. LÓGICA DE INCLUSIÓN INVISIBLE ---
+        try {
+            const incEl = document.getElementById('inclusion-data-json');
+            const estEl = document.getElementById('estudiantes-data-json');
+            if (!incEl || !estEl) return;
+
+            window._incData = JSON.parse(incEl.textContent);
+            const estData = JSON.parse(estEl.textContent);
+            let yaInsertado = false;
+
+            // Esperar pacientemente a que la tabla original se dibuje sola
+            const timer = setInterval(() => {
+                const tabla = document.getElementById('tabla-calificaciones');
+                if (!tabla) return;
+
+                // Si no hay estudiantes (como en SEXTO A), simplemente detenemos el reloj
+                if (estData.length === 0) {
+                    clearInterval(timer);
+                    return;
+                }
+                
+                const filas = tabla.querySelectorAll('tbody tr');
+                
+                // Cuando las filas originales de tu sistema estén completas
+                if (filas.length > 0 && filas.length === estData.length && !yaInsertado) {
+                    yaInsertado = true;
+                    clearInterval(timer);
+
+                    // Insertamos el botón DENTRO de la celda del nombre del estudiante 
+                    // para NO alterar el número de columnas de tu sistema.
+                    filas.forEach((tr, idx) => {
+                        const est = estData[idx];
+                        if (!est) return;
+                        
+                        const incInfo = window._incData[est.id];
+
+                        if (incInfo && incInfo.es_inclusion) {
+                            const celdas = tr.querySelectorAll('td');
+                            
+                            // Buscar la celda que contiene el nombre del estudiante
+                            let celdaNombre = null;
+                            celdas.forEach(td => {
+                                if (td.textContent.includes(est.nombre_completo.split(',')[0])) {
+                                    celdaNombre = td;
+                                }
+                            });
+
+                            if (celdaNombre) {
+                                const btnClass = incInfo.obs ? 'btn-info text-white' : 'btn-outline-info';
+                                const btn = document.createElement('button');
+                                btn.className = `btn btn-sm ${btnClass} ms-2 btn-inc-modal float-end`;
+                                btn.title = "Indicador de Inclusión";
+                                btn.innerHTML = '<i class="fas fa-universal-access"></i>';
+                                btn.dataset.id = est.id;
+
+                                celdaNombre.appendChild(btn);
+
+                                btn.addEventListener('click', function() {
+                                    document.getElementById('inc-modal-name').textContent = est.nombre_completo;
+                                    document.getElementById('inc-modal-id').value = est.id;
+                                    document.getElementById('inc-modal-text').value = window._incData[est.id].obs || "";
+                                    new bootstrap.Modal(document.getElementById('modalInclusion')).show();
+                                });
+                            }
+                        }
+                    });
+                }
+            }, 300); // Revisa cada 300 milisegundos
+
+            // Capturar la información cuando se guarde en el modal
+            document.addEventListener('click', function(e) {
+                if (e.target && e.target.id === 'btnGuardarInclusion') {
+                    const id = document.getElementById('inc-modal-id').value;
+                    const text = document.getElementById('inc-modal-text').value;
+                    window._incData[id].obs = text;
+
+                    // Actualizar color visualmente
+                    const btn = document.querySelector(`.btn-inc-modal[data-id="${id}"]`);
+                    if (btn) {
+                        btn.className = text.trim() ? 'btn btn-sm btn-info text-white ms-2 btn-inc-modal float-end' : 'btn btn-sm btn-outline-info ms-2 btn-inc-modal float-end';
+                    }
+
+                    const gBtn = document.getElementById('guardarTodoBtn');
+                    if (gBtn) gBtn.disabled = false;
+
+                    const mod = bootstrap.Modal.getInstance(document.getElementById('modalInclusion'));
+                    if (mod) mod.hide();
+                }
+            });
+
+            // Interceptar silenciosamente el envío de datos al servidor (Para Fetch/AJAX modernos)
+            const origFetch = window.fetch;
+            window.fetch = async function(...args) {
+                try {
+                    let [resource, config] = args;
+                    let url = typeof resource === 'string' ? resource : (resource instanceof Request ? resource.url : '');
+                    if (config && config.method && config.method.toUpperCase() === 'POST' && typeof config.body === 'string' && url.includes(window.location.pathname)) {
+                        let parsed = JSON.parse(config.body);
+                        if (parsed.estudiantes) {
+                            parsed.estudiantes.forEach(est => {
+                                if (window._incData[est.id]) {
+                                    est.observacion_inclusion = window._incData[est.id].obs;
+                                }
+                            });
+                            config.body = JSON.stringify(parsed);
+                            args[1] = config;
+                        }
+                    }
+                } catch(e) {}
+                return origFetch.apply(this, args);
+            };
+
+            // Interceptar silenciosamente (Para jQuery AJAX antiguo)
+            if (window.jQuery) {
+                window.jQuery.ajaxPrefilter(function(options, originalOptions, jqXHR) {
+                    if (options.type && options.type.toUpperCase() === 'POST' && typeof options.data === 'string' && options.url && options.url.includes(window.location.pathname)) {
+                        try {
+                            let parsed = JSON.parse(options.data);
+                            if (parsed.estudiantes) {
+                                parsed.estudiantes.forEach(e => {
+                                    if (window._incData[e.id]) e.observacion_inclusion = window._incData[e.id].obs;
+                                });
+                                options.data = JSON.stringify(parsed);
+                            }
+                        } catch(e) {}
+                    }
+                });
+            }
+
+        } catch(e) {
+            console.error("Módulo de inclusión de fondo:", e);
         }
     });
     </script>

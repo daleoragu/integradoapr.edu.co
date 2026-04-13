@@ -39,7 +39,7 @@ class Colegio(models.Model):
     # --- Datos Oficiales ---
     nit = models.CharField(max_length=50, blank=True, verbose_name="NIT del Colegio")
     resolucion_aprobacion = models.CharField(max_length=255, blank=True, verbose_name="Resolución de Aprobación")
-    nombre_rector = models.CharField(max_length=255, blank=True, null=True, verbose_name="Nombre Completo del Rector(a)") # <-- NUEVO CAMPO
+    nombre_rector = models.CharField(max_length=255, blank=True, null=True, verbose_name="Nombre Completo del Rector(a)")
     direccion = models.CharField(max_length=255, blank=True, verbose_name="Dirección Física")
     ciudad = models.CharField(max_length=100, blank=True, null=True, verbose_name="Ciudad")
     departamento = models.CharField(max_length=100, blank=True, null=True, verbose_name="Departamento")
@@ -76,20 +76,34 @@ class Colegio(models.Model):
     
     encabezado_pdf_sin_bordes = models.BooleanField(default=False, verbose_name="Quitar bordes del encabezado en PDF", help_text="Marcar si el encabezado debe ocupar todo el ancho sin bordes (diseño especial).")
 
+    # --- Identidad Visual ---
+    logo_izquierdo = models.ImageField(upload_to='logos_colegios/', blank=True, null=True, verbose_name="Logo Izquierdo (Reportes)", help_text="Ej: Logo del Colegio")
+    logo_derecho = models.ImageField(upload_to='logos_colegios/', blank=True, null=True, verbose_name="Logo Derecho (Reportes)", help_text="Ej: Logo de la Gobernación")
+    favicon = models.ImageField(upload_to='logos_colegios/', blank=True, null=True, help_text="Icono para la pestaña del navegador (32x32px)")
+    escudo = models.ImageField(upload_to='logos_colegios/', blank=True, null=True, verbose_name="Logo/Escudo Principal del Portal", help_text="Escudo para el portal y marca de agua en PDFs")
+    firma_rector = models.ImageField(upload_to='firmas_rectores/', blank=True, null=True, verbose_name="Firma del Rector(a)", help_text="Imagen de la firma para los reportes") 
+    alto_logos_pdf = models.PositiveSmallIntegerField(default=65, verbose_name="Altura Máxima de Logos en PDF (px)", help_text="Ajusta la altura de los logos para que se alineen con el texto del encabezado.")
+
+    # --- Configuración de Boletines en PDF ---
+    mostrar_foto_estudiante_boletin = models.BooleanField(default=False, verbose_name="Mostrar Foto del Estudiante en Boletines")
+    mostrar_firma_rector_boletin = models.BooleanField(default=False, verbose_name="Mostrar Firma del Rector en Boletines")
+    fuente_firma_rector = models.CharField(max_length=100, choices=FONT_CHOICES, default='Helvetica', verbose_name="Fuente de la Firma del Rector")
+    tamano_firma_rector = models.PositiveSmallIntegerField(default=10, verbose_name="Tamaño de Letra del Rector (pt)")
+    
+    tamano_letra_boletin = models.PositiveSmallIntegerField(default=9, verbose_name="Tamaño de Letra General (px)", help_text="Ajusta el tamaño del texto general de los boletines (Recomendado: 8 o 9).")
+    
+    formatear_logros_automatico = models.BooleanField(
+        default=True, 
+        verbose_name="Formatear logros automáticamente",
+        help_text="Si se desactiva, el logro se mostrará exactamente como lo escribió el docente. Si se activa, se convertirá a minúsculas y se le añadirá un prefijo de coherencia."
+    )
+
     # --- Campos de Contenido del Portal ---
     lema = models.CharField(max_length=255, blank=True, null=True, verbose_name="Lema o Slogan")
     historia = models.TextField(blank=True, null=True, verbose_name="Historia / Quiénes Somos")
     mision = models.TextField(blank=True, null=True, verbose_name="Misión")
     vision = models.TextField(blank=True, null=True, verbose_name="Visión")
     modelo_pedagogico = models.TextField(blank=True, null=True, verbose_name="Modelo Pedagógico")
-
-    # --- Identidad Visual ---
-    logo_izquierdo = models.ImageField(upload_to='logos_colegios/', blank=True, null=True, verbose_name="Logo Izquierdo (Reportes)", help_text="Ej: Logo del Colegio")
-    logo_derecho = models.ImageField(upload_to='logos_colegios/', blank=True, null=True, verbose_name="Logo Derecho (Reportes)", help_text="Ej: Logo de la Gobernación")
-    favicon = models.ImageField(upload_to='logos_colegios/', blank=True, null=True, help_text="Icono para la pestaña del navegador (32x32px)")
-    escudo = models.ImageField(upload_to='logos_colegios/', blank=True, null=True, verbose_name="Logo/Escudo Principal del Portal", help_text="Escudo para el portal y marca de agua en PDFs")
-    firma_rector = models.ImageField(upload_to='firmas_rectores/', blank=True, null=True, verbose_name="Firma del Rector(a)", help_text="Imagen de la firma para los reportes") # <-- NUEVO CAMPO
-    alto_logos_pdf = models.PositiveSmallIntegerField(default=65, verbose_name="Altura Máxima de Logos en PDF (px)", help_text="Ajusta la altura de los logos para que se alineen con el texto del encabezado.")
 
     # --- Paleta de Colores del Portal ---
     color_primario = models.CharField(max_length=7, default='#0D6EFD', verbose_name="Color Primario (Botones, Acentos)")
@@ -149,27 +163,23 @@ class Curso(models.Model):
     nivel = models.CharField(max_length=4, choices=NIVEL_CHOICES, default='BAS', verbose_name="Nivel Escolar")
     director_grado = models.ForeignKey('Docente', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Director de Grado", related_name="cursos_dirigidos")
     
-    # --- CAMPO AÑADIDO ---
     orden = models.PositiveIntegerField(default=0, db_index=True)
 
     def __str__(self): 
         return self.nombre
         
-    # --- MÉTODO SAVE MODIFICADO ---
     def save(self, *args, **kwargs):
         self.nombre = self.nombre.upper()
-        if self.pk is None: # Si es un curso nuevo
-            # Busca el número de orden más alto que exista y le suma 1
+        if self.pk is None: 
             max_orden = Curso.objects.filter(colegio=self.colegio).aggregate(Max('orden'))['orden__max']
             self.orden = (max_orden or 0) + 1
         super().save(*args, **kwargs)
         
-    # --- CLASE META MODIFICADA ---
     class Meta:
         unique_together = ('nombre', 'colegio')
         verbose_name = "Curso"
         verbose_name_plural = "Cursos"
-        ordering = ['orden'] # Ordenar por defecto usando el nuevo campo
+        ordering = ['orden'] 
 
 class Docente(models.Model):
     colegio = models.ForeignKey(Colegio, on_delete=models.CASCADE, related_name="docentes")
@@ -192,6 +202,9 @@ class Estudiante(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name="Usuario de Login")
     curso = models.ForeignKey(Curso, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Curso Asignado")
     is_active = models.BooleanField(default=True, verbose_name="¿Estudiante Activo?")
+    
+    # NUEVO CAMPO AÑADIDO PARA INCLUSIÓN
+    es_inclusion = models.BooleanField(default=False, verbose_name="Estudiante de Inclusión", help_text="Marcar si el estudiante pertenece al programa de inclusión. Se ignorará para rankings.")
     
     def __str__(self): 
         return self.user.get_full_name() or self.user.username
@@ -239,17 +252,10 @@ class FichaDocente(models.Model):
     titulo_profesional = models.CharField(max_length=200, blank=True, null=True, verbose_name="Título Profesional")
     foto = models.ImageField(upload_to='fotos_docentes/', null=True, blank=True, verbose_name="Foto del Docente")
     
-    # === INICIO DE LA CORRECCIÓN ===
     def save(self, *args, **kwargs):
-        """
-        Sobrescribe el método de guardado para convertir cadenas vacías en None.
-        Esto previene errores de 'unique constraint' cuando se crean múltiples
-        docentes sin número de documento.
-        """
         if not self.numero_documento:
             self.numero_documento = None
         super().save(*args, **kwargs)
-    # === FIN DE LA CORRECCIÓN ===
 
     def __str__(self): 
         return f"Ficha de {self.docente.user.get_full_name()}"

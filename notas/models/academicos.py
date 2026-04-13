@@ -75,27 +75,12 @@ class AsignacionDocente(models.Model):
             if total_porcentaje != 100:
                 raise ValidationError(f"La suma de porcentajes debe ser 100. Actualmente es {total_porcentaje}.")
     
-    # ==================================================================
-    # INICIO DE LA CORRECCIÓN
-    # La lógica ahora depende de la configuración global del colegio.
-    # ==================================================================
     @property
     def ser_calc(self):
-        # Primero, obtenemos la configuración global del colegio.
         config_global, _ = ConfiguracionCalificaciones.objects.get_or_create(colegio=self.colegio)
-
-        # REGLA 1: ¿El administrador permite que los docentes modifiquen?
         if config_global.docente_puede_modificar:
-            # SI, entonces usamos la configuración de ESTA ASIGNACIÓN específica.
-            # Si el docente marcó equitativa para esta asignación, es 33.33.
-            # Si no, es el porcentaje que el docente guardó para esta asignación.
             return Decimal('33.33') if self.usar_ponderacion_equitativa else Decimal(self.porcentaje_ser)
-        
-        # REGLA 2: El administrador NO permite modificar.
         else:
-            # NO, entonces IGNORAMOS la configuración de la asignación y usamos la de la MATERIA.
-            # Si la materia está configurada como equitativa, es 33.33.
-            # Si no, es el porcentaje por defecto que el admin guardó para la materia.
             return Decimal('33.33') if self.materia.usar_ponderacion_equitativa else Decimal(self.materia.porcentaje_ser)
 
     @property
@@ -113,9 +98,6 @@ class AsignacionDocente(models.Model):
             return Decimal('33.34') if self.usar_ponderacion_equitativa else Decimal(self.porcentaje_hacer)
         else:
             return Decimal('33.34') if self.materia.usar_ponderacion_equitativa else Decimal(self.materia.porcentaje_hacer)
-    # ==================================================================
-    # FIN DE LA CORRECCIÓN
-    # ==================================================================
 
 class Calificacion(models.Model):
     colegio = models.ForeignKey(Colegio, on_delete=models.CASCADE, related_name="calificaciones", null=True)
@@ -127,6 +109,10 @@ class Calificacion(models.Model):
     tipo_nota = models.CharField(max_length=12, choices=TIPO_NOTA_CHOICES)
     valor_nota = models.DecimalField(max_digits=4, decimal_places=2, validators=[MinValueValidator(Decimal('1.0')), MaxValueValidator(Decimal('5.0'))])
     es_recuperada = models.BooleanField(default=False, help_text="Indica si esta calificación de periodo fue recuperada con una nivelación.")
+    
+    # NUEVO CAMPO AÑADIDO PARA INCLUSIÓN
+    observacion_inclusion = models.TextField(blank=True, null=True, verbose_name="Indicador de Inclusión", help_text="Indicador personalizado para estudiantes de inclusión")
+    
     class Meta:
         unique_together = ('estudiante', 'materia', 'periodo', 'tipo_nota', 'colegio')
         verbose_name = "Calificación (Promedio)"; verbose_name_plural = "Calificaciones (Promedios)"

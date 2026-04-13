@@ -12,7 +12,7 @@ try:
 except ImportError:
     PDF_SUPPORT = False
 
-# Se añade FichaEstudiante para poder obtener el número de documento
+# Se añade FichaEstudiante para poder obtener el número de documento y la foto
 from ..models import Curso, PeriodoAcademico, Docente, AsignacionDocente, Estudiante, FichaEstudiante
 from ..boletin.logic import get_datos_boletin_curso, get_datos_boletin_final
 
@@ -152,21 +152,28 @@ def generar_boletin_vista(request):
             pdf_filename = f'boletines_{curso.nombre}_{periodo.get_nombre_display()}.pdf'
             context = { "boletines": boletines_data, "curso": curso, "periodo": periodo, "colegio": request.colegio }
 
-    # --- INICIO: CORRECCIÓN PARA EVITAR EL KEYERROR ---
+    # --- INICIO: CORRECCIÓN PARA EVITAR EL KEYERROR Y AGREGAR FOTO ---
     for boletin in boletines_data:
         # Se verifica si la llave 'estudiante' existe antes de usarla.
         estudiante_obj = boletin.get('estudiante')
         if not estudiante_obj:
-            # Si no hay estudiante en este registro, se le asigna una identificación
-            # genérica y se continúa con el siguiente para no detener la ejecución.
             boletin['identificacion'] = "Estudiante no encontrado"
+            boletin['foto_estudiante_url'] = None
             continue
 
         try:
             ficha = FichaEstudiante.objects.get(estudiante=estudiante_obj)
             boletin['identificacion'] = ficha.numero_documento or estudiante_obj.user.username
+            
+            # Comprobación de si existe una foto para anexar la url
+            if ficha.foto and ficha.foto.name:
+                boletin['foto_estudiante_url'] = ficha.foto.url
+            else:
+                boletin['foto_estudiante_url'] = None
+                
         except FichaEstudiante.DoesNotExist:
             boletin['identificacion'] = estudiante_obj.user.username
+            boletin['foto_estudiante_url'] = None
     # --- FIN: CORRECCIÓN ---
 
     html_string = render_to_string(template_path, context)

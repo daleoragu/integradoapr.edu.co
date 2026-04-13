@@ -15,31 +15,42 @@
                 font-size: 8px; color: #555;
             }
         }
-        body { font-family: 'Helvetica', Arial, sans-serif; font-size: 8px; color: #333; }
+        /* El tamaño base se define aquí con la nueva variable. Todo lo demás usa 'em' para escalar automáticamente */
+        body { font-family: 'Helvetica', Arial, sans-serif; font-size: {{ colegio.tamano_letra_boletin|default:9 }}px; color: #333; }
         .boletin { page-break-after: always; }
         .boletin:last-child { page-break-after: auto; }
         .encabezado { text-align: center; margin-bottom: 10px; }
         .encabezado-tabla { width: 100%; border-collapse: collapse; border: 1px solid #000; }
         .encabezado-tabla td { vertical-align: middle; text-align: center; padding: 5px; border: 1px solid #000; }
         .escudo {max-width: 100px;  max-height: {{ colegio.alto_logos_pdf|default:100 }}px; height: auto; width: auto;}
-        .info-institucion { font-size: 11px; font-weight: bold; }
+        .info-institucion { font-size: 1.2em; font-weight: bold; }
         .info-institucion p { margin: 1px 0; }
-        .info-estudiante { width: 100%; font-size: 9px; border-collapse: collapse; margin-bottom: 10px; }
+        
+        .info-estudiante { width: 100%; font-size: 1.1em; border-collapse: collapse; margin-bottom: 10px; }
         .info-estudiante td { padding: 2px 4px; }
-        .tabla-notas { width: 100%; border-collapse: collapse; font-size: 8px; }
+        
+        .tabla-notas { width: 100%; border-collapse: collapse; font-size: 1em; }
         .tabla-notas th, .tabla-notas td { border: 1px solid #999; padding: 3px; text-align: center; vertical-align: middle; }
         .tabla-notas th { background-color: #E0E0E0; font-weight: bold; }
         .area-header { font-weight: bold; text-align: left; background-color: #f0f0f0; }
         .asignatura-row td { text-align: left; }
         .asignatura-row .nota { text-align: center; }
-        .logro-descriptivo-row td { text-align: left; font-size: 8px; padding-left: 20px; border-top: none; }
-        .tabla-resumen { width: 100%; margin-top: 15px; border-collapse: collapse; font-size: 9px; }
+        .logro-descriptivo-row td { text-align: left; font-size: 0.95em; padding-left: 20px; border-top: none; }
+        
+        .tabla-resumen { width: 100%; margin-top: 15px; border-collapse: collapse; font-size: 1.1em; }
         .tabla-resumen th, .tabla-resumen td { border: 1px solid #999; padding: 4px; text-align: center; }
         .tabla-resumen th { background-color: #E0E0E0; }
-        .seccion-perdidas { margin-top: 15px; padding: 8px; border: 1px solid #ccc; font-size: 8.5px; }
-        .seccion-perdidas h4 { margin: 0 0 5px 0; font-size: 10px; text-align: center; }
+        .seccion-perdidas { margin-top: 15px; padding: 8px; border: 1px solid #ccc; font-size: 1em; }
+        .seccion-perdidas h4 { margin: 0 0 5px 0; font-size: 1.1em; text-align: center; }
         .seccion-perdidas p { margin: 0; text-align: left; line-height: 1.4; }
-        .pie-pagina { margin-top: 20px; text-align: center; font-size: 9px; }
+        
+        /* Estilos de las Firmas Corregidos */
+        .pie-pagina-tabla { width: 100%; margin-top: 40px; text-align: center; page-break-inside: avoid; font-size: 1.1em; border-collapse: collapse; }
+        .pie-pagina-tabla td { border: none !important; vertical-align: bottom; padding: 5px; }
+        .linea-firma { border-top: 1px solid #000; width: 80%; margin: 0 auto 5px auto; }
+        .contenedor-firma { height: 65px; text-align: center; }
+        .img-firma { max-height: 60px; max-width: 150px; display: inline-block; }
+        
         .desempeno-reprobado { background-color: #F2DEDE !important; color: #A94442 !important; }
         .desempeno-aprobado { background-color: #DFF0D8 !important; color: #3C763D !important; }
     </style>
@@ -52,22 +63,36 @@
         <h3 style="text-align: center; margin: 10px 0;">BOLETÍN ACADÉMICO {{ periodo.get_nombre_display|upper }} - {{ periodo.ano_lectivo }}</h3>
         </header>
         
-        <table class="info-estudiante">
+        <table style="width: 100%; margin-bottom: 10px; border-collapse: collapse;">
             <tr>
-                <td><strong>Estudiante:</strong> {{ boletin.estudiante.user.last_name|upper }} {{ boletin.estudiante.user.first_name|upper }}</td>
-                <td><strong>Identificación:</strong> {{ boletin.identificacion|default:boletin.estudiante.user.username }}</td>
-                <td><strong>Grupo:</strong> {{ curso.nombre }}</td>
-            </tr>
-            <tr>
-                <td><strong>Periodo:</strong> {{ periodo.get_nombre_display }} - {{ periodo.ano_lectivo }}</td>
-                <td><strong>Prom. Periodo:</strong> {{ boletin.promedio_general|coma_decimal }}</td>
-                <td><strong>Puesto:</strong> {{ boletin.puesto }}</td>
+                {% if colegio.mostrar_foto_estudiante_boletin %}
+                <td style="width: 80px; text-align: center; vertical-align: middle; padding-right: 10px; border: none;">
+                    {% if boletin.foto_estudiante_url %}
+                        <img src="{{ boletin.foto_estudiante_url }}" style="width: 70px; height: 90px; object-fit: cover; border: 1px solid #ccc;">
+                    {% else %}
+                        <div style="width: 70px; height: 90px; border: 1px dashed #ccc; display: inline-block; line-height: 90px; color: #999;">Sin foto</div>
+                    {% endif %}
+                </td>
+                {% endif %}
+                <td style="vertical-align: top; padding: 0; border: none;">
+                    <table class="info-estudiante">
+                        <tr>
+                            <td><strong>Estudiante:</strong> {{ boletin.estudiante.user.last_name|upper }} {{ boletin.estudiante.user.first_name|upper }}</td>
+                            <td><strong>Identificación:</strong> {{ boletin.identificacion|default:boletin.estudiante.user.username }}</td>
+                            <td><strong>Grupo:</strong> {{ curso.nombre }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Periodo:</strong> {{ periodo.get_nombre_display }} - {{ periodo.ano_lectivo }}</td>
+                            <td><strong>Prom. Periodo:</strong> {{ boletin.promedio_general|coma_decimal }}</td>
+                            <td><strong>Puesto:</strong> {{ boletin.puesto }}</td>
+                        </tr>
+                    </table>
+                </td>
             </tr>
         </table>
 
         <table class="tabla-notas">
             <thead>
-                <!-- INICIO: CABECERA MODIFICADA -->
                 <tr>
                     <th style="width: 35%;">AREA/ASIGNATURA</th>
                     <th style="width: 5%;">IH</th>
@@ -76,21 +101,18 @@
                     <th>SAB</th>
                     <th>HAC</th>
                     <th style="width: 5%;">DEF</th>
-                    <th style="width: 5%;">ACUM</th> <!-- Nueva columna -->
+                    <th style="width: 5%;">ACUM</th>
                     <th style="width: 5%;">INAS</th>
                 </tr>
-                <!-- FIN: CABECERA MODIFICADA -->
             </thead>
             <tbody>
             {% for area in boletin.areas %}
                 <tr class="{{ area.estado_color_css_class }}">
                     <td class="area-header">{{ area.nombre }}</td>
-                    <!-- INICIO: COLSPAN MODIFICADO -->
                     <td class="area-header" style="text-align: center; font-weight: bold;" colspan="5">{{ area.desempeno_area }}</td>
                     <td class="area-header" style="text-align: center;"><strong>{{ area.nota_final_area|coma_decimal|default_if_none:"" }}</strong></td>
-                    <td class="area-header" style="text-align: center;"><strong>{{ area.nota_final_area_acumulada|coma_decimal|default_if_none:"" }}</strong></td> <!-- Acumulado del Área -->
+                    <td class="area-header" style="text-align: center;"><strong>{{ area.nota_final_area_acumulada|coma_decimal|default_if_none:"" }}</strong></td>
                     <td class="area-header"></td>
-                    <!-- FIN: COLSPAN MODIFICADO -->
                 </tr>
                 {% for materia in area.materias %}
                 <tr class="asignatura-row">
@@ -101,25 +123,27 @@
                     <td class="nota">{{ materia.sab.valor_nota|coma_decimal|default_if_none:"" }}</td>
                     <td class="nota">{{ materia.hac.valor_nota|coma_decimal|default_if_none:"" }}</td>
                     <td class="nota"><strong>{{ materia.def|coma_decimal|default_if_none:"" }}</strong></td>
-                    <td class="nota"><strong>{{ materia.def_acumulada|coma_decimal|default_if_none:"" }}</strong></td> <!-- Acumulado de la Materia -->
+                    <td class="nota"><strong>{{ materia.def_acumulada|coma_decimal|default_if_none:"" }}</strong></td>
                     <td class="nota">{{ materia.inasistencias|default_if_none:"0" }}</td>
                 </tr>
                 {% for logro in materia.logros %}
                 <tr class="logro-descriptivo-row">
-                    <!-- INICIO: COLSPAN MODIFICADO -->
                     <td colspan="9">
-                    <!-- FIN: COLSPAN MODIFICADO -->
                         • 
-                        {% if materia.v_n == 'SUPERIOR' %}
-                            Demuestra con excelencia que {{ logro.descripcion|lower|capfirst }}.
-                        {% elif materia.v_n == 'ALTO' %}
-                            Logra satisfactoriamente que {{ logro.descripcion|lower|capfirst }}.
-                        {% elif materia.v_n == 'BASICO' %}
-                            Está en proceso de lograr que {{ logro.descripcion|lower|capfirst }}.
-                        {% elif materia.v_n == 'BAJO' %}
-                            Se le dificulta lograr que {{ logro.descripcion|lower|capfirst }}.
+                        {% if colegio.formatear_logros_automatico %}
+                            {% if materia.v_n == 'SUPERIOR' %}
+                                Demuestra con excelencia que {{ logro.descripcion|lower }}.
+                            {% elif materia.v_n == 'ALTO' %}
+                                Logra satisfactoriamente que {{ logro.descripcion|lower }}.
+                            {% elif materia.v_n == 'BASICO' %}
+                                Está en proceso de lograr que {{ logro.descripcion|lower }}.
+                            {% elif materia.v_n == 'BAJO' %}
+                                Se le dificulta lograr que {{ logro.descripcion|lower }}.
+                            {% else %}
+                                {{ logro.descripcion|lower|capfirst }}
+                            {% endif %}
                         {% else %}
-                            {{ logro.descripcion|capfirst }}
+                            {{ logro.descripcion }}
                         {% endif %}
                     </td>
                 </tr>
@@ -160,13 +184,37 @@
             </div>
         {% endif %}
 
-        <div class="pie-pagina">
-            <p>_________________________</p>
-            <p>{{ curso.director_grado.user.get_full_name|default_if_none:"DIRECTOR(A) DE GRUPO" }}</p>
-            <p><strong>Director(a) de Grupo</strong></p>
-        </div>
+        <!-- TABLA DE FIRMAS HOMOLOGADAS -->
+        <table class="pie-pagina-tabla">
+            <tr>
+                <td style="width: {% if colegio.mostrar_firma_rector_boletin %}50%{% else %}100%{% endif %};">
+                    <div class="contenedor-firma"></div>
+                    <div class="linea-firma"></div>
+                    <p style="margin: 0; text-transform: uppercase;">{{ curso.director_grado.user.get_full_name|default_if_none:"NOMBRE DEL DIRECTOR" }}</p>
+                    <p style="margin: 0;"><strong>Director(a) de Grupo</strong></p>
+                </td>
+                
+                {% if colegio.mostrar_firma_rector_boletin %}
+                <td style="width: 50%;">
+                    <div class="contenedor-firma">
+                        {% if colegio.firma_rector %}
+                            <img src="{{ colegio.firma_rector.url }}" class="img-firma">
+                        {% endif %}
+                    </div>
+                    <div class="linea-firma"></div>
+                    <p style="margin: 0; text-transform: uppercase;">
+                        {% if colegio.nombre_rector %}
+                            {{ colegio.nombre_rector }}
+                        {% else %}
+                            NOMBRE DEL RECTOR(A)
+                        {% endif %}
+                    </p>
+                    <p style="margin: 0;"><strong>Rector(a)</strong></p>
+                </td>
+                {% endif %}
+            </tr>
+        </table>
     </div>
 {% endfor %}
 </body>
 </html>
-

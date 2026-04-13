@@ -10,12 +10,12 @@ from django.http import JsonResponse, HttpResponseNotFound
 from django.shortcuts import get_object_or_404, render
 from django.views import View
 from django.core.exceptions import ValidationError
-from django.core.serializers.json import DjangoJSONEncoder # Importación necesaria
+from django.core.serializers.json import DjangoJSONEncoder 
 
 from ..models.academicos import (
     AsignacionDocente, PeriodoAcademico, Estudiante, Calificacion,
     NotaDetallada, InasistenciasManualesPeriodo, Asistencia, IndicadorLogroPeriodo,
-    ConfiguracionCalificaciones, EscalaValoracion # Importación necesaria
+    ConfiguracionCalificaciones, EscalaValoracion 
 )
 from ..models.perfiles import Docente
 
@@ -72,37 +72,49 @@ class IngresoNotasView(LoginRequiredMixin, View):
             estudiantes_del_curso = Estudiante.objects.filter(curso=asignacion_seleccionada.curso, colegio=request.colegio, is_active=True).select_related('user').order_by('user__last_name', 'user__first_name')
             
             estudiantes_data = []
+            inclusion_data = {} # Mochila de datos separada
+
             for estudiante in estudiantes_del_curso:
                 nombre_completo = f"{estudiante.user.last_name}, {estudiante.user.first_name}".strip()
                 data = {'id': estudiante.id, 'nombre_completo': nombre_completo, 'notas': {'ser': [], 'saber': [], 'hacer': []}, 'inasistencias': 0}
                 
                 calificaciones = Calificacion.objects.filter(estudiante=estudiante, materia=asignacion_seleccionada.materia, periodo=periodo_seleccionado, colegio=request.colegio).prefetch_related('notas_detalladas')
+                
+                obs_inc = ""
                 for cal in calificaciones:
                     tipo_map = {'SER': 'ser', 'SABER': 'saber', 'HACER': 'hacer'}
                     if cal.tipo_nota in tipo_map:
                         key = tipo_map[cal.tipo_nota]
                         data['notas'][key] = [{'descripcion': n.descripcion, 'valor': str(n.valor_nota)} for n in cal.notas_detalladas.all()]
+                    elif cal.tipo_nota == 'PROM_PERIODO':
+                        obs_inc = getattr(cal, 'observacion_inclusion', "")
                 
                 inasistencia_manual, _ = InasistenciasManualesPeriodo.objects.get_or_create(estudiante=estudiante, asignacion=asignacion_seleccionada, periodo=periodo_seleccionado, colegio=request.colegio, defaults={'cantidad': 0})
                 data['inasistencias'] = inasistencia_manual.cantidad
                 estudiantes_data.append(data)
+
+                inclusion_data[str(estudiante.id)] = {
+                    'es_inclusion': getattr(estudiante, 'es_inclusion', False),
+                    'obs': obs_inc
+                }
             
             indicadores = IndicadorLogroPeriodo.objects.filter(asignacion=asignacion_seleccionada, periodo=periodo_seleccionado, colegio=request.colegio).order_by('id')
             
-            context.update({'asignacion_seleccionada': asignacion_seleccionada, 'periodo_seleccionado': periodo_seleccionado, 'estudiantes_data_json': json.dumps(estudiantes_data), 'periodo_cerrado': not periodo_seleccionado.esta_activo, 'indicadores': indicadores, 'hay_indicadores': indicadores.exists()})
+            context.update({
+                'asignacion_seleccionada': asignacion_seleccionada, 
+                'periodo_seleccionado': periodo_seleccionado, 
+                'estudiantes_data_json': json.dumps(estudiantes_data, cls=DjangoJSONEncoder), 
+                'inclusion_data_json': json.dumps(inclusion_data, cls=DjangoJSONEncoder),
+                'periodo_cerrado': not periodo_seleccionado.esta_activo, 
+                'indicadores': indicadores, 
+                'hay_indicadores': indicadores.exists()
+            })
 
-        # --- INICIO: CÓDIGO AÑADIDO PARA LA ESCALA DE VALORACIÓN ---
-        # Obtiene la escala de valoración del colegio actual
         escala_valoracion = EscalaValoracion.objects.filter(colegio=request.colegio).values(
             'nombre_desempeno', 'valor_minimo', 'valor_maximo'
         ).order_by('valor_minimo')
 
-        # Convierte la escala a una cadena JSON para que JavaScript pueda leerla
-        context['escala_valoracion_json'] = json.dumps(
-            list(escala_valoracion), 
-            cls=DjangoJSONEncoder
-        )
-        # --- FIN: CÓDIGO AÑADIDO ---
+        context['escala_valoracion_json'] = json.dumps(list(escala_valoracion), cls=DjangoJSONEncoder)
 
         return render(request, self.template_name, context)
 
@@ -161,9 +173,17 @@ class IngresoNotasView(LoginRequiredMixin, View):
 
                 definitiva_periodo = (promedio_ser * pesos['ser']) + (promedio_saber * pesos['saber']) + (promedio_hacer * pesos['hacer'])
 
+                defaults_dict = {
+                    'valor_nota': definitiva_periodo.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP), 
+                    'docente': asignacion.docente
+                }
+
+                if 'observacion_inclusion' in est_data and hasattr(Calificacion, 'observacion_inclusion'):
+                    defaults_dict['observacion_inclusion'] = est_data['observacion_inclusion']
+
                 Calificacion.objects.update_or_create(
                     colegio=request.colegio, estudiante=estudiante, materia=asignacion.materia, periodo=periodo, tipo_nota='PROM_PERIODO',
-                    defaults={'valor_nota': definitiva_periodo.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP), 'docente': asignacion.docente}
+                    defaults=defaults_dict
                 )
                 
                 InasistenciasManualesPeriodo.objects.update_or_create(

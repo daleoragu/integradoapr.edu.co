@@ -123,7 +123,12 @@
                             {% if forloop.first %}
                             <tr>
                                 <td rowspan="{% if total_rows > 0 %}{{ total_rows }}{% else %}1{% endif %}">{{ forloop.parentloop.counter }}</td>
-                                <td rowspan="{% if total_rows > 0 %}{{ total_rows }}{% else %}1{% endif %}" class="td-nombre">{{ data.info.user.last_name }} {{ data.info.user.first_name }}</td>
+                                <td rowspan="{% if total_rows > 0 %}{{ total_rows }}{% else %}1{% endif %}" class="td-nombre">
+                                    {{ data.info.user.last_name }} {{ data.info.user.first_name }}
+                                    {% if data.info.es_inclusion %}
+                                        <span class="badge bg-info text-dark ms-1" title="Estudiante de Inclusión">INC</span>
+                                    {% endif %}
+                                </td>
                             {% else %}
                             <tr>
                             {% endif %}
@@ -154,7 +159,10 @@
                         {% empty %}
                             <tr>
                                 <td>{{ forloop.counter }}</td>
-                                <td class="td-nombre">{{ data.info.user.last_name }} {{ data.info.user.first_name }}</td>
+                                <td class="td-nombre">
+                                    {{ data.info.user.last_name }} {{ data.info.user.first_name }}
+                                    {% if data.info.es_inclusion %}<span class="badge bg-info text-dark ms-1">INC</span>{% endif %}
+                                </td>
                                 <td colspan="{{ resumen_final_celdas|length|add:1|add:desempenos_headers|length }}">No hay notas de periodo para mostrar.</td>
                                 <td>{{ data.puesto_final }}</td>
                             </tr>
@@ -225,7 +233,7 @@
         <div class="col-12">
             <div class="podium-container">
                 <!-- Segundo Lugar -->
-                {% if mejores_estudiantes|length > 1 %}
+                {% if mejores_estudiantes|length > 1 and not mejores_estudiantes.1.info.es_inclusion %}
                 <div class="podium-place podium-2">
                     <div class="podium-card">
                         <i class="fas fa-medal podium-icon"></i>
@@ -237,6 +245,7 @@
                 {% endif %}
 
                 <!-- Primer Lugar -->
+                {% if not mejores_estudiantes.0.info.es_inclusion %}
                 <div class="podium-place podium-1">
                     <div class="podium-card">
                         <i class="fas fa-medal podium-icon"></i>
@@ -245,9 +254,10 @@
                         <p class="promedio">{{ mejores_estudiantes.0.fila_acumulada.promedio_final_ranking|coma_decimal }}</p>
                     </div>
                 </div>
+                {% endif %}
 
                 <!-- Tercer Lugar -->
-                {% if mejores_estudiantes|length > 2 %}
+                {% if mejores_estudiantes|length > 2 and not mejores_estudiantes.2.info.es_inclusion %}
                 <div class="podium-place podium-3">
                     <div class="podium-card">
                         <i class="fas fa-medal podium-icon"></i>

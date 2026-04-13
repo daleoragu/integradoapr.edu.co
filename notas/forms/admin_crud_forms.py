@@ -92,6 +92,9 @@ class AdminCrearEstudianteForm(forms.Form):
     numero_documento = forms.CharField(label="Número de Documento (Opcional)", required=False, max_length=20, widget=forms.TextInput(attrs={'class': 'form-control'}))
     curso = forms.ModelChoiceField(label="Asignar al Curso", queryset=Curso.objects.none(), widget=forms.Select(attrs={'class': 'form-select'}))
     
+    # NUEVO CAMPO AÑADIDO PARA INCLUSIÓN
+    es_inclusion = forms.BooleanField(label="¿Estudiante de Inclusión?", required=False, widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}))
+    
     def __init__(self, *args, **kwargs):
         colegio = kwargs.pop('colegio', None)
         super().__init__(*args, **kwargs)
@@ -116,6 +119,9 @@ class AdminEditarEstudianteForm(forms.ModelForm):
     # Campo del Estudiante
     curso = forms.ModelChoiceField(queryset=Curso.objects.none(), label="Curso", widget=forms.Select(attrs={'class': 'form-select'}))
     is_active = forms.BooleanField(required=False, label="¿Estudiante Activo?", widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}))
+    
+    # NUEVO CAMPO AÑADIDO PARA INCLUSIÓN
+    es_inclusion = forms.BooleanField(required=False, label="Programa de Inclusión", widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}))
     
     class Meta:
         model = FichaEstudiante
@@ -160,6 +166,9 @@ class AdminEditarEstudianteForm(forms.ModelForm):
             self.fields['last_name'].initial = estudiante_profile.user.last_name
             self.fields['curso'].initial = estudiante_profile.curso
             self.fields['is_active'].initial = estudiante_profile.is_active
+            
+            # PRECARGAR DATO DE INCLUSIÓN
+            self.fields['es_inclusion'].initial = estudiante_profile.es_inclusion
 
     def save(self, commit=True):
         ficha = super().save(commit=False)
@@ -171,6 +180,9 @@ class AdminEditarEstudianteForm(forms.ModelForm):
         user.last_name = self.cleaned_data['last_name'].upper()
         estudiante_profile.curso = self.cleaned_data['curso']
         estudiante_profile.is_active = self.cleaned_data['is_active']
+        
+        # GUARDAR DATO DE INCLUSIÓN
+        estudiante_profile.es_inclusion = self.cleaned_data['es_inclusion']
         
         if commit:
             user.save()

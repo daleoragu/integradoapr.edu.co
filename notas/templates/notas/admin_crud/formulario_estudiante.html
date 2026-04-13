@@ -48,6 +48,15 @@
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">{{ form.curso.label_tag }} {{ form.curso }}</div>
+                        <!-- NUEVO CAMPO DE INCLUSIÓN AL CREAR -->
+                        <div class="col-md-6 mb-3 d-flex align-items-center">
+                            <div class="form-check mt-3 p-3 bg-info bg-opacity-10 border border-info rounded w-100">
+                                {{ form.es_inclusion }}
+                                <label class="form-check-label fw-bold text-info ms-2" for="{{ form.es_inclusion.id_for_label }}">
+                                    <i class="fas fa-universal-access me-1"></i> ¿Estudiante de Inclusión?
+                                </label>
+                            </div>
+                        </div>
                     </div>
                 {% else %}
                     {# Versión completa con PESTAÑAS para EDITAR un estudiante #}
@@ -92,9 +101,18 @@
                                         <img src="{{ form.instance.foto.url }}" alt="Foto actual" class="img-thumbnail mb-2" style="max-height: 150px;">
                                     {% endif %}
                                     {{ form.foto }}
-                                    <div class="form-check mt-3">
+                                    
+                                    <div class="form-check mt-3 text-start">
                                         {{ form.is_active }}
                                         <label class="form-check-label" for="{{ form.is_active.id_for_label }}"> {{ form.is_active.label }}</label>
+                                    </div>
+                                    
+                                    <!-- NUEVO CAMPO DE INCLUSIÓN AL EDITAR -->
+                                    <div class="form-check mt-2 p-2 bg-info bg-opacity-10 border border-info rounded text-start">
+                                        {{ form.es_inclusion }}
+                                        <label class="form-check-label fw-bold text-info ms-1" for="{{ form.es_inclusion.id_for_label }}">
+                                            <i class="fas fa-universal-access me-1"></i> Programa de Inclusión
+                                        </label>
                                     </div>
                                 </div>
                             </div>

@@ -70,6 +70,7 @@
         .podium-icon-circle.gold { background: #e6be46; border-color: #b8860b; }
         .podium-icon-circle.silver { background: #bfc5ce; border-color: #8d9196; }
         .podium-icon-circle.bronze { background: #cf9654; border-color: #a97142; }
+        .badge-inclusion { color: #0D6EFD; font-size: 6px; font-weight: bold; margin-left: 2px; }
     </style>
 </head>
 <body>
@@ -104,7 +105,10 @@
                         {% if forloop.first %}
                         <tr>
                             <td rowspan="{% if total_rows > 0 %}{{ total_rows }}{% else %}1{% endif %}">{{ forloop.parentloop.counter }}</td>
-                            <td rowspan="{% if total_rows > 0 %}{{ total_rows }}{% else %}1{% endif %}" class="td-nombre">{{ data.info.user.last_name }} {{ data.info.user.first_name }}</td>
+                            <td rowspan="{% if total_rows > 0 %}{{ total_rows }}{% else %}1{% endif %}" class="td-nombre">
+                                {{ data.info.user.last_name }} {{ data.info.user.first_name }}
+                                {% if data.info.es_inclusion %}<span class="badge-inclusion">(INC)</span>{% endif %}
+                            </td>
                         {% else %}
                         <tr>
                         {% endif %}
@@ -131,7 +135,10 @@
                     {% empty %}
                     <tr>
                         <td>{{ forloop.counter }}</td>
-                        <td class="td-nombre">{{ data.info.user.last_name }} {{ data.info.user.first_name }}</td>
+                        <td class="td-nombre">
+                            {{ data.info.user.last_name }} {{ data.info.user.first_name }}
+                            {% if data.info.es_inclusion %}<span class="badge-inclusion">(INC)</span>{% endif %}
+                        </td>
                         <td colspan="{{ resumen_final_celdas|length|add:1|add:desempenos_headers|length }}">- Sin notas de periodo -</td>
                         <td>{{ data.puesto_final }}</td>
                     </tr>
@@ -187,7 +194,7 @@
         <p class="podium-title">CUADRO DE HONOR</p>
         <p class="podium-subtitle">(Calculado con el promedio original antes de recuperaciones)</p>
         <div class="podium-container">
-            {% if mejores_estudiantes|length > 1 %}
+            {% if mejores_estudiantes|length > 1 and not mejores_estudiantes.1.info.es_inclusion %}
             <div class="podium-place podium-2">
                 <div class="podium-card">
                     <div class="podium-icon-circle silver">2</div>
@@ -198,6 +205,7 @@
             </div>
             {% endif %}
             
+            {% if not mejores_estudiantes.0.info.es_inclusion %}
             <div class="podium-place podium-1">
                 <div class="podium-card">
                     <div class="podium-icon-circle gold">1</div>
@@ -206,7 +214,9 @@
                     <p class="podium-grade">{{ mejores_estudiantes.0.fila_acumulada.promedio_final_ranking|coma_decimal }}</p>
                 </div>
             </div>
-            {% if mejores_estudiantes|length > 2 %}
+            {% endif %}
+
+            {% if mejores_estudiantes|length > 2 and not mejores_estudiantes.2.info.es_inclusion %}
             <div class="podium-place podium-3">
                 <div class="podium-card">
                     <div class="podium-icon-circle bronze">3</div>
