@@ -1,6 +1,6 @@
 {% comment %}
   Plantilla rediseñada para la tabla de calificaciones.
-  Incluye inyección de configuración dinámica de Materias para no depender estrictamente de "Ser, Saber y Hacer".
+  Añadida lógica para ocultar columnas de notas cuyo porcentaje asignado sea 0%.
 {% endcomment %}
 
 {% if asignacion_seleccionada and periodo_seleccionado %}
@@ -30,19 +30,19 @@
         <div class="card-body bg-light border-bottom" id="panel-ponderacion">
             <h6 class="card-title"><i class="fas fa-sliders-h me-2"></i>Ajustar Ponderación de la Asignatura</h6>
             <p class="card-text text-muted small">
-                Puedes ajustar los porcentajes. Si esta materia solo tiene 1 componente (ej. Examen), pon el porcentaje en 100% y los demás en 0.
+                Puedes ajustar los porcentajes para esta asignatura. La suma debe ser exactamente 100%. (Si pones un componente en 0%, se ocultará de la tabla).
             </p>
             <div class="row align-items-center">
                 <div class="col-md-3" id="bloque-ser">
-                    <label for="p-ser" class="form-label mb-0 fw-bold text-primary" id="lbl-ser">Ser (%):</label>
+                    <label for="p-ser" class="form-label mb-0 fw-bold text-primary" id="lbl-ser-input">Ser (%):</label>
                     <input type="number" class="form-control form-control-sm porcentaje-input" id="p-ser" value="{{ asignacion_seleccionada.ser_calc|floatformat:0 }}" min="0" max="100">
                 </div>
                 <div class="col-md-3" id="bloque-saber">
-                    <label for="p-saber" class="form-label mb-0 fw-bold text-success" id="lbl-saber">Saber (%):</label>
+                    <label for="p-saber" class="form-label mb-0 fw-bold text-success" id="lbl-saber-input">Saber (%):</label>
                     <input type="number" class="form-control form-control-sm porcentaje-input" id="p-saber" value="{{ asignacion_seleccionada.saber_calc|floatformat:0 }}" min="0" max="100">
                 </div>
                 <div class="col-md-3" id="bloque-hacer">
-                    <label for="p-hacer" class="form-label mb-0 fw-bold text-danger" id="lbl-hacer">Hacer (%):</label>
+                    <label for="p-hacer" class="form-label mb-0 fw-bold text-danger" id="lbl-hacer-input">Hacer (%):</label>
                     <input type="number" class="form-control form-control-sm porcentaje-input" id="p-hacer" value="{{ asignacion_seleccionada.hacer_calc|floatformat:0 }}" min="0" max="100">
                 </div>
                 <div class="col-md-3">
@@ -50,7 +50,7 @@
                     <div id="suma-porcentajes" class="fw-bold fs-5 p-1 border rounded text-center bg-white">100%</div>
                 </div>
             </div>
-            <div id="error-porcentajes" class="text-danger small mt-2" style="display: none;">La suma debe ser exactamente 100% (o 0% si la materia es puramente informativa).</div>
+            <div id="error-porcentajes" class="text-danger small mt-2" style="display: none;">La suma debe ser exactamente 100% (o 0% si es informativa).</div>
         </div>
         {% endif %}
         
@@ -78,7 +78,7 @@
     </div>
     {% endif %}
 
-    <!-- DATOS JSON (Agregamos Config de Materia) -->
+    <!-- Datos JSON -->
     <div id="config-materia-json" style="display: none;">{{ config_materia_json|safe }}</div>
     <div id="estudiantes-data-json" style="display: none;">{{ estudiantes_data_json|safe }}</div>
     <div id="url-get-inasistencias" data-url="{% url 'notas:get_inasistencias_auto' %}"></div>
@@ -87,9 +87,9 @@
 
     <div id="asignacion-details" 
          data-usar-ponderacion-equitativa="{{ asignacion_seleccionada.usar_ponderacion_equitativa|yesno:'true,false' }}"
-         data-p-ser="{{ asignacion_seleccionada.ser_calc }}"
-         data-p-saber="{{ asignacion_seleccionada.saber_calc }}"
-         data-p-hacer="{{ asignacion_seleccionada.hacer_calc }}">
+         data-p-ser="{{ asignacion_seleccionada.ser_calc|floatformat:0 }}"
+         data-p-saber="{{ asignacion_seleccionada.saber_calc|floatformat:0 }}"
+         data-p-hacer="{{ asignacion_seleccionada.hacer_calc|floatformat:0 }}">
     </div>
 
     <!-- MODAL DE INCLUSIÓN -->
@@ -118,50 +118,76 @@
         
         // --- 0. LÓGICA DE MATERIAS DINÁMICAS Y ETIQUETAS ---
         const configJsonEl = document.getElementById('config-materia-json');
-        if (configJsonEl) {
-            const configMat = JSON.parse(configJsonEl.textContent || "{}");
+        let configMat = {};
+        if (configJsonEl && configJsonEl.textContent.trim()) {
+            configMat = JSON.parse(configJsonEl.textContent);
             
+            // Etiqueta Promedia Visual
             const badgePromedia = document.getElementById('badge-promedia');
             if(badgePromedia) {
                 if(configMat.promedia) {
-                    badgePromedia.textContent = "✔ Promedia";
+                    badgePromedia.textContent = "✔ Suma al Promedio";
                     badgePromedia.className = "badge bg-success ms-2";
                 } else {
-                    badgePromedia.textContent = "✖ No Promedia";
+                    badgePromedia.textContent = "✖ Informativa";
                     badgePromedia.className = "badge bg-warning text-dark ms-2";
                 }
             }
 
-            const lblSer = document.getElementById('lbl-ser');
-            if (lblSer && configMat.lbl_ser) lblSer.textContent = configMat.lbl_ser.toUpperCase() + ' (%):';
-            
-            const lblSaber = document.getElementById('lbl-saber');
-            if (lblSaber && configMat.lbl_saber) lblSaber.textContent = configMat.lbl_saber.toUpperCase() + ' (%):';
-            
-            const lblHacer = document.getElementById('lbl-hacer');
-            if (lblHacer && configMat.lbl_hacer) lblHacer.textContent = configMat.lbl_hacer.toUpperCase() + ' (%):';
-
-            // INTERCEPTOR PARA LA TABLA
-            const timerEtiquetas = setInterval(() => {
-                const theads = document.querySelectorAll('#tabla-calificaciones th');
-                if (theads.length > 0) {
-                    theads.forEach(th => {
-                        let txt = th.textContent.trim().toUpperCase();
-                        if (txt === 'SER' || txt.includes('SER ')) {
-                            th.innerHTML = th.innerHTML.replace(/SER/i, configMat.lbl_ser.toUpperCase());
-                        }
-                        if (txt === 'SABER' || txt.includes('SABER ')) {
-                            th.innerHTML = th.innerHTML.replace(/SABER/i, configMat.lbl_saber.toUpperCase());
-                        }
-                        if (txt === 'HACER' || txt.includes('HACER ')) {
-                            th.innerHTML = th.innerHTML.replace(/HACER/i, configMat.lbl_hacer.toUpperCase());
-                        }
-                    });
-                }
-            }, 300);
-            
-            setTimeout(() => clearInterval(timerEtiquetas), 5000);
+            // Renombrar labels de inputs manuales
+            const lblSerIn = document.getElementById('lbl-ser-input');
+            if (lblSerIn && configMat.lbl_ser) lblSerIn.textContent = configMat.lbl_ser.toUpperCase() + ' (%):';
+            const lblSaberIn = document.getElementById('lbl-saber-input');
+            if (lblSaberIn && configMat.lbl_saber) lblSaberIn.textContent = configMat.lbl_saber.toUpperCase() + ' (%):';
+            const lblHacerIn = document.getElementById('lbl-hacer-input');
+            if (lblHacerIn && configMat.lbl_hacer) lblHacerIn.textContent = configMat.lbl_hacer.toUpperCase() + ' (%):';
         }
+
+        const asigDetails = document.getElementById('asignacion-details');
+        const pSer = asigDetails ? parseFloat(asigDetails.dataset.pSer) || 0 : 33;
+        const pSaber = asigDetails ? parseFloat(asigDetails.dataset.pSaber) || 0 : 33;
+        const pHacer = asigDetails ? parseFloat(asigDetails.dataset.pHacer) || 0 : 34;
+
+        // Función para ocultar columnas físicas de la tabla (y cabeceras)
+        function hideColumn(table, colIndex) {
+            const ths = table.querySelectorAll('th');
+            if(ths[colIndex]) ths[colIndex].style.display = 'none';
+            const rows = table.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                const tds = row.querySelectorAll('td');
+                if(tds[colIndex]) tds[colIndex].style.display = 'none';
+            });
+        }
+
+        // Interceptor constante para renombrar u ocultar columnas al momento en que tu script dibuja la tabla
+        const timerEtiquetas = setInterval(() => {
+            const table = document.getElementById('tabla-calificaciones');
+            if(!table) return;
+            const theads = table.querySelectorAll('th');
+            if (theads.length > 0) {
+                theads.forEach((th, index) => {
+                    let txt = th.textContent.trim().toUpperCase();
+
+                    // Aplicar Ser o desaparecerlo
+                    if (txt === 'SER' || txt.includes('SER ')) {
+                        if (configMat.lbl_ser) th.innerHTML = th.innerHTML.replace(/SER/i, configMat.lbl_ser.toUpperCase());
+                        if (pSer === 0) hideColumn(table, index);
+                    }
+                    // Aplicar Saber o desaparecerlo
+                    if (txt === 'SABER' || txt.includes('SABER ')) {
+                        if (configMat.lbl_saber) th.innerHTML = th.innerHTML.replace(/SABER/i, configMat.lbl_saber.toUpperCase());
+                        if (pSaber === 0) hideColumn(table, index);
+                    }
+                    // Aplicar Hacer o desaparecerlo
+                    if (txt === 'HACER' || txt.includes('HACER ')) {
+                        if (configMat.lbl_hacer) th.innerHTML = th.innerHTML.replace(/HACER/i, configMat.lbl_hacer.toUpperCase());
+                        if (pHacer === 0) hideColumn(table, index);
+                    }
+                });
+            }
+        }, 300);
+
+        setTimeout(() => clearInterval(timerEtiquetas), 6000); // Se detiene a los 6s para evitar consumo excesivo
 
         // --- 1. Lógica Ponderación Original ---
         const panelPonderacion = document.getElementById('panel-ponderacion');
@@ -175,6 +201,8 @@
                 let suma = 0;
                 inputs.forEach(input => { suma += parseInt(input.value, 10) || 0; });
                 sumaDiv.textContent = suma + '%';
+                
+                // Permitimos 100 o 0 (si la materia es totalmente informativa y vale 0%)
                 if (suma === 100 || suma === 0) {
                     sumaDiv.classList.remove('text-danger', 'bg-warning-subtle');
                     sumaDiv.classList.add('text-success', 'bg-success-subtle');
@@ -207,7 +235,6 @@
                 if (estData.length === 0) { clearInterval(timer); return; }
                 
                 const filas = tabla.querySelectorAll('tbody tr');
-                
                 if (filas.length > 0 && filas.length === estData.length && !yaInsertado) {
                     yaInsertado = true;
                     clearInterval(timer);
@@ -221,7 +248,9 @@
                             const celdas = tr.querySelectorAll('td');
                             let celdaNombre = null;
                             celdas.forEach(td => {
-                                if (td.textContent.includes(est.nombre_completo.split(',')[0])) celdaNombre = td;
+                                if (td.textContent.includes(est.nombre_completo.split(',')[0])) {
+                                    celdaNombre = td;
+                                }
                             });
 
                             if (celdaNombre) {
