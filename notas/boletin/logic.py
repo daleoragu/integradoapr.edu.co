@@ -104,9 +104,10 @@ def get_datos_boletin_curso(colegio, curso, periodo, estudiante_especifico=None)
                 if definitiva_valor_periodo is not None and definitiva_valor_periodo < UMBRAL_APROBACION:
                     materias_reprobadas_en_area.append(materia.nombre)
 
+                promedia_boletin = getattr(materia, 'promedia_en_boletin', True)
                 peso = ponderaciones_map.get((area.id, materia.id))
                 
-                # SOLO PONDERA SI ESTÁ MARCADA PARA ELLO
+                # SÓLO PONDERA SI ESTÁ MARCADA PARA PROMEDIAR
                 if promedia_boletin and definitiva_valor_periodo is not None and peso is not None:
                     suma_ponderada_area_periodo += (Decimal(definitiva_valor_periodo) * peso)
                     suma_pesos_area_periodo += peso
@@ -133,15 +134,15 @@ def get_datos_boletin_curso(colegio, curso, periodo, estudiante_especifico=None)
                     'nombre': materia.nombre, 'ih': asignacion.intensidad_horaria_semanal, 'docente': asignacion.docente,
                     'ser': notas_materia_periodo.filter(tipo_nota='SER').first(), 'sab': notas_materia_periodo.filter(tipo_nota='SABER').first(),
                     'hac': notas_materia_periodo.filter(tipo_nota='HACER').first(), 'def': definitiva_valor_periodo,
-                    'def_acumulada': definitiva_acumulada,
+                    'def_acumulada': definitiva_acumulada, # Nuevo campo
                     'v_n': valoracion_cualitativa, 'inasistencias': inasistencias,
                     'logros': IndicadorLogroPeriodo.objects.filter(asignacion=asignacion, periodo=periodo, colegio=colegio),
-                    'lbl_ser': lbl_ser, 'lbl_saber': lbl_saber, 'lbl_hacer': lbl_hacer, 'promedia': promedia_boletin
+                    'promedia': promedia_boletin
                 }
                 datos_area['materias'].append(datos_materia)
 
+                # LÓGICA DE PROMEDIO GENERAL CON IHS=0 (Y RESPETANDO SI PROMEDIA O NO)
                 if promedia_boletin and definitiva_valor_periodo is not None:
-                    # Aplicamos un peso matemático de 1 si la IHS es 0 para que cuente
                     ih_efectiva = asignacion.intensidad_horaria_semanal if asignacion.intensidad_horaria_semanal > 0 else 1
                     suma_ponderada_periodo += (Decimal(definitiva_valor_periodo) * ih_efectiva)
                     datos_estudiante['total_ih'] += ih_efectiva
@@ -164,7 +165,14 @@ def get_datos_boletin_curso(colegio, curso, periodo, estudiante_especifico=None)
                 datos_area['nota_final_area_acumulada'] = nota_area_acum
 
             if datos_area['materias']:
+                # Ordenar materias: las que SÍ promedian primero, las informativas al final
+                datos_area['materias'].sort(key=lambda m: (not m['promedia'], m['nombre']))
+                # Marcar si toda el área es informativa
+                datos_area['es_informativa'] = all(not m['promedia'] for m in datos_area['materias'])
                 datos_estudiante['areas'].append(datos_area)
+
+        # Ordenar áreas: primero las académicas, de últimas las informativas
+        datos_estudiante['areas'].sort(key=lambda a: (a.get('es_informativa', False), a['nombre']))
 
         if datos_estudiante['total_ih'] > 0:
             promedio = suma_ponderada_periodo / datos_estudiante['total_ih']
@@ -282,6 +290,7 @@ def get_datos_boletin_final(colegio, curso, ano_lectivo, estudiante_especifico=N
                     definitiva_materia_rec = definitiva_materia_rec.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP)
                 
                 definitiva_para_calculo_area = definitiva_materia_rec
+                promedia_boletin = getattr(asignacion.materia, 'promedia_en_boletin', True)
 
                 if definitiva_para_calculo_area is not None and promedia_boletin:
                     # Aplicamos un peso matemático de 1 si la IHS es 0
@@ -326,7 +335,14 @@ def get_datos_boletin_final(colegio, curso, ano_lectivo, estudiante_especifico=N
                         datos_area_actual['estado_color_css_class'] = 'desempeno-aprobado'
 
             if datos_area_actual['materias']:
+                # Ordenar materias: las que SÍ promedian primero, las informativas al final
+                datos_area_actual['materias'].sort(key=lambda m: (not m['promedia'], m['nombre']))
+                # Marcar si toda el área es informativa
+                datos_area_actual['es_informativa'] = all(not m['promedia'] for m in datos_area_actual['materias'])
                 datos_estudiante['areas'].append(datos_area_actual)
+
+        # Ordenar áreas: primero las académicas, de últimas las informativas
+        datos_estudiante['areas'].sort(key=lambda a: (a.get('es_informativa', False), a['nombre']))
 
         promedio_general_final = (suma_ponderada_final / total_ih_anual).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP) if total_ih_anual > 0 else Decimal('0.0')
 
