@@ -91,6 +91,11 @@ def get_datos_boletin_curso(colegio, curso, periodo, estudiante_especifico=None)
                 asignacion = asignaciones_map.get(materia.id)
                 if not asignacion: continue
 
+                promedia_boletin = getattr(materia, 'promedia_en_boletin', True)
+                lbl_ser = getattr(materia, 'etiqueta_ser', 'Ser')
+                lbl_saber = getattr(materia, 'etiqueta_saber', 'Saber')
+                lbl_hacer = getattr(materia, 'etiqueta_hacer', 'Hacer')
+
                 # Lógica para el periodo actual
                 notas_materia_periodo = Calificacion.objects.filter(estudiante=estudiante, materia=materia, periodo=periodo, colegio=colegio)
                 definitiva_obj = notas_materia_periodo.filter(tipo_nota='PROM_PERIODO').first()
@@ -100,7 +105,9 @@ def get_datos_boletin_curso(colegio, curso, periodo, estudiante_especifico=None)
                     materias_reprobadas_en_area.append(materia.nombre)
 
                 peso = ponderaciones_map.get((area.id, materia.id))
-                if definitiva_valor_periodo is not None and peso is not None:
+                
+                # SOLO PONDERA SI ESTÁ MARCADA PARA ELLO
+                if promedia_boletin and definitiva_valor_periodo is not None and peso is not None:
                     suma_ponderada_area_periodo += (Decimal(definitiva_valor_periodo) * peso)
                     suma_pesos_area_periodo += peso
                 
@@ -115,7 +122,7 @@ def get_datos_boletin_curso(colegio, curso, periodo, estudiante_especifico=None)
                 definitiva_acumulada = (sum(notas_materia_acum) / len(notas_materia_acum)) if notas_materia_acum else None
                 if definitiva_acumulada is not None:
                     definitiva_acumulada = definitiva_acumulada.quantize(Decimal('0.1'), rounding=ROUND_HALF_UP)
-                    if peso is not None:
+                    if promedia_boletin and peso is not None:
                         suma_ponderada_area_acum += (definitiva_acumulada * peso)
                         suma_pesos_area_acum += peso
 
@@ -126,15 +133,18 @@ def get_datos_boletin_curso(colegio, curso, periodo, estudiante_especifico=None)
                     'nombre': materia.nombre, 'ih': asignacion.intensidad_horaria_semanal, 'docente': asignacion.docente,
                     'ser': notas_materia_periodo.filter(tipo_nota='SER').first(), 'sab': notas_materia_periodo.filter(tipo_nota='SABER').first(),
                     'hac': notas_materia_periodo.filter(tipo_nota='HACER').first(), 'def': definitiva_valor_periodo,
-                    'def_acumulada': definitiva_acumulada, # Nuevo campo
+                    'def_acumulada': definitiva_acumulada,
                     'v_n': valoracion_cualitativa, 'inasistencias': inasistencias,
-                    'logros': IndicadorLogroPeriodo.objects.filter(asignacion=asignacion, periodo=periodo, colegio=colegio)
+                    'logros': IndicadorLogroPeriodo.objects.filter(asignacion=asignacion, periodo=periodo, colegio=colegio),
+                    'lbl_ser': lbl_ser, 'lbl_saber': lbl_saber, 'lbl_hacer': lbl_hacer, 'promedia': promedia_boletin
                 }
                 datos_area['materias'].append(datos_materia)
 
-                if definitiva_valor_periodo is not None:
-                    suma_ponderada_periodo += (Decimal(definitiva_valor_periodo) * asignacion.intensidad_horaria_semanal)
-                    datos_estudiante['total_ih'] += asignacion.intensidad_horaria_semanal
+                if promedia_boletin and definitiva_valor_periodo is not None:
+                    # Aplicamos un peso matemático de 1 si la IHS es 0 para que cuente
+                    ih_efectiva = asignacion.intensidad_horaria_semanal if asignacion.intensidad_horaria_semanal > 0 else 1
+                    suma_ponderada_periodo += (Decimal(definitiva_valor_periodo) * ih_efectiva)
+                    datos_estudiante['total_ih'] += ih_efectiva
 
             if suma_pesos_area_periodo > 0:
                 nota_area = (suma_ponderada_area_periodo / suma_pesos_area_periodo).quantize(Decimal('0.1'), rounding=ROUND_HALF_UP)
@@ -240,6 +250,7 @@ def get_datos_boletin_final(colegio, curso, ano_lectivo, estudiante_especifico=N
                 if not asignacion: continue
 
                 ih = asignacion.intensidad_horaria_semanal
+                promedia_boletin = getattr(asignacion.materia, 'promedia_en_boletin', True)
                 
                 notas_periodos_display = {}
                 notas_para_calculo_orig = []
@@ -272,9 +283,11 @@ def get_datos_boletin_final(colegio, curso, ano_lectivo, estudiante_especifico=N
                 
                 definitiva_para_calculo_area = definitiva_materia_rec
 
-                if definitiva_para_calculo_area is not None:
-                    suma_ponderada_final += (definitiva_para_calculo_area * ih)
-                    total_ih_anual += ih
+                if definitiva_para_calculo_area is not None and promedia_boletin:
+                    # Aplicamos un peso matemático de 1 si la IHS es 0
+                    ih_efectiva = ih if ih > 0 else 1
+                    suma_ponderada_final += (definitiva_para_calculo_area * ih_efectiva)
+                    total_ih_anual += ih_efectiva
 
                     if definitiva_para_calculo_area < UMBRAL_APROBACION:
                         materias_reprobadas_en_area.append(asignacion.materia.nombre)
@@ -294,6 +307,7 @@ def get_datos_boletin_final(colegio, curso, ano_lectivo, estudiante_especifico=N
                     'definitiva_original': definitiva_materia_orig,
                     'definitiva_recuperada': definitiva_materia_rec if definitiva_materia_rec != definitiva_materia_orig else None,
                     'valoracion': valoracion,
+                    'promedia': promedia_boletin
                 })
 
             if suma_pesos_area > 0:

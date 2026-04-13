@@ -28,6 +28,13 @@ class Materia(models.Model):
     porcentaje_ser = models.PositiveIntegerField(default=30, validators=[MinValueValidator(0), MaxValueValidator(100)], verbose_name="Porcentaje SER por defecto")
     porcentaje_saber = models.PositiveIntegerField(default=40, validators=[MinValueValidator(0), MaxValueValidator(100)], verbose_name="Porcentaje SABER por defecto")
     porcentaje_hacer = models.PositiveIntegerField(default=30, validators=[MinValueValidator(0), MaxValueValidator(100)], verbose_name="Porcentaje HACER por defecto")
+    
+    # --- NUEVOS CAMPOS PARA FLEXIBILIDAD EN MATERIAS ESPECIALES ---
+    promedia_en_boletin = models.BooleanField(default=True, verbose_name="¿Promedia en el Boletín?", help_text="Si se desmarca, no sumará al promedio general.")
+    etiqueta_ser = models.CharField(max_length=30, default="SER", verbose_name="Nombre Componente 1 (Ser)")
+    etiqueta_saber = models.CharField(max_length=30, default="SABER", verbose_name="Nombre Componente 2 (Saber)")
+    etiqueta_hacer = models.CharField(max_length=30, default="HACER", verbose_name="Nombre Componente 3 (Hacer)")
+
     def __str__(self): return self.nombre
     def clean(self):
         super().clean()
@@ -72,8 +79,8 @@ class AsignacionDocente(models.Model):
         super().clean()
         if not self.usar_ponderacion_equitativa:
             total_porcentaje = (self.porcentaje_ser or 0) + (self.porcentaje_saber or 0) + (self.porcentaje_hacer or 0)
-            if total_porcentaje != 100:
-                raise ValidationError(f"La suma de porcentajes debe ser 100. Actualmente es {total_porcentaje}.")
+            if total_porcentaje != 100 and total_porcentaje != 0:
+                raise ValidationError(f"La suma de porcentajes debe ser 100 (o 0 si no promedia). Actualmente es {total_porcentaje}.")
     
     @property
     def ser_calc(self):

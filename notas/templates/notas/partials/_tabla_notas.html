@@ -1,5 +1,6 @@
 {% comment %}
   Plantilla rediseñada para la tabla de calificaciones.
+  Incluye inyección de configuración dinámica de Materias para no depender estrictamente de "Ser, Saber y Hacer".
 {% endcomment %}
 
 {% if asignacion_seleccionada and periodo_seleccionado %}
@@ -18,7 +19,10 @@
     {% else %}
     <div class="card shadow-sm mt-4">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Calificaciones: {{ asignacion_seleccionada.materia }} en {{ asignacion_seleccionada.curso }}</h5>
+            <h5 class="mb-0">
+                Calificaciones: {{ asignacion_seleccionada.materia }} en {{ asignacion_seleccionada.curso }}
+                <span class="badge bg-secondary ms-2" id="badge-promedia"></span>
+            </h5>
             <div id="status-indicator" class="status-indicator" title="Estado de los cambios"></div>
         </div>
 
@@ -26,19 +30,19 @@
         <div class="card-body bg-light border-bottom" id="panel-ponderacion">
             <h6 class="card-title"><i class="fas fa-sliders-h me-2"></i>Ajustar Ponderación de la Asignatura</h6>
             <p class="card-text text-muted small">
-                Puedes ajustar los porcentajes para esta asignatura. La suma debe ser exactamente 100%.
+                Puedes ajustar los porcentajes. Si esta materia solo tiene 1 componente (ej. Examen), pon el porcentaje en 100% y los demás en 0.
             </p>
             <div class="row align-items-center">
-                <div class="col-md-3">
-                    <label for="p-ser" class="form-label mb-0">Ser (%):</label>
+                <div class="col-md-3" id="bloque-ser">
+                    <label for="p-ser" class="form-label mb-0 fw-bold text-primary" id="lbl-ser">Ser (%):</label>
                     <input type="number" class="form-control form-control-sm porcentaje-input" id="p-ser" value="{{ asignacion_seleccionada.ser_calc|floatformat:0 }}" min="0" max="100">
                 </div>
-                <div class="col-md-3">
-                    <label for="p-saber" class="form-label mb-0">Saber (%):</label>
+                <div class="col-md-3" id="bloque-saber">
+                    <label for="p-saber" class="form-label mb-0 fw-bold text-success" id="lbl-saber">Saber (%):</label>
                     <input type="number" class="form-control form-control-sm porcentaje-input" id="p-saber" value="{{ asignacion_seleccionada.saber_calc|floatformat:0 }}" min="0" max="100">
                 </div>
-                <div class="col-md-3">
-                    <label for="p-hacer" class="form-label mb-0">Hacer (%):</label>
+                <div class="col-md-3" id="bloque-hacer">
+                    <label for="p-hacer" class="form-label mb-0 fw-bold text-danger" id="lbl-hacer">Hacer (%):</label>
                     <input type="number" class="form-control form-control-sm porcentaje-input" id="p-hacer" value="{{ asignacion_seleccionada.hacer_calc|floatformat:0 }}" min="0" max="100">
                 </div>
                 <div class="col-md-3">
@@ -46,7 +50,7 @@
                     <div id="suma-porcentajes" class="fw-bold fs-5 p-1 border rounded text-center bg-white">100%</div>
                 </div>
             </div>
-            <div id="error-porcentajes" class="text-danger small mt-2" style="display: none;">La suma debe ser 100%.</div>
+            <div id="error-porcentajes" class="text-danger small mt-2" style="display: none;">La suma debe ser exactamente 100% (o 0% si la materia es puramente informativa).</div>
         </div>
         {% endif %}
         
@@ -74,12 +78,11 @@
     </div>
     {% endif %}
 
-    <!-- Datos JSON (Original Intacto) -->
+    <!-- DATOS JSON (Agregamos Config de Materia) -->
+    <div id="config-materia-json" style="display: none;">{{ config_materia_json|safe }}</div>
     <div id="estudiantes-data-json" style="display: none;">{{ estudiantes_data_json|safe }}</div>
     <div id="url-get-inasistencias" data-url="{% url 'notas:get_inasistencias_auto' %}"></div>
     <div id="escala-valoracion-json" style="display: none;">{{ escala_valoracion_json|safe }}</div>
-    
-    <!-- NUESTRA MOCHILA DE DATOS DE INCLUSIÓN -->
     <div id="inclusion-data-json" style="display: none;">{{ inclusion_data_json|safe }}</div>
 
     <div id="asignacion-details" 
@@ -112,6 +115,54 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+        
+        // --- 0. LÓGICA DE MATERIAS DINÁMICAS Y ETIQUETAS ---
+        const configJsonEl = document.getElementById('config-materia-json');
+        if (configJsonEl) {
+            const configMat = JSON.parse(configJsonEl.textContent || "{}");
+            
+            const badgePromedia = document.getElementById('badge-promedia');
+            if(badgePromedia) {
+                if(configMat.promedia) {
+                    badgePromedia.textContent = "✔ Promedia";
+                    badgePromedia.className = "badge bg-success ms-2";
+                } else {
+                    badgePromedia.textContent = "✖ No Promedia";
+                    badgePromedia.className = "badge bg-warning text-dark ms-2";
+                }
+            }
+
+            const lblSer = document.getElementById('lbl-ser');
+            if (lblSer && configMat.lbl_ser) lblSer.textContent = configMat.lbl_ser.toUpperCase() + ' (%):';
+            
+            const lblSaber = document.getElementById('lbl-saber');
+            if (lblSaber && configMat.lbl_saber) lblSaber.textContent = configMat.lbl_saber.toUpperCase() + ' (%):';
+            
+            const lblHacer = document.getElementById('lbl-hacer');
+            if (lblHacer && configMat.lbl_hacer) lblHacer.textContent = configMat.lbl_hacer.toUpperCase() + ' (%):';
+
+            // INTERCEPTOR PARA LA TABLA
+            const timerEtiquetas = setInterval(() => {
+                const theads = document.querySelectorAll('#tabla-calificaciones th');
+                if (theads.length > 0) {
+                    theads.forEach(th => {
+                        let txt = th.textContent.trim().toUpperCase();
+                        if (txt === 'SER' || txt.includes('SER ')) {
+                            th.innerHTML = th.innerHTML.replace(/SER/i, configMat.lbl_ser.toUpperCase());
+                        }
+                        if (txt === 'SABER' || txt.includes('SABER ')) {
+                            th.innerHTML = th.innerHTML.replace(/SABER/i, configMat.lbl_saber.toUpperCase());
+                        }
+                        if (txt === 'HACER' || txt.includes('HACER ')) {
+                            th.innerHTML = th.innerHTML.replace(/HACER/i, configMat.lbl_hacer.toUpperCase());
+                        }
+                    });
+                }
+            }, 300);
+            
+            setTimeout(() => clearInterval(timerEtiquetas), 5000);
+        }
+
         // --- 1. Lógica Ponderación Original ---
         const panelPonderacion = document.getElementById('panel-ponderacion');
         if (panelPonderacion) {
@@ -124,7 +175,7 @@
                 let suma = 0;
                 inputs.forEach(input => { suma += parseInt(input.value, 10) || 0; });
                 sumaDiv.textContent = suma + '%';
-                if (suma === 100) {
+                if (suma === 100 || suma === 0) {
                     sumaDiv.classList.remove('text-danger', 'bg-warning-subtle');
                     sumaDiv.classList.add('text-success', 'bg-success-subtle');
                     errorDiv.style.display = 'none';
@@ -150,41 +201,27 @@
             const estData = JSON.parse(estEl.textContent);
             let yaInsertado = false;
 
-            // Esperar pacientemente a que la tabla original se dibuje sola
             const timer = setInterval(() => {
                 const tabla = document.getElementById('tabla-calificaciones');
                 if (!tabla) return;
-
-                // Si no hay estudiantes (como en SEXTO A), simplemente detenemos el reloj
-                if (estData.length === 0) {
-                    clearInterval(timer);
-                    return;
-                }
+                if (estData.length === 0) { clearInterval(timer); return; }
                 
                 const filas = tabla.querySelectorAll('tbody tr');
                 
-                // Cuando las filas originales de tu sistema estén completas
                 if (filas.length > 0 && filas.length === estData.length && !yaInsertado) {
                     yaInsertado = true;
                     clearInterval(timer);
 
-                    // Insertamos el botón DENTRO de la celda del nombre del estudiante 
-                    // para NO alterar el número de columnas de tu sistema.
                     filas.forEach((tr, idx) => {
                         const est = estData[idx];
                         if (!est) return;
-                        
                         const incInfo = window._incData[est.id];
 
                         if (incInfo && incInfo.es_inclusion) {
                             const celdas = tr.querySelectorAll('td');
-                            
-                            // Buscar la celda que contiene el nombre del estudiante
                             let celdaNombre = null;
                             celdas.forEach(td => {
-                                if (td.textContent.includes(est.nombre_completo.split(',')[0])) {
-                                    celdaNombre = td;
-                                }
+                                if (td.textContent.includes(est.nombre_completo.split(',')[0])) celdaNombre = td;
                             });
 
                             if (celdaNombre) {
@@ -207,20 +244,16 @@
                         }
                     });
                 }
-            }, 300); // Revisa cada 300 milisegundos
+            }, 300);
 
-            // Capturar la información cuando se guarde en el modal
             document.addEventListener('click', function(e) {
                 if (e.target && e.target.id === 'btnGuardarInclusion') {
                     const id = document.getElementById('inc-modal-id').value;
                     const text = document.getElementById('inc-modal-text').value;
                     window._incData[id].obs = text;
 
-                    // Actualizar color visualmente
                     const btn = document.querySelector(`.btn-inc-modal[data-id="${id}"]`);
-                    if (btn) {
-                        btn.className = text.trim() ? 'btn btn-sm btn-info text-white ms-2 btn-inc-modal float-end' : 'btn btn-sm btn-outline-info ms-2 btn-inc-modal float-end';
-                    }
+                    if (btn) btn.className = text.trim() ? 'btn btn-sm btn-info text-white ms-2 btn-inc-modal float-end' : 'btn btn-sm btn-outline-info ms-2 btn-inc-modal float-end';
 
                     const gBtn = document.getElementById('guardarTodoBtn');
                     if (gBtn) gBtn.disabled = false;
@@ -230,7 +263,6 @@
                 }
             });
 
-            // Interceptar silenciosamente el envío de datos al servidor (Para Fetch/AJAX modernos)
             const origFetch = window.fetch;
             window.fetch = async function(...args) {
                 try {
@@ -240,9 +272,7 @@
                         let parsed = JSON.parse(config.body);
                         if (parsed.estudiantes) {
                             parsed.estudiantes.forEach(est => {
-                                if (window._incData[est.id]) {
-                                    est.observacion_inclusion = window._incData[est.id].obs;
-                                }
+                                if (window._incData[est.id]) est.observacion_inclusion = window._incData[est.id].obs;
                             });
                             config.body = JSON.stringify(parsed);
                             args[1] = config;
@@ -252,7 +282,6 @@
                 return origFetch.apply(this, args);
             };
 
-            // Interceptar silenciosamente (Para jQuery AJAX antiguo)
             if (window.jQuery) {
                 window.jQuery.ajaxPrefilter(function(options, originalOptions, jqXHR) {
                     if (options.type && options.type.toUpperCase() === 'POST' && typeof options.data === 'string' && options.url && options.url.includes(window.location.pathname)) {

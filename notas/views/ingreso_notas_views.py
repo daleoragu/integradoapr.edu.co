@@ -69,10 +69,20 @@ class IngresoNotasView(LoginRequiredMixin, View):
             asignacion_seleccionada = get_object_or_404(AsignacionDocente, id=asignacion_id, colegio=request.colegio)
             periodo_seleccionado = get_object_or_404(PeriodoAcademico, id=periodo_id, colegio=request.colegio)
             
+            # Recolectar configuración de la materia para enviarla al Frontend
+            materia = asignacion_seleccionada.materia
+            config_materia = {
+                'promedia': getattr(materia, 'promedia_en_boletin', True),
+                'lbl_ser': getattr(materia, 'etiqueta_ser', 'SER'),
+                'lbl_saber': getattr(materia, 'etiqueta_saber', 'SABER'),
+                'lbl_hacer': getattr(materia, 'etiqueta_hacer', 'HACER'),
+            }
+            context['config_materia_json'] = json.dumps(config_materia)
+
             estudiantes_del_curso = Estudiante.objects.filter(curso=asignacion_seleccionada.curso, colegio=request.colegio, is_active=True).select_related('user').order_by('user__last_name', 'user__first_name')
             
             estudiantes_data = []
-            inclusion_data = {} # Mochila de datos separada
+            inclusion_data = {} 
 
             for estudiante in estudiantes_del_curso:
                 nombre_completo = f"{estudiante.user.last_name}, {estudiante.user.first_name}".strip()
@@ -148,9 +158,9 @@ class IngresoNotasView(LoginRequiredMixin, View):
             config, _ = ConfiguracionCalificaciones.objects.get_or_create(colegio=request.colegio)
             if config.docente_puede_modificar and porcentajes_nuevos:
                 try:
-                    asignacion.porcentaje_saber = int(porcentajes_nuevos.get('saber'))
-                    asignacion.porcentaje_hacer = int(porcentajes_nuevos.get('hacer'))
-                    asignacion.porcentaje_ser = int(porcentajes_nuevos.get('ser'))
+                    asignacion.porcentaje_saber = int(porcentajes_nuevos.get('saber', 0))
+                    asignacion.porcentaje_hacer = int(porcentajes_nuevos.get('hacer', 0))
+                    asignacion.porcentaje_ser = int(porcentajes_nuevos.get('ser', 0))
                     asignacion.usar_ponderacion_equitativa = False
                     asignacion.full_clean()
                     asignacion.save()
@@ -167,9 +177,17 @@ class IngresoNotasView(LoginRequiredMixin, View):
             for est_data in estudiantes_data:
                 estudiante = get_object_or_404(Estudiante, id=est_data['id'], colegio=request.colegio)
                 
-                promedio_ser = self.calcular_promedio_componente(request.colegio, estudiante, asignacion, periodo, 'SER', est_data['notas']['ser'])
-                promedio_saber = self.calcular_promedio_componente(request.colegio, estudiante, asignacion, periodo, 'SABER', est_data['notas']['saber'])
-                promedio_hacer = self.calcular_promedio_componente(request.colegio, estudiante, asignacion, periodo, 'HACER', est_data['notas']['hacer'])
+                promedio_ser = Decimal('0.0')
+                if pesos['ser'] > 0:
+                    promedio_ser = self.calcular_promedio_componente(request.colegio, estudiante, asignacion, periodo, 'SER', est_data['notas'].get('ser', []))
+                
+                promedio_saber = Decimal('0.0')
+                if pesos['saber'] > 0:
+                    promedio_saber = self.calcular_promedio_componente(request.colegio, estudiante, asignacion, periodo, 'SABER', est_data['notas'].get('saber', []))
+                
+                promedio_hacer = Decimal('0.0')
+                if pesos['hacer'] > 0:
+                    promedio_hacer = self.calcular_promedio_componente(request.colegio, estudiante, asignacion, periodo, 'HACER', est_data['notas'].get('hacer', []))
 
                 definitiva_periodo = (promedio_ser * pesos['ser']) + (promedio_saber * pesos['saber']) + (promedio_hacer * pesos['hacer'])
 

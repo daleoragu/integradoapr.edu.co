@@ -34,7 +34,6 @@ class AdminEditarDocenteForm(forms.ModelForm):
     Formulario para que el admin edite la ficha de un docente.
     Esta versión corregida asegura que tanto los datos del usuario como la foto se guarden.
     """
-    # Campos del modelo User que queremos editar
     first_name = forms.CharField(label="Nombres", widget=forms.TextInput(attrs={'class': 'form-control'}))
     last_name = forms.CharField(label="Apellidos", widget=forms.TextInput(attrs={'class': 'form-control'}))
     email = forms.EmailField(label="Correo Electrónico", required=False, widget=forms.EmailInput(attrs={'class': 'form-control'}))
@@ -52,11 +51,9 @@ class AdminEditarDocenteForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        # Sacamos el 'docente' que pasamos desde la vista
         self.docente = kwargs.pop('docente', None)
         super().__init__(*args, **kwargs)
 
-        # Precargamos los datos del User en los campos del formulario
         if self.docente:
             self.fields['first_name'].initial = self.docente.user.first_name
             self.fields['last_name'].initial = self.docente.user.last_name
@@ -64,10 +61,7 @@ class AdminEditarDocenteForm(forms.ModelForm):
             self.fields['is_active'].initial = self.docente.user.is_active
 
     def save(self, commit=True):
-        # Guardamos primero la ficha (que contiene la foto)
         ficha = super().save(commit=False)
-        
-        # Actualizamos los datos del objeto User asociado
         user = self.docente.user
         user.first_name = self.cleaned_data['first_name'].upper()
         user.last_name = self.cleaned_data['last_name'].upper()
@@ -81,7 +75,7 @@ class AdminEditarDocenteForm(forms.ModelForm):
         return ficha
 
 # ==============================================================================
-# FORMULARIOS PARA GESTIÓN DE ESTUDIANTES (LÓGICA DE GUARDADO CORREGIDA)
+# FORMULARIOS PARA GESTIÓN DE ESTUDIANTES
 # ==============================================================================
 
 class AdminCrearEstudianteForm(forms.Form):
@@ -92,7 +86,6 @@ class AdminCrearEstudianteForm(forms.Form):
     numero_documento = forms.CharField(label="Número de Documento (Opcional)", required=False, max_length=20, widget=forms.TextInput(attrs={'class': 'form-control'}))
     curso = forms.ModelChoiceField(label="Asignar al Curso", queryset=Curso.objects.none(), widget=forms.Select(attrs={'class': 'form-select'}))
     
-    # NUEVO CAMPO AÑADIDO PARA INCLUSIÓN
     es_inclusion = forms.BooleanField(label="¿Estudiante de Inclusión?", required=False, widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}))
     
     def __init__(self, *args, **kwargs):
@@ -110,24 +103,17 @@ class AdminCrearEstudianteForm(forms.Form):
 class AdminEditarEstudianteForm(forms.ModelForm):
     """
     Formulario para que el admin edite la ficha de un estudiante.
-    Esta versión corregida asegura que todos los datos se guarden correctamente.
     """
-    # Campos del User
     first_name = forms.CharField(label="Nombres", widget=forms.TextInput(attrs={'class': 'form-control'}))
     last_name = forms.CharField(label="Apellidos", widget=forms.TextInput(attrs={'class': 'form-control'}))
-    
-    # Campo del Estudiante
     curso = forms.ModelChoiceField(queryset=Curso.objects.none(), label="Curso", widget=forms.Select(attrs={'class': 'form-select'}))
     is_active = forms.BooleanField(required=False, label="¿Estudiante Activo?", widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}))
-    
-    # NUEVO CAMPO AÑADIDO PARA INCLUSIÓN
     es_inclusion = forms.BooleanField(required=False, label="Programa de Inclusión", widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}))
     
     class Meta:
         model = FichaEstudiante
         fields = '__all__'
         exclude = ['estudiante']
-        # Los widgets se mantienen como los tenías, ¡están perfectos!
         widgets = {
             'tipo_documento': forms.Select(attrs={'class': 'form-select'}),
             'numero_documento': forms.TextInput(attrs={'class': 'form-control'}),
@@ -158,16 +144,12 @@ class AdminEditarEstudianteForm(forms.ModelForm):
         if colegio:
             self.fields['curso'].queryset = Curso.objects.filter(colegio=colegio).order_by('nombre')
         
-        # self.instance aquí es la 'ficha'
         if self.instance and self.instance.pk:
             estudiante_profile = self.instance.estudiante
-            # Precargamos los datos del User y Estudiante
             self.fields['first_name'].initial = estudiante_profile.user.first_name
             self.fields['last_name'].initial = estudiante_profile.user.last_name
             self.fields['curso'].initial = estudiante_profile.curso
             self.fields['is_active'].initial = estudiante_profile.is_active
-            
-            # PRECARGAR DATO DE INCLUSIÓN
             self.fields['es_inclusion'].initial = estudiante_profile.es_inclusion
 
     def save(self, commit=True):
@@ -175,13 +157,10 @@ class AdminEditarEstudianteForm(forms.ModelForm):
         estudiante_profile = ficha.estudiante
         user = estudiante_profile.user
 
-        # Actualizamos los datos del User y Estudiante
         user.first_name = self.cleaned_data['first_name'].upper()
         user.last_name = self.cleaned_data['last_name'].upper()
         estudiante_profile.curso = self.cleaned_data['curso']
         estudiante_profile.is_active = self.cleaned_data['is_active']
-        
-        # GUARDAR DATO DE INCLUSIÓN
         estudiante_profile.es_inclusion = self.cleaned_data['es_inclusion']
         
         if commit:
@@ -191,7 +170,9 @@ class AdminEditarEstudianteForm(forms.ModelForm):
             
         return ficha
 
-# --- OTROS FORMULARIOS (SIN CAMBIOS) ---
+# ==============================================================================
+# OTROS FORMULARIOS DE ACADÉMICOS Y CONFIGURACIÓN
+# ==============================================================================
 
 class CursoForm(forms.ModelForm):
     class Meta:
@@ -218,11 +199,21 @@ class MateriaForm(forms.ModelForm):
     area = forms.ModelChoiceField(queryset=AreaConocimiento.objects.none(), required=False, label="Asignar a un Área", widget=forms.Select(attrs={'class': 'form-select'}))
     class Meta:
         model = Materia
-        fields = ['nombre', 'abreviatura', 'area', 'usar_ponderacion_equitativa', 'porcentaje_ser', 'porcentaje_saber', 'porcentaje_hacer']
+        fields = [
+            'nombre', 'abreviatura', 'area', 'usar_ponderacion_equitativa', 
+            'promedia_en_boletin', 
+            'etiqueta_ser', 'porcentaje_ser', 
+            'etiqueta_saber', 'porcentaje_saber', 
+            'etiqueta_hacer', 'porcentaje_hacer'
+        ]
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control'}),
             'abreviatura': forms.TextInput(attrs={'class': 'form-control'}),
+            'promedia_en_boletin': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'usar_ponderacion_equitativa': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'etiqueta_ser': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: SER, EXAMEN...'}),
+            'etiqueta_saber': forms.TextInput(attrs={'class': 'form-control'}),
+            'etiqueta_hacer': forms.TextInput(attrs={'class': 'form-control'}),
             'porcentaje_ser': forms.NumberInput(attrs={'class': 'form-control'}),
             'porcentaje_saber': forms.NumberInput(attrs={'class': 'form-control'}),
             'porcentaje_hacer': forms.NumberInput(attrs={'class': 'form-control'}),
