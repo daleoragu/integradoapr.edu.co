@@ -5,11 +5,11 @@
 
 {% block extra_css %}
 <style>
-    /* Estilos del Encabezado */
+    /* Estilos del Encabezado (Unificado con el estilo de docente) */
     .welcome-header {
         background: linear-gradient(135deg, #6c757d, #343a40);
         color: white;
-        padding: 20px 30px;
+        padding: 30px;
         border-radius: 12px;
         margin-bottom: 25px;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
@@ -17,13 +17,44 @@
         align-items: center;
         justify-content: space-between;
         gap: 20px;
+        position: relative;
+        overflow: hidden;
     }
-    .welcome-text h2 { font-weight: 700; font-size: 1.8rem; }
-    .welcome-text p { opacity: 0.9; margin: 5px 0 0; }
-    .welcome-illustration { max-width: 90px; height: auto; opacity: 0.9; }
+    .welcome-text h2 { 
+        font-weight: 700; 
+        font-size: 2.2rem; 
+        margin: 0; 
+        position: relative; 
+        z-index: 2; 
+    }
+    .welcome-text p { 
+        font-size: 1.1rem; 
+        opacity: 0.9; 
+        margin-top: 5px; 
+        position: relative; 
+        z-index: 2; 
+    }
+    .welcome-header .btn {
+        position: relative;
+        z-index: 2;
+    }
+    
+    /* Marca de agua estilo dashboard docente */
+    .welcome-illustration {
+        font-size: 9rem;
+        color: white;
+        opacity: 0.15;
+        position: absolute;
+        right: 30px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 1;
+    }
+
     @media (max-width: 768px) {
-        .welcome-header { flex-direction: column; text-align: center; }
+        .welcome-header { flex-direction: column; text-align: center; justify-content: center; }
         .welcome-illustration { display: none; }
+        .welcome-header .btn { margin-top: 15px; }
     }
 
     .dashboard-nav { border-bottom: 1px solid #dee2e6; }
@@ -43,11 +74,12 @@
         color: #0d6efd;
     }
 
+    /* Grilla e iconos unificados con el panel de docente */
     .app-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-        gap: 20px;
-        padding: 15px;
+        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+        gap: 25px;
+        padding: 20px;
     }
     .app-icon {
         display: flex;
@@ -56,27 +88,27 @@
         text-align: center;
         text-decoration: none;
         color: #343a40;
-        transition: transform 0.2s ease, color 0.2s ease;
+        transition: transform 0.2s ease;
     }
     .app-icon:hover {
-        transform: translateY(-5px);
-        color: #0d6efd;
+        transform: scale(1.08);
     }
     .icon-container {
-        width: 70px;
-        height: 70px;
-        border-radius: 18px;
+        width: 80px;
+        height: 80px;
+        border-radius: 22%;
         display: flex;
         align-items: center;
         justify-content: center;
         margin-bottom: 10px;
-        font-size: 2rem;
+        font-size: 2.5rem;
         color: white;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        background-color: #f8f9fa;
     }
-    .app-label { font-size: 0.85rem; font-weight: 500; }
+    .app-label { font-size: 0.9rem; font-weight: 500; }
 
-    /* Colores de los iconos */
+    /* Colores de los iconos (Administrador) */
     .bg-estudiantes { background-color: #0d6efd; }
     .bg-materias { background-color: #ffc107; }
     .bg-docentes { background-color: #6f42c1; }
@@ -93,9 +125,23 @@
     .bg-admin-reporte-estudiantes { background: linear-gradient(135deg, #a0522d, #8b4513); }
     .bg-impresion-carnets { background: linear-gradient(135deg, #17a2b8, #138496); }
     .bg-certificado-de-estudios {background: linear-gradient(135deg, #6610f2, #8540f5);}
+
+    /* Colores de los iconos (Docente) - importados de dashboard_docente.html */
+    .bg-notas { background: linear-gradient(135deg, #007bff, #0056b3); }
+    .bg-asistencia { background: linear-gradient(135deg, #28a745, #1c7430); }
+    .bg-observador { background: linear-gradient(135deg, #17a2b8, #0f7180); }
+    .bg-mejoramiento { background: linear-gradient(135deg, #fd7e14, #d3640a); }
+    .bg-reporte { background: linear-gradient(135deg, #6f42c1, #532c9c); }
+    .bg-boletin { background: linear-gradient(135deg, #ffc107, #d39e00); }
+    .bg-sabana { background: linear-gradient(135deg, #6c757d, #495057); }
+    .bg-mail { background: linear-gradient(135deg, #dc3545, #b02130); }
+    .bg-consulta { background: linear-gradient(135deg, #20c997, #158765); }
+    .bg-stats { background: linear-gradient(135deg, #e83e8c, #c21a68); }
+    .bg-portal-gestion { background: linear-gradient(135deg, #5f72bd, #435185); }
+    .bg-reporte-estudiantes { background: linear-gradient(135deg, #a0522d, #8b4513); }
+
 </style>
 {% endblock %}
-
 
 {% block content %}
 <div class="container py-4">
@@ -119,6 +165,10 @@
                 </div>
                 <!-- CORREGIDO: Se añade el namespace 'notas:' -->
                 <a href="{% url 'notas:portal' %}" class="btn btn-light"><i class="fas fa-globe me-2"></i>Ir al Portal</a>
+                <!-- Icono de marca de agua para el panel de administración -->
+                <div class="welcome-illustration">
+                    <i class="fas fa-user-shield"></i>
+                </div>
             </div>
 
             <div class="app-grid">

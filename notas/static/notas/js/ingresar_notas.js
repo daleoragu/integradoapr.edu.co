@@ -1,6 +1,6 @@
 /**
  * Script for handling the grade entry page with a spreadsheet style.
- * @version 12.0 - Integrada la escala de valoración dinámica para los colores de la nota definitiva.
+ * @version 12.1 - Arreglado el bug que borraba las notas no guardadas al añadir/quitar columnas.
  */
 document.addEventListener('DOMContentLoaded', function () {
     // --- DOM ELEMENTS AND INITIAL DATA ---
@@ -49,6 +49,35 @@ document.addEventListener('DOMContentLoaded', function () {
 
     let hayCambiosSinGuardar = false;
     let descripcionesColumnas = { ser: {}, saber: {}, hacer: {} };
+
+    // --- NUEVA FUNCIÓN: Guarda en memoria lo que el usuario ha escrito antes de redibujar ---
+    function sincronizarDatosDesdeDOM() {
+        if (!tablaCalificaciones) return;
+        
+        tablaCalificaciones.querySelectorAll('tbody tr[data-estudiante-id]').forEach(fila => {
+            const estId = fila.dataset.estudianteId;
+            // Buscamos el estudiante en nuestro array en memoria
+            const estudiante = estudiantesData.find(e => e.id.toString() === estId.toString());
+            
+            if (estudiante) {
+                // Guardar inasistencias en memoria
+                const inasistInput = fila.querySelector('.input-inasistencia');
+                if (inasistInput) {
+                    estudiante.inasistencias = inasistInput.value;
+                }
+
+                // Guardar notas digitadas en memoria
+                for (const tipo of ['ser', 'saber', 'hacer']) {
+                    const inputs = fila.querySelectorAll(`.input-nota[data-tipo="${tipo}"]`);
+                    inputs.forEach((input, index) => {
+                        if (estudiante.notas[tipo] && estudiante.notas[tipo][index]) {
+                            estudiante.notas[tipo][index].valor = input.value;
+                        }
+                    });
+                }
+            }
+        });
+    }
 
     function renderizarTabla() {
         const hayIndicadores = tablaCalificaciones.dataset.hayIndicadores === 'true';
@@ -136,9 +165,6 @@ document.addEventListener('DOMContentLoaded', function () {
         actualizarDefinitiva(fila);
     }
 
-    // --- ======================================================= ---
-    // --- FUNCIÓN ACTUALIZADA PARA USAR LA ESCALA DE VALORACIÓN ---
-    // --- ======================================================= ---
     function actualizarDefinitiva(fila) {
         const defCelda = fila.querySelector('.def-celda');
         let definitiva = 0;
@@ -170,35 +196,30 @@ document.addEventListener('DOMContentLoaded', function () {
         
         defCelda.textContent = definitiva.toFixed(1);
         
-        // --- INICIO: LÓGICA DE COLOR DINÁMICA ---
+        // Lógica de color dinámica
         const notaFinal = parseFloat(defCelda.textContent);
         let claseDesempeno = '';
 
         if (escalaValoracion && escalaValoracion.length > 0) {
-            // Usar la escala personalizada
             const escalaEncontrada = escalaValoracion.find(escala => 
                 notaFinal >= parseFloat(escala.valor_minimo) && notaFinal <= parseFloat(escala.valor_maximo)
             );
             if (escalaEncontrada) {
-                // Convierte "DESEMPEÑO BAJO" a "desempeno-bajo"
                 claseDesempeno = 'desempeno-' + escalaEncontrada.nombre_desempeno.toLowerCase().replace(' ', '-');
             } else {
-                claseDesempeno = 'desempeno-default'; // Si no encaja en ningún rango
+                claseDesempeno = 'desempeno-default';
             }
         } else {
-            // Fallback a la lógica antigua si no hay escala configurada
             if (notaFinal < 3.0) claseDesempeno = 'nota-roja';
             else if (notaFinal < 4.0) claseDesempeno = 'nota-amarilla';
             else if (notaFinal < 4.6) claseDesempeno = 'nota-verde';
             else claseDesempeno = 'nota-azul';
         }
 
-        // Limpiar clases anteriores y aplicar la nueva
-        defCelda.className = 'text-center align-middle fw-bolder def-celda'; // Resetea a la clase base
+        defCelda.className = 'text-center align-middle fw-bolder def-celda';
         if(claseDesempeno) {
             defCelda.classList.add(claseDesempeno);
         }
-        // --- FIN: LÓGICA DE COLOR DINÁMICA ---
     }
     
     function actualizarStatus(estado) {
@@ -256,6 +277,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const btnSync = e.target.closest('.sync-inasistencias');
 
         if (btnAdd) {
+            sincronizarDatosDesdeDOM(); // <-- GUARDAR TEMPORALMENTE LO QUE SE HA ESCRITO
             const tipo = btnAdd.dataset.tipo;
             if (estudiantesData.length > 0) {
                 estudiantesData.forEach(est => {
@@ -267,6 +289,7 @@ document.addEventListener('DOMContentLoaded', function () {
             actualizarStatus('pending');
         }
         if (btnRemove) {
+            sincronizarDatosDesdeDOM(); // <-- GUARDAR TEMPORALMENTE LO QUE SE HA ESCRITO
             const tipo = btnRemove.dataset.tipo;
             estudiantesData.forEach(est => {
                 if (est.notas[tipo]?.length > 1) est.notas[tipo].pop();
@@ -322,6 +345,9 @@ document.addEventListener('DOMContentLoaded', function () {
         this.disabled = true;
         this.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
         
+        // Asegurarse de que toda la tabla esté sincronizada antes de guardar
+        sincronizarDatosDesdeDOM();
+        
         const payload = {
             asignacion_id: asignacionData.id,
             periodo_id: asignacionData.periodoId,
@@ -338,17 +364,24 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        tablaCalificaciones.querySelectorAll('tbody tr[data-estudiante-id]').forEach(fila => {
-            const estId = fila.dataset.estudianteId;
-            const datosEst = { id: estId, notas: { ser: [], saber: [], hacer: [] }, inasistencias: fila.querySelector('.input-inasistencia').value };
+        // Ahora usamos los datos ya recolectados en memoria en vez de iterar el DOM de nuevo
+        estudiantesData.forEach(est => {
+            const datosEst = {
+                id: est.id.toString(),
+                notas: { ser: [], saber: [], hacer: [] },
+                inasistencias: est.inasistencias || "0"
+            };
+            
             for (const tipo of ['ser', 'saber', 'hacer']) {
-                fila.querySelectorAll(`.input-nota[data-tipo="${tipo}"]`).forEach((input, index) => {
-                    const valor = input.value.replace(',', '.').trim();
-                    if (valor) {
-                        const descripcion = descripcionesColumnas[tipo][index] || `Nota ${index + 1}`;
-                        datosEst.notas[tipo].push({ descripcion, valor });
-                    }
-                });
+                if (est.notas[tipo]) {
+                    est.notas[tipo].forEach((nota, index) => {
+                        const valor = (nota.valor || '').replace(',', '.').trim();
+                        if (valor) {
+                            const descripcion = descripcionesColumnas[tipo][index] || `Nota ${index + 1}`;
+                            datosEst.notas[tipo].push({ descripcion, valor });
+                        }
+                    });
+                }
             }
             payload.estudiantes.push(datosEst);
         });

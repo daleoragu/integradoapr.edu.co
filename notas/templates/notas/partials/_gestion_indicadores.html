@@ -1,6 +1,7 @@
 {% comment %}
     Este parcial maneja la visualización, creación y gestión de los
-    indicadores de logro, ahora con un modal para la edición.
+    indicadores de logro, ahora con un modal para la edición y
+    protección contra pérdida de datos no guardados.
 {% endcomment %}
 
 {% if asignacion_seleccionada and periodo_seleccionado %}
@@ -35,10 +36,6 @@
                     <span>{{ indicador.descripcion }}</span>
                     {% if not periodo_cerrado %}
                         <div class="d-flex">
-                            <!-- ================================================================== -->
-                            <!-- INICIO DE LA CORRECCIÓN CLAVE -->
-                            <!-- ================================================================== -->
-                            <!-- Se añade un nuevo atributo 'data-url' que contiene la URL ya construida por Django -->
                             <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1 me-1" 
                                     title="Editar"
                                     data-bs-toggle="modal" 
@@ -48,10 +45,9 @@
                                     data-url="{% url 'notas:editar_indicador' indicador.id %}">
                                 <i class="fas fa-pencil-alt"></i>
                             </button>
-                            <!-- ================================================================== -->
-                            <!-- FIN DE LA CORRECCIÓN CLAVE -->
-                            <!-- ================================================================== -->
-                            <form action="{% url 'notas:eliminar_indicador' indicador.id %}" method="post" class="d-inline" onsubmit="return confirm('¿Está seguro de que desea eliminar este indicador?');">
+                            
+                            <!-- Formulario de eliminación actualizado para validación JS -->
+                            <form action="{% url 'notas:eliminar_indicador' indicador.id %}" method="post" class="d-inline form-eliminar-indicador">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-1" title="Eliminar">
                                     <i class="fas fa-trash-alt"></i>
@@ -91,28 +87,68 @@
   </div>
 </div>
 
-<!-- SCRIPT SIMPLIFICADO Y ROBUSTO PARA MANEJAR EL MODAL -->
+<!-- SCRIPT SIMPLIFICADO Y ROBUSTO PARA MANEJAR EL MODAL Y LA PROTECCIÓN DE DATOS -->
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const editarModalEl = document.getElementById('editarIndicadorModal');
         if (editarModalEl) {
             editarModalEl.addEventListener('show.bs.modal', function (event) {
-                // Botón que activó el modal
                 const button = event.relatedTarget;
-                
-                // Extraer información de los atributos data-*
                 const descripcion = button.getAttribute('data-descripcion');
-                // Leemos la URL correcta directamente del nuevo atributo 'data-url'
                 const formActionUrl = button.getAttribute('data-url');
-    
-                // Actualizar el formulario del modal
+                
                 const form = document.getElementById('editarIndicadorForm');
-                form.action = formActionUrl; // Asignamos la URL correcta
+                form.action = formActionUrl;
     
                 const textarea = document.getElementById('descripcionIndicadorTextarea');
                 textarea.value = descripcion;
             });
         }
+
+        // --- SISTEMA DE PROTECCIÓN CONTRA PÉRDIDA DE NOTAS ---
+        function verificarCambiosSinGuardar(e) {
+            const btnGuardar = document.getElementById('guardarTodoBtn');
+            // Si el botón está habilitado, significa que el usuario digitó notas y no guardó
+            if (btnGuardar && !btnGuardar.disabled) {
+                const confirmar = confirm("⚠️ ATENCIÓN: Tienes calificaciones sin guardar en la tabla de abajo.\n\nAl crear o modificar un indicador, la página se recargará y PERDERÁS ESAS NOTAS.\n\nPor favor, haz clic en 'Cancelar', baja y presiona 'Guardar Cambios' primero.\n\n¿Deseas continuar y PERDER las notas digitadas?");
+                if (!confirmar) {
+                    e.preventDefault();
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        // Proteger el botón de agregar
+        const formCrearIndicador = document.querySelector('.form-indicador');
+        if (formCrearIndicador) {
+            formCrearIndicador.addEventListener('submit', verificarCambiosSinGuardar);
+        }
+
+        // Proteger el botón de editar
+        const formEditarIndicador = document.getElementById('editarIndicadorForm');
+        if (formEditarIndicador) {
+            formEditarIndicador.addEventListener('submit', verificarCambiosSinGuardar);
+        }
+
+        // Proteger todos los botones de eliminar
+        const formsEliminar = document.querySelectorAll('.form-eliminar-indicador');
+        formsEliminar.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                const btnGuardar = document.getElementById('guardarTodoBtn');
+                if (btnGuardar && !btnGuardar.disabled) {
+                    const confirmar = confirm("⚠️ ATENCIÓN: Tienes calificaciones sin guardar.\nSi eliminas el indicador, la página se recargará y PERDERÁS TUS NOTAS.\n\n¿Deseas continuar y PERDER los cambios?");
+                    if (!confirmar) {
+                        e.preventDefault();
+                    }
+                } else {
+                    const confirmacionNormal = confirm("¿Está seguro de que desea eliminar este indicador?");
+                    if (!confirmacionNormal) {
+                        e.preventDefault();
+                    }
+                }
+            });
+        });
     });
 </script>
 

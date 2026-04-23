@@ -4,7 +4,6 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth.decorators import login_required
 import datetime
 
-
 @login_required
 def generar_reporte_individual_excel(request):
     """
@@ -12,7 +11,6 @@ def generar_reporte_individual_excel(request):
     """
     # --- Importaciones locales para evitar dependencia circular ---
     from ..reportes.excel_generator import AsistenciaExcelGenerator
-    # --- CORRECCIÓN: Se importa AsignacionDocente y PeriodoAcademico ---
     from ..models.academicos import AsignacionDocente, PeriodoAcademico
 
     if not hasattr(request, 'colegio') or not request.colegio:
@@ -21,14 +19,16 @@ def generar_reporte_individual_excel(request):
     try:
         asignacion_id = request.GET.get('asignacion_id')
         periodo_id = request.GET.get('periodo_id')
-        mes_seleccionado = request.GET.get('mes')
         
-        if not all([asignacion_id, periodo_id, mes_seleccionado]):
+        # --- SOLUCIÓN: Dar valor por defecto 'todos'. Si el select HTML está 'disabled', 
+        # el navegador no lo envía, evitando así que el valor sea nulo (None) ---
+        mes_seleccionado = request.GET.get('mes', 'todos')
+        
+        # --- SOLUCIÓN: Quitamos 'mes_seleccionado' de la validación estricta ---
+        if not asignacion_id or not periodo_id:
              return HttpResponse("Parámetros incompletos en la solicitud.", status=400)
 
-        # --- CORRECCIÓN: Se usa el nombre correcto del modelo AsignacionDocente ---
         asignacion = get_object_or_404(AsignacionDocente, pk=asignacion_id, colegio=request.colegio)
-        # --- CORRECCIÓN: Se usa el nombre correcto del modelo PeriodoAcademico ---
         periodo = get_object_or_404(PeriodoAcademico, pk=periodo_id, colegio=request.colegio)
     except (ValueError, TypeError, AsignacionDocente.DoesNotExist, PeriodoAcademico.DoesNotExist):
         return HttpResponse("Parámetros inválidos o no encontrados.", status=400)
@@ -51,7 +51,6 @@ def generar_reporte_individual_pdf(request):
     """
     # --- Importaciones locales para evitar dependencia circular ---
     from ..reportes.pdf_generator import AsistenciaPDFGenerator
-    # --- CORRECCIÓN: Se importa AsignacionDocente y PeriodoAcademico ---
     from ..models.academicos import AsignacionDocente, PeriodoAcademico
 
     if not hasattr(request, 'colegio') or not request.colegio:
@@ -60,14 +59,14 @@ def generar_reporte_individual_pdf(request):
     try:
         asignacion_id = request.GET.get('asignacion_id')
         periodo_id = request.GET.get('periodo_id')
-        mes_seleccionado = request.GET.get('mes')
+        
+        # --- SOLUCIÓN: Aplicamos la misma corrección para las descargas de PDF ---
+        mes_seleccionado = request.GET.get('mes', 'todos')
 
-        if not all([asignacion_id, periodo_id, mes_seleccionado]):
+        if not asignacion_id or not periodo_id:
              return HttpResponse("Parámetros incompletos en la solicitud.", status=400)
 
-        # --- CORRECCIÓN: Se usa el nombre correcto del modelo AsignacionDocente ---
         asignacion = get_object_or_404(AsignacionDocente, pk=asignacion_id, colegio=request.colegio)
-        # --- CORRECCIÓN: Se usa el nombre correcto del modelo PeriodoAcademico ---
         periodo = get_object_or_404(PeriodoAcademico, pk=periodo_id, colegio=request.colegio)
     except (ValueError, TypeError, AsignacionDocente.DoesNotExist, PeriodoAcademico.DoesNotExist):
         return HttpResponse("Parámetros inválidos o no encontrados.", status=400)
@@ -89,7 +88,6 @@ def obtener_meses_periodo_ajax(request):
     Devuelve los meses correspondientes a un periodo académico en formato JSON.
     """
     # --- Importación local para evitar dependencia circular ---
-    # --- CORRECCIÓN: Se usa el nombre correcto del modelo PeriodoAcademico ---
     from ..models.academicos import PeriodoAcademico
     from ..reportes import utils
 
@@ -101,7 +99,6 @@ def obtener_meses_periodo_ajax(request):
         return JsonResponse({'error': 'No se proporcionó ID de periodo'}, status=400)
     
     try:
-        # --- CORRECCIÓN: Se usa el nombre correcto del modelo PeriodoAcademico ---
         periodo = get_object_or_404(PeriodoAcademico, id=periodo_id, colegio=request.colegio)
         meses = utils.get_meses_for_periodo(periodo)
         return JsonResponse({'meses': meses})
