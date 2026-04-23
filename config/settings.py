@@ -10,7 +10,7 @@ load_dotenv(dotenv_path=BASE_DIR / '.env')
 
 # --- Configuración General de Django ---
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'clave-secreta-por-defecto-para-local')
-DEBUG = os.getenv('DJANGO_DEBUG', 'True') == 'True'
+DEBUG =True
 
 ALLOWED_HOSTS = [
     'mcolegio.com.co',
