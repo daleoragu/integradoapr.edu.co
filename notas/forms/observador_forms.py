@@ -30,18 +30,33 @@ class FichaEstudianteForm(forms.ModelForm):
         }
 
 class RegistroObservadorForm(forms.ModelForm):
+    # CORRECCIÓN CRÍTICA: Definir subtipo como NO obligatorio para evitar bloqueos
+    subtipo = forms.ChoiceField(
+        choices=RegistroObservador.SUBTIPO_CHOICES,
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
     class Meta:
         model = RegistroObservador
         fields = ['fecha_suceso', 'tipo', 'subtipo', 'descripcion']
         widgets = {
             'fecha_suceso': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'tipo': forms.Select(attrs={'class': 'form-select'}),
-            'subtipo': forms.Select(attrs={'class': 'form-select'}),
             'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'placeholder': 'Describa detalladamente el suceso...'}),
         }
 
 class EstudianteCompromisoForm(forms.ModelForm):
-    compromiso_estudiante = forms.CharField(widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 5}), label="Mi Compromiso para este año lectivo:", help_text="Describe aquí tus metas y a qué te comprometes para mejorar académicamente y como persona.", required=False)
+    """
+    Este es el formulario que causaba el ImportError. 
+    Asegúrate de que este bloque esté completo al final del archivo.
+    """
+    compromiso_estudiante = forms.CharField(
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 5}), 
+        label="Mi Compromiso para este año lectivo:", 
+        help_text="Describe aquí tus metas y compromisos.", 
+        required=False
+    )
     class Meta:
         model = FichaEstudiante
         fields = ['compromiso_estudiante']

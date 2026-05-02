@@ -7,6 +7,7 @@ from django.http import HttpResponse, HttpResponseNotFound
 from django.template.loader import render_to_string
 from django.urls import reverse
 
+# Soporte para generación de PDF con WeasyPrint
 try:
     from weasyprint import HTML
     PDF_SUPPORT = True
@@ -20,11 +21,17 @@ from ..models import (
 )
 
 def es_docente_o_superuser(user):
+    """
+    Verifica si el usuario es superusuario o pertenece al grupo de Docentes.
+    """
     return user.is_superuser or user.groups.filter(name='Docentes').exists()
 
 @login_required
 @user_passes_test(es_docente_o_superuser)
 def observador_selector_vista(request):
+    """
+    Permite seleccionar un curso y luego un estudiante para ver su observador.
+    """
     if not request.colegio:
         return HttpResponseNotFound("<h1>Colegio no configurado</h1>")
 
@@ -32,12 +39,16 @@ def observador_selector_vista(request):
     cursos = []
     estudiantes = Estudiante.objects.none()
 
+    # Si es admin ve todo, si es docente ve sus cursos asignados
     if user.is_superuser:
         cursos = Curso.objects.filter(colegio=request.colegio).order_by('nombre')
     else:
         try:
             docente = get_object_or_404(Docente, user=user, colegio=request.colegio)
-            cursos_ids = AsignacionDocente.objects.filter(docente=docente, colegio=request.colegio).values_list('curso_id', flat=True).distinct()
+            cursos_ids = AsignacionDocente.objects.filter(
+                docente=docente, 
+                colegio=request.colegio
+            ).values_list('curso_id', flat=True).distinct()
             cursos = Curso.objects.filter(id__in=cursos_ids, colegio=request.colegio).order_by('nombre')
         except Docente.DoesNotExist:
             messages.error(request, "Su perfil no está asociado a un docente en este colegio.")
@@ -46,7 +57,9 @@ def observador_selector_vista(request):
     curso_seleccionado_id = request.GET.get('curso_id')
     if curso_seleccionado_id:
         estudiantes = Estudiante.objects.filter(
-            curso_id=curso_seleccionado_id, colegio=request.colegio, is_active=True
+            curso_id=curso_seleccionado_id, 
+            colegio=request.colegio, 
+            is_active=True
         ).select_related('user', 'curso').order_by('user__last_name', 'user__first_name')
 
     if request.method == 'POST':
@@ -66,6 +79,9 @@ def observador_selector_vista(request):
 @login_required
 @user_passes_test(es_docente_o_superuser)
 def vista_detalle_observador(request, estudiante_id):
+    """
+    Muestra la ficha del estudiante y el historial de anotaciones.
+    """
     if not request.colegio:
         return HttpResponseNotFound("<h1>Colegio no configurado</h1>")
         
@@ -85,6 +101,9 @@ def vista_detalle_observador(request, estudiante_id):
 @login_required
 @user_passes_test(es_docente_o_superuser)
 def crear_registro_observador_vista(request, estudiante_id):
+    """
+    Crea una nueva anotación académica o comportamental.
+    """
     if not request.colegio:
         return HttpResponseNotFound("<h1>Colegio no configurado</h1>")
         
@@ -98,22 +117,32 @@ def crear_registro_observador_vista(request, estudiante_id):
             nuevo_registro.colegio = request.colegio
             nuevo_registro.estudiante = estudiante
             nuevo_registro.docente_reporta = docente
+            
+            # Limpieza lógica: si no es comportamental, el subtipo debe ser None
+            # para evitar que guarde basura de selecciones previas ocultas por JS.
+            if nuevo_registro.tipo != 'COMPORTAMENTAL':
+                nuevo_registro.subtipo = None
+                
             nuevo_registro.save()
             
+            # Notificación automática al estudiante
             try:
-                url_destino = reverse('mi_observador')
+                url_destino = reverse('notas:mi_observador')
             except:
                 url_destino = '#'
 
             Notificacion.objects.create(
                 colegio=request.colegio,
                 destinatario=estudiante.user,
-                mensaje="Tienes una nueva anotación en tu observador.",
+                mensaje=f"Se ha registrado una nueva anotación {nuevo_registro.get_tipo_display()} en tu observador.",
                 tipo='OBSERVADOR',
                 url=url_destino
             )
-            messages.success(request, f"Observación para {estudiante.user.get_full_name()} guardada.")
+
+            messages.success(request, f"Observación para {estudiante.user.get_full_name()} guardada correctamente.")
             return redirect('notas:vista_detalle_observador', estudiante_id=estudiante.id)
+        else:
+            messages.error(request, "Hubo errores en el formulario. Por favor revisa los campos marcados.")
     else:
         form = RegistroObservadorForm()
 
@@ -128,6 +157,9 @@ def crear_registro_observador_vista(request, estudiante_id):
 @login_required
 @user_passes_test(es_docente_o_superuser)
 def editar_ficha_vista(request, estudiante_id):
+    """
+    Permite editar la información sociodemográfica y compromisos en la ficha.
+    """
     if not request.colegio:
         return HttpResponseNotFound("<h1>Colegio no configurado</h1>")
         
@@ -138,8 +170,10 @@ def editar_ficha_vista(request, estudiante_id):
         form = FichaEstudianteForm(request.POST, request.FILES, instance=ficha)
         if form.is_valid():
             form.save()
-            messages.success(request, f"Ficha de {estudiante.user.get_full_name()} actualizada.")
+            messages.success(request, f"Ficha de {estudiante.user.get_full_name()} actualizada correctamente.")
             return redirect('notas:vista_detalle_observador', estudiante_id=estudiante.id)
+        else:
+            messages.error(request, "Error al actualizar la ficha. Verifique los datos.")
     else:
         form = FichaEstudianteForm(instance=ficha)
     
@@ -154,10 +188,14 @@ def editar_ficha_vista(request, estudiante_id):
 @login_required
 @user_passes_test(es_docente_o_superuser)
 def generar_observador_pdf_vista(request, estudiante_id):
+    """
+    Genera una versión PDF del observador para impresión o archivo.
+    """
     if not request.colegio:
         return HttpResponseNotFound("<h1>Colegio no configurado</h1>")
+        
     if not PDF_SUPPORT:
-        return HttpResponse("Error: WeasyPrint no está instalado.", status=500)
+        return HttpResponse("Error: El servidor no tiene instalada la librería WeasyPrint para generar PDFs.", status=500)
             
     estudiante = get_object_or_404(Estudiante, id=estudiante_id, colegio=request.colegio)
     ficha, _ = FichaEstudiante.objects.get_or_create(estudiante=estudiante)
@@ -172,8 +210,11 @@ def generar_observador_pdf_vista(request, estudiante_id):
     
     html_string = render_to_string('notas/observador/observador_pdf.html', context)
     base_url = request.build_absolute_uri()
-    pdf_file = HTML(string=html_string, base_url=base_url).write_pdf()
-
-    response = HttpResponse(pdf_file, content_type='application/pdf')
-    response['Content-Disposition'] = f'inline; filename="observador_{estudiante.user.username}.pdf"'
-    return response
+    
+    try:
+        pdf_file = HTML(string=html_string, base_url=base_url).write_pdf()
+        response = HttpResponse(pdf_file, content_type='application/pdf')
+        response['Content-Disposition'] = f'inline; filename="observador_{estudiante.user.username}.pdf"'
+        return response
+    except Exception as e:
+        return HttpResponse(f"Error técnico al generar el PDF: {str(e)}", status=500)
