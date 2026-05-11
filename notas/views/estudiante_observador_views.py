@@ -98,4 +98,4 @@ def mi_observador_vista(request):
         'colegio': request.colegio
     }
     
-    return render(request, 'notas/estudiante/mi_observador.html', context))
+    return render(request, 'notas/estudiante/mi_observador.html', context)
