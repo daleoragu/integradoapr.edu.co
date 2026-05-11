@@ -35,6 +35,10 @@ def mi_observador_vista(request):
         return redirect('notas:logout')
 
     ficha, created = FichaEstudiante.objects.get_or_create(estudiante=estudiante)
+    
+    # CORRECCIÓN CLAVE: Instanciamos el formulario antes del bloque POST
+    # para que esté disponible tanto para GET como para re-renderizado si hay errores en el POST.
+    compromiso_form = EstudianteCompromisoForm(instance=ficha)
 
     if request.method == 'POST':
         # Manejar el guardado de un DESCARGO
@@ -61,8 +65,11 @@ def mi_observador_vista(request):
                         kwargs=kwargs_para_url
                     )
                 messages.success(request, "Tu descargo ha sido guardado correctamente.")
+                # Solo redirigimos si hubo éxito
+                return redirect('notas:mi_observador')
             else:
                 messages.error(request, "No se pudo guardar el descargo. Faltaron datos.")
+                # Si falla, no redirigimos. Sigue hacia abajo y muestra los errores conservando el estado.
 
         # Manejar el guardado del COMPROMISO
         elif 'guardar_compromiso' in request.POST:
@@ -70,14 +77,14 @@ def mi_observador_vista(request):
             if compromiso_form.is_valid():
                 compromiso_form.save()
                 messages.success(request, "Tu compromiso ha sido actualizado correctamente.")
+                # Solo redirigimos si hubo éxito
+                return redirect('notas:mi_observador')
             else:
                 messages.error(request, "Hubo un error al guardar tu compromiso. Por favor, inténtalo de nuevo.")
+                # Si falla la validación, NO REDIRIGIMOS. Se renderiza la página con los datos que el usuario 
+                # había escrito y se muestran los errores, evitando que el form "se quede en blanco de nuevo".
             
-        return redirect('notas:mi_observador')
-
-    # Para peticiones GET, se prepara el formulario
-    compromiso_form = EstudianteCompromisoForm(instance=ficha)
-    
+    # Obtenemos los registros para pasarlos al contexto
     registros = RegistroObservador.objects.filter(
         estudiante=estudiante, colegio=request.colegio
     ).order_by('-fecha_suceso')
@@ -91,4 +98,4 @@ def mi_observador_vista(request):
         'colegio': request.colegio
     }
     
-    return render(request, 'notas/estudiante/mi_observador.html', context)
+    return render(request, 'notas/estudiante/mi_observador.html', context))

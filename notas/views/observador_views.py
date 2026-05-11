@@ -143,6 +143,7 @@ def crear_registro_observador_vista(request, estudiante_id):
             return redirect('notas:vista_detalle_observador', estudiante_id=estudiante.id)
         else:
             messages.error(request, "Hubo errores en el formulario. Por favor revisa los campos marcados.")
+            # Si hay error cae aquí y pasa derecho al `render` del final para no borrar los datos del form.
     else:
         form = RegistroObservadorForm()
 
@@ -174,6 +175,7 @@ def editar_ficha_vista(request, estudiante_id):
             return redirect('notas:vista_detalle_observador', estudiante_id=estudiante.id)
         else:
             messages.error(request, "Error al actualizar la ficha. Verifique los datos.")
+            # Nuevamente, si es inválido, NO redirige, solo cae al `render` conservando el form con errores.
     else:
         form = FichaEstudianteForm(instance=ficha)
     
