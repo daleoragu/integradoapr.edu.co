@@ -5,20 +5,20 @@
 {% block page_title %}{{ page_title }}{% endblock %}
 
 {% block content %}
-<div class=\"container mt-4\" style=\"max-width: 800px;\">
-    <div class=\"card shadow-sm\">
-        <div class=\"card-header bg-primary text-white\">
-            <h4 class=\"mb-0\">
-                <i class=\"fas fa-plus-circle me-2\"></i>Nueva Observación para {{ estudiante.user.get_full_name }}
+<div class="container mt-4" style="max-width: 800px;">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">
+                <i class="fas fa-plus-circle me-2"></i>Nueva Observación para {{ estudiante.user.get_full_name }}
             </h4>
         </div>
-        <div class=\"card-body p-4\">
+        <div class="card-body p-4">
             
-            {# VISUALIZACIÓN DE ERRORES SI EL FORMULARIO FALLA #}
+            {# --- MOSTRAR ERRORES DETALLADOS EN BLOQUES --- #}
             {% if form.errors %}
-                <div class=\"alert alert-danger shadow-sm mb-4\">
-                    <h6 class=\"alert-heading fw-bold\"><i class=\"fas fa-exclamation-circle me-2\"></i>Errores detectados:</h6>
-                    <ul class=\"mb-0 small\">
+                <div class="alert alert-danger shadow-sm mb-4">
+                    <h6 class="alert-heading fw-bold"><i class="fas fa-exclamation-circle me-2"></i>Errores detectados:</h6>
+                    <ul class="mb-0 small">
                         {% for field, errors in form.errors.items %}
                             {% for error in errors %}
                                 <li><strong>{{ field|capfirst }}:</strong> {{ error }}</li>
@@ -28,36 +28,48 @@
                 </div>
             {% endif %}
 
-            <form method=\"POST\">
+            <form method="POST">
                 {% csrf_token %}
                 
-                <div class=\"row g-3\">
-                    <div class=\"col-md-6\">
-                        <label for=\"{{ form.fecha_suceso.id_for_label }}\" class=\"form-label fw-bold\">{{ form.fecha_suceso.label }}</label>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="{{ form.fecha_suceso.id_for_label }}" class="form-label fw-bold">{{ form.fecha_suceso.label }}</label>
                         {{ form.fecha_suceso }}
+                        {% if form.fecha_suceso.errors %}
+                            <div class="text-danger small mt-1">{{ form.fecha_suceso.errors|striptags }}</div>
+                        {% endif %}
                     </div>
-                    <div class=\"col-md-6\">
-                        <label for=\"{{ form.tipo.id_for_label }}\" class=\"form-label fw-bold\">{{ form.tipo.label }}</label>
+                    <div class="col-md-6">
+                        <label for="{{ form.tipo.id_for_label }}" class="form-label fw-bold">{{ form.tipo.label }}</label>
                         {{ form.tipo }}
+                        {% if form.tipo.errors %}
+                            <div class="text-danger small mt-1">{{ form.tipo.errors|striptags }}</div>
+                        {% endif %}
                     </div>
                     
-                    <div class=\"col-md-12\" id=\"subtipo-container\" style=\"display: none;\">
-                        <label for=\"{{ form.subtipo.id_for_label }}\" class=\"form-label fw-bold\">{{ form.subtipo.label }}</label>
+                    <div class="col-md-12" id="subtipo-container" style="display: none;">
+                        <label for="{{ form.subtipo.id_for_label }}" class="form-label fw-bold">{{ form.subtipo.label }}</label>
                         {{ form.subtipo }}
+                        {% if form.subtipo.errors %}
+                            <div class="text-danger small mt-1">{{ form.subtipo.errors|striptags }}</div>
+                        {% endif %}
                     </div>
 
-                    <div class=\"col-12\">
-                        <label for=\"{{ form.descripcion.id_for_label }}\" class=\"form-label fw-bold\">{{ form.descripcion.label }}</label>
+                    <div class="col-12">
+                        <label for="{{ form.descripcion.id_for_label }}" class="form-label fw-bold">{{ form.descripcion.label }}</label>
                         {{ form.descripcion }}
+                        {% if form.descripcion.errors %}
+                            <div class="text-danger small mt-1">{{ form.descripcion.errors|striptags }}</div>
+                        {% endif %}
                     </div>
                 </div>
 
-                <hr class=\"my-4\">
+                <hr class="my-4">
 
-                <div class=\"d-flex justify-content-end gap-2\">
-                    <a href=\"{% url 'notas:vista_detalle_observador' estudiante.id %}\" class=\"btn btn-secondary\">Cancelar</a>
-                    <button type=\"submit\" class=\"btn btn-success px-4\">
-                        <i class=\"fas fa-save me-2\"></i>Guardar Observación
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{% url 'notas:vista_detalle_observador' estudiante.id %}" class="btn btn-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-success px-4">
+                        <i class="fas fa-save me-2"></i>Guardar Observación
                     </button>
                 </div>
             </form>

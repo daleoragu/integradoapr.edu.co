@@ -3,6 +3,12 @@ from django import forms
 from ..models import FichaEstudiante, RegistroObservador
 
 class FichaEstudianteForm(forms.ModelForm):
+    def clean_numero_documento(self):
+        documento = self.cleaned_data.get('numero_documento')
+        if not documento or str(documento).strip() == '':
+            return None  # Permite nulos en BD para evitar errores de unicidad duplicada
+        return documento
+
     class Meta:
         model = FichaEstudiante
         exclude = ['estudiante']
@@ -30,9 +36,9 @@ class FichaEstudianteForm(forms.ModelForm):
         }
 
 class RegistroObservadorForm(forms.ModelForm):
-    # CORRECCIÓN CRÍTICA: Definir subtipo como NO obligatorio para evitar bloqueos
+    # Añadimos un valor vacío '---' como opción válida para evitar que Django rechace las opciones vacías
     subtipo = forms.ChoiceField(
-        choices=RegistroObservador.SUBTIPO_CHOICES,
+        choices=[('', '--- Seleccione Opción (Solo Comportamiento) ---')] + RegistroObservador.SUBTIPO_CHOICES,
         required=False,
         widget=forms.Select(attrs={'class': 'form-select'})
     )
@@ -41,20 +47,20 @@ class RegistroObservadorForm(forms.ModelForm):
         model = RegistroObservador
         fields = ['fecha_suceso', 'tipo', 'subtipo', 'descripcion']
         widgets = {
-            'fecha_suceso': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            # Forzamos a Django a esperar formato de fecha estándar de navegadores modernos
+            'fecha_suceso': forms.DateInput(
+                format='%Y-%m-%d',
+                attrs={'type': 'date', 'class': 'form-control'}
+            ),
             'tipo': forms.Select(attrs={'class': 'form-select'}),
             'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'placeholder': 'Describa detalladamente el suceso...'}),
         }
 
 class EstudianteCompromisoForm(forms.ModelForm):
-    """
-    Este es el formulario que causaba el ImportError. 
-    Asegúrate de que este bloque esté completo al final del archivo.
-    """
     compromiso_estudiante = forms.CharField(
         widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 5}), 
         label="Mi Compromiso para este año lectivo:", 
-        help_text="Describe aquí tus metas y compromisos.", 
+        help_text="Describe aquí tus metas y a qué te comprometes para mejorar académicamente y como persona.", 
         required=False
     )
     class Meta:
