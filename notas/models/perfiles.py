@@ -241,6 +241,12 @@ class FichaEstudiante(models.Model):
     compromiso_padre = models.TextField(blank=True, null=True, verbose_name="Compromiso del Padre/Acudiente")
     compromiso_estudiante = models.TextField(blank=True, null=True, verbose_name="Compromiso del Estudiante")
     
+    # CORRECCIÓN DE UNICIDAD EN EL MODELO: Forzamos la conversión de valores vacíos a NULL en base de datos
+    def save(self, *args, **kwargs):
+        if not self.numero_documento or str(self.numero_documento).strip() == '':
+            self.numero_documento = None
+        super().save(*args, **kwargs)
+
     def __str__(self): 
         return f"Ficha de {self.estudiante.user.get_full_name()}"
 
@@ -253,7 +259,7 @@ class FichaDocente(models.Model):
     foto = models.ImageField(upload_to='fotos_docentes/', null=True, blank=True, verbose_name="Foto del Docente")
     
     def save(self, *args, **kwargs):
-        if not self.numero_documento:
+        if not self.numero_documento or str(self.numero_documento).strip() == '':
             self.numero_documento = None
         super().save(*args, **kwargs)
 
