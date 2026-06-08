@@ -1,220 +1,161 @@
-{% load nota_filters %}
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Observador - {{ estudiante.user.get_full_name }}</title>
-    <style>
-        @page {
-            size: letter;
-            margin: 1.5cm;
-        }
-        body {
-            font-family: 'Helvetica', 'Arial', sans-serif;
-            font-size: 9.5pt;
-            color: #333;
-        }
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
-        .info-institucion p {
-            margin: 1px 0;
-            font-weight: bold;
-            font-size: 11px;
-        }
-        .titulo-principal {
-            text-align: center;
-            font-weight: bold;
-            font-size: 14px;
-            margin-bottom: 15px;
-        }
-        .ficha-cuerpo-tabla td {
-            vertical-align: top;
-        }
-        .ficha-datos-principales {
-            padding-right: 15px;
-        }
-        .ficha-foto-cell {
-            width: 125px;
-        }
-        .ficha-foto-box {
-            width: 120px;
-            height: 140px;
-            border: 1px solid #ccc;
-            text-align: center;
-            line-height: 140px;
-            color: #ccc;
-            background-color: #f9f9f9;
-        }
-        .ficha-foto-box img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: cover;
-        }
-        .ficha-fila {
-            margin-bottom: 10px;
-        }
-        .label {
-            font-weight: bold;
-        }
-        .data {
-            border-bottom: 1px dotted #999;
-            font-family: 'Courier New', Courier, monospace;
-            padding: 0 4px;
-        }
-        .compromisos-titulo {
-            font-weight: bold;
-            text-align: center;
-            margin-top: 20px;
-            margin-bottom: 5px;
-            font-size: 11px;
-        }
-        .compromisos-box {
-            border: 1px solid #aaa;
-            padding: 8px;
-            min-height: 60px;
-            margin-top: 5px;
-        }
-        .firmas-section {
-            margin-top: 40px;
-        }
-        .firma-linea {
-            border-top: 1px solid #000;
-            text-align: center;
-            padding-top: 5px;
-            font-weight: bold;
-            font-size: 9pt;
-        }
-        .section-title-historial {
-            background-color: #333;
-            color: white;
-            padding: 8px;
-            margin-top: 25px;
-            margin-bottom: 15px;
-            font-size: 12pt;
-            text-align: center;
-            page-break-before: auto;
-        }
-        .registro-item {
-            border: 1px solid #999;
-            padding: 10px;
-            margin-bottom: 15px;
-            page-break-inside: avoid;
-        }
-        .registro-header {
-            background-color: #f2f2f2;
-            padding: 8px;
-            margin: -10px -10px 10px -10px;
-            border-bottom: 1px solid #ccc;
-            font-size: 9pt;
-        }
-        .registro-descargo {
-            margin-top: 10px;
-            border-top: 1px dashed #ccc;
-            padding-top: 8px;
-        }
-        .registro-label {
-            font-weight: bold;
-        }
-        .encabezado { text-align: center; margin-bottom: 10px; }
-        .encabezado-tabla { width: 100%; border-collapse: collapse; border: 1px solid #000; }
-        .encabezado-tabla td { vertical-align: middle; text-align: center; padding: 5px; border: 1px solid #000; }
-        .escudo { max-width: 100px; max-height: {{ colegio.alto_logos_pdf|default:100 }}px; height: auto; width: auto; }
-        .info-institucion { font-size: 11px; font-weight: bold; }
-    </style>
-</head>
-<body>
-    <div class="header-wrapper">
-         <header class="encabezado">
-             {% include "notas/fragmentos/encabezado_pdf.html" %}
-             <div class="titulo-principal">OBSERVADOR DEL ESTUDIANTE {% now "Y" %}</div>
-         </header>
-    </div>
-    
-    <table class="ficha-cuerpo-tabla">
-        <tr>
-            <td class="ficha-datos-principales">
-                <table style="width:100%;">
-                    <tr>
-                        <td style="width: 70%;"><p class="ficha-fila"><span class="label">Director(a) Grado:</span> <span class="data">{{ estudiante.curso.director_grado.user.get_full_name|default_if_none:"" }}</span></p></td>
-                        <td style="width: 30%;"><p class="ficha-fila"><span class="label">Grado:</span> <span class="data">{{ estudiante.curso.nombre }}</span></p></td>
-                    </tr>
-                    <tr>
-                        <td><p class="ficha-fila"><span class="label">Estudiante:</span> <span class="data">{{ estudiante.user.last_name|upper }} {{ estudiante.user.first_name|upper }}</span></p></td>
-                        <td><p class="ficha-fila"><span class="label">Celular:</span> <span class="data">{{ ficha.celular_acudiente|default_if_none:"" }}</span></p></td>
-                    </tr>
-                    <tr>
-                        <td><p class="ficha-fila"><span class="label">Lugar De Nacimiento:</span> <span class="data">{{ ficha.lugar_nacimiento|default_if_none:"" }}</span></p></td>
-                        <td><p class="ficha-fila"><span class="label">Fecha:</span> D: <span class="data">{{ ficha.fecha_nacimiento|date:"d"|default:"&nbsp;" }}</span> M: <span class="data">{{ ficha.fecha_nacimiento|date:"m"|default:"&nbsp;" }}</span> A: <span class="data">{{ ficha.fecha_nacimiento|date:"Y"|default:"&nbsp;" }}</span></p></td>
-                    </tr>
-                    <tr>
-                        <td colspan="2"><p class="ficha-fila"><span class="label">Documento de Identificación N°:</span> <span class="data">{{ ficha.get_tipo_documento_display|default:"TI" }} - {{ ficha.numero_documento|default:estudiante.user.username }}</span></p></td>
-                    </tr>
-                    <tr>
-                        <td colspan="2"><p class="ficha-fila"><span class="label">Dirección De Residencia:</span><span class="data">&nbsp;</span></p></td>
-                    </tr>
-                    <tr>
-                        <td><p class="ficha-fila"><span class="label">E.P.S:</span> <span class="data">{{ ficha.eps|default_if_none:"" }}</span></p></td>
-                        <td><p class="ficha-fila"><span class="label">Grupo Sanguíneo:</span> <span class="data">{{ ficha.grupo_sanguineo|default_if_none:"" }}</span> <span class="label">RH:</span><span class="data">&nbsp;</span></p></td>
-                    </tr>
-                </table>
-            </td>
-            <td class="ficha-foto-cell">
-                <div class="ficha-foto-box">
-                    {% if ficha.foto %}
-                        <img src="{{ ficha.foto.path }}">
-                    {% else %}
-                        FOTO
-                    {% endif %}
-                </div>
-            </td>
-        </tr>
-    </table>
-    
-    <table>
-        <tr><td colspan="2"><p class="ficha-fila" style="margin-top: 10px;"><span class="label">Nombre del Padre:</span> <span class="data">{{ ficha.nombre_padre|default_if_none:"" }}</span> <span class="label" style="margin-left:15px;">Celular:</span> <span class="data">{{ ficha.celular_padre|default_if_none:"" }}</span></p></td></tr>
-        <tr><td colspan="2"><p class="ficha-fila"><span class="label">Nombre de la Madre:</span> <span class="data">{{ ficha.nombre_madre|default_if_none:"" }}</span> <span class="label" style="margin-left:15px;">Celular:</span> <span class="data">{{ ficha.celular_madre|default_if_none:"" }}</span></p></td></tr>
-        <tr><td colspan="2"><p class="ficha-fila"><span class="label">Nombre del Acudiente:</span> <span class="data">{{ ficha.nombre_acudiente|default_if_none:"" }}</span> <span class="label" style="margin-left:15px;">Celular:</span> <span class="data">{{ ficha.celular_acudiente|default_if_none:"" }}</span></p></td></tr>
-        <tr><td colspan="2"><p class="ficha-fila"><span class="label">El (la) Estudiante debe esperar en portería?</span> SI: <span class="data">{% if ficha.espera_en_porteria %}&nbsp;X&nbsp;{% else %}&nbsp;&nbsp;&nbsp;{% endif %}</span> NO: <span class="data">{% if not ficha.espera_en_porteria %}&nbsp;X&nbsp;{% else %}&nbsp;&nbsp;&nbsp;{% endif %}</span></p></td></tr>
-        <tr><td colspan="2"><p class="ficha-fila"><span class="label">El año anterior lo estudió en:</span> <span class="data">{{ ficha.colegio_anterior|default_if_none:"" }}</span> <span class="label" style="margin-left:15px;">Grado:</span> <span class="data">{{ ficha.grado_anterior|default_if_none:"" }}</span></p></td></tr>
-    </table>
-    
-    <div class="compromisos-titulo">COMPROMISOS</div>
-    <p class="label">Como Padre me Comprometo a:</p>
-    <div class="compromisos-box">{{ ficha.compromiso_padre|linebreaksbr|default:"&nbsp;" }}</div>
-    <p class="label" style="margin-top: 10px;">Como Estudiante me Comprometo a:</p>
-    <div class="compromisos-box">{{ ficha.compromiso_estudiante|linebreaksbr|default:"&nbsp;" }}</div>
-    
-    <table class="firmas-section">
-        <tr>
-            <td style="width: 50%; padding: 0 20px;"><div class="firma-linea">FIRMA DEL PADRE O ACUDIENTE</div></td>
-            <td style="width: 50%; padding: 0 20px;"><div class="firma-linea">FIRMA DEL ESTUDIANTE</div></td>
-        </tr>
-    </table>
+{% extends 'notas/base.html' %}
+{% load static %}
 
-    <div class="section-title-historial">HISTORIAL DE ANOTACIONES</div>
-    {% for registro in registros %}
-        <div class="registro-item">
-            <div class="registro-header">
-                <strong>Fecha Suceso:</strong> {{ registro.fecha_suceso|date:"d/m/Y" }} | 
-                <strong>Tipo:</strong> {{ registro.get_tipo_display }}
-                {% if registro.subtipo %} | <strong>Subtipo:</strong> {{ registro.get_subtipo_display }}{% endif %}
-                | <strong>Reporta:</strong> {{ registro.docente_reporta.user.get_full_name|default:"Administrador" }}
-            </div>
-            <div class="registro-body">
-                <p class="registro-label" style="margin-top: 10px;">Descripción del suceso:</p>
-                <p>{{ registro.descripcion|linebreaksbr }}</p>
-                {% if registro.descargo_estudiante %}
-                    <div class="registro-descargo">
-                        <p class="registro-label">Descargo del estudiante (Fecha: {{ registro.fecha_descargo|date:"d/m/Y" }}):</p>
-                        <p><em>"{{ registro.descargo_estudiante|linebreaksbr }}"</em></p>
-                    </div>
-                {% endif %}
+{% block title %}Editar Ficha - {{ estudiante.user.get_full_name }}{% endblock %}
+{% block page_title %}Editar Ficha de Observador{% endblock %}
+
+{% block content %}
+<div class="container mt-4 mb-5">
+    <form method="POST" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="mb-0 text-primary">
+                <i class="fas fa-user-edit me-2"></i>Ficha de: {{ estudiante.user.get_full_name }}
+            </h2>
+            <div>
+                <a href="{% url 'notas:vista_detalle_observador' estudiante.id %}" class="btn btn-secondary">
+                    <i class="fas fa-times me-1"></i>Cancelar
+                </a>
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-save me-2"></i>Guardar Cambios
+                </button>
             </div>
         </div>
-    {% empty %}
-        <p style="text-align: center; margin-top: 20px;">No hay registros en el observador.</p>
-    {% endfor %}
-</body>
-</html>
+
+        {% if form.non_field_errors or form.errors %}
+        <div class="alert alert-danger p-3 shadow-sm">
+            <p class="mb-1 fw-bold"><i class="fas fa-exclamation-triangle me-2"></i>Por favor, corrige los errores a continuación:</p>
+            <ul class="mb-0 ps-3">
+            {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+            {% for field in form %}{% if field.errors %}<li>{{ field.label }}: {{ field.errors|striptags }}</li>{% endif %}{% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                
+                <!-- Sección: Datos Personales -->
+                <h5 class="mb-3 fw-bold text-secondary border-bottom pb-2">Datos Personales y de Identificación</h5>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">{{ form.tipo_documento.label }}</label>
+                        {{ form.tipo_documento }}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">{{ form.numero_documento.label }}</label>
+                        {{ form.numero_documento }}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">{{ form.lugar_nacimiento.label }}</label>
+                        {{ form.lugar_nacimiento }}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">{{ form.fecha_nacimiento.label }}</label>
+                        {{ form.fecha_nacimiento }}
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold">{{ form.grupo_sanguineo.label }}</label>
+                        {{ form.grupo_sanguineo }}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">{{ form.eps.label }}</label>
+                        {{ form.eps }}
+                    </div>
+                    <div class="col-md-7">
+                        <label class="form-label fw-bold">{{ form.enfermedades_alergias.label }}</label>
+                        {{ form.enfermedades_alergias }}
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">{{ form.foto.label }}</label>
+                        {% if form.instance.foto %}
+                            <div class="mb-2">
+                                <img src="{{ form.instance.foto.url }}" alt="Foto actual" class="img-thumbnail" style="max-height: 120px;">
+                            </div>
+                        {% endif %}
+                        {{ form.foto }}
+                        <small class="text-muted d-block mt-1">Sube una foto tipo documento del estudiante.</small>
+                    </div>
+                </div>
+
+                <!-- Sección: Datos Familiares -->
+                <h5 class="mb-3 fw-bold text-secondary border-bottom pb-2 mt-5">Información Familiar y Acudientes</h5>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">{{ form.nombre_padre.label }}</label>
+                        {{ form.nombre_padre }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">{{ form.celular_padre.label }}</label>
+                        {{ form.celular_padre }}
+                    </div>
+                </div>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">{{ form.nombre_madre.label }}</label>
+                        {{ form.nombre_madre }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">{{ form.celular_madre.label }}</label>
+                        {{ form.celular_madre }}
+                    </div>
+                </div>
+                <div class="row g-3 mb-4 bg-light p-3 rounded">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">{{ form.nombre_acudiente.label }}</label>
+                        {{ form.nombre_acudiente }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">{{ form.celular_acudiente.label }}</label>
+                        {{ form.celular_acudiente }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">{{ form.email_acudiente.label }}</label>
+                        {{ form.email_acudiente }}
+                    </div>
+                </div>
+
+                <!-- Sección: Información Adicional -->
+                <h5 class="mb-3 fw-bold text-secondary border-bottom pb-2 mt-5">Información Adicional</h5>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">{{ form.colegio_anterior.label }}</label>
+                        {{ form.colegio_anterior }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">{{ form.grado_anterior.label }}</label>
+                        {{ form.grado_anterior }}
+                    </div>
+                </div>
+                <div class="form-check mt-3 mb-4">
+                    {{ form.espera_en_porteria }}
+                    <label class="form-check-label fw-bold" for="{{ form.espera_en_porteria.id_for_label }}">
+                        ¿El (la) Estudiante debe esperar en portería para que lo recojan?
+                    </label>
+                </div>
+
+                <!-- Sección: Compromisos -->
+                <h5 class="mb-3 fw-bold text-secondary border-bottom pb-2 mt-5">Compromisos</h5>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">{{ form.compromiso_padre.label }}</label>
+                        {{ form.compromiso_padre }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">{{ form.compromiso_estudiante.label }}</label>
+                        {{ form.compromiso_estudiante }}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
