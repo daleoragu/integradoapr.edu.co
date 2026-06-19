@@ -1,6 +1,6 @@
 /**
  * Script for handling the grade entry page with a spreadsheet style.
- * @version 12.1 - Arreglado el bug que borraba las notas no guardadas al añadir/quitar columnas.
+ * @version 12.2 - Bug corregido: Las notas nuevas ya no se borran al guardar. Alertas nativas reemplazadas.
  */
 document.addEventListener('DOMContentLoaded', function () {
     // --- DOM ELEMENTS AND INITIAL DATA ---
@@ -50,6 +50,19 @@ document.addEventListener('DOMContentLoaded', function () {
     let hayCambiosSinGuardar = false;
     let descripcionesColumnas = { ser: {}, saber: {}, hacer: {} };
 
+    // Helper para reemplazar los alert() nativos
+    function mostrarNotificacion(mensaje, esError = false) {
+        const div = document.createElement('div');
+        div.className = `alert ${esError ? 'alert-danger' : 'alert-success'} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3 shadow-lg`;
+        div.style.zIndex = '9999';
+        div.innerHTML = `
+            <strong>${esError ? '<i class="fas fa-exclamation-triangle me-2"></i>Error:' : '<i class="fas fa-check-circle me-2"></i>Éxito:'}</strong> ${mensaje}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        document.body.appendChild(div);
+        setTimeout(() => { if (div.parentNode) div.parentNode.removeChild(div); }, 4500);
+    }
+
     // --- NUEVA FUNCIÓN: Guarda en memoria lo que el usuario ha escrito antes de redibujar ---
     function sincronizarDatosDesdeDOM() {
         if (!tablaCalificaciones) return;
@@ -69,11 +82,23 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Guardar notas digitadas en memoria
                 for (const tipo of ['ser', 'saber', 'hacer']) {
                     const inputs = fila.querySelectorAll(`.input-nota[data-tipo="${tipo}"]`);
+                    
+                    // CORRECCIÓN 1: Asegurarnos de que el array del componente exista
+                    if (!estudiante.notas[tipo]) {
+                        estudiante.notas[tipo] = [];
+                    }
+                    
                     inputs.forEach((input, index) => {
-                        if (estudiante.notas[tipo] && estudiante.notas[tipo][index]) {
-                            estudiante.notas[tipo][index].valor = input.value;
+                        // CORRECCIÓN 2: Si el profesor añadió una columna, creamos el espacio en memoria
+                        if (!estudiante.notas[tipo][index]) {
+                            estudiante.notas[tipo][index] = { valor: '', descripcion: '' };
                         }
+                        // Ahora guardamos con total seguridad el valor digitado
+                        estudiante.notas[tipo][index].valor = input.value;
                     });
+                    
+                    // CORRECCIÓN 3: Si el profesor eliminó una columna con el botón "-", recortamos la memoria
+                    estudiante.notas[tipo].length = inputs.length;
                 }
             }
         });
@@ -102,16 +127,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
         let headerHtml = `<thead class="table-light"><tr><th rowspan="2" class="text-center align-middle">#</th><th rowspan="2" class="align-middle">Estudiante</th>`;
         for (const tipo of ['ser', 'saber', 'hacer']) {
-            headerHtml += `<th colspan="${maxNotas[tipo] + 1}" class="text-center comp-${tipo}">${tipo.toUpperCase()} <button class="btn btn-outline-success btn-sm btn-add-col" data-tipo="${tipo}" title="Añadir columna de nota">+</button><button class="btn btn-outline-danger btn-sm btn-remove-col" data-tipo="${tipo}" title="Quitar última columna">-</button></th>`;
+            headerHtml += `<th colspan="${maxNotas[tipo] + 1}" class="text-center comp-${tipo}">${tipo.toUpperCase()} <button class="btn btn-outline-success btn-sm btn-add-col ms-1" data-tipo="${tipo}" title="Añadir columna de nota">+</button><button class="btn btn-outline-danger btn-sm btn-remove-col ms-1" data-tipo="${tipo}" title="Quitar última columna">-</button></th>`;
         }
         headerHtml += `<th rowspan="2" class="text-center align-middle">Definitiva</th><th rowspan="2" class="text-center align-middle">Inasistencias</th></tr><tr>`;
 
         for (const tipo of ['ser', 'saber', 'hacer']) {
             for (let i = 0; i < maxNotas[tipo]; i++) {
                 const desc = descripcionesColumnas[tipo][i] || '';
-                headerHtml += `<th class="text-center th-nota" data-tipo="${tipo}" data-col-index="${i}" title="Clic para describir esta columna">
-                                 <span class="col-title">n${i + 1}</span>
-                                 <span class="col-desc">${desc}</span>
+                headerHtml += `<th class="text-center th-nota" data-tipo="${tipo}" data-col-index="${i}" style="cursor: pointer;" title="Clic para describir esta columna">
+                                 <span class="col-title text-primary"><i class="fas fa-edit me-1 small"></i>n${i + 1}</span><br>
+                                 <span class="col-desc small fw-normal text-muted">${desc}</span>
                                </th>`;
             }
             headerHtml += `<th class="text-center align-middle prom-header">Prom.</th>`;
@@ -124,18 +149,18 @@ document.addEventListener('DOMContentLoaded', function () {
             bodyHtml += `<tr><td colspan="${colspan}" class="text-center text-muted py-4">No hay estudiantes en este curso.</td></tr>`;
         } else {
             estudiantesData.forEach((estudiante, index) => {
-                bodyHtml += `<tr data-estudiante-id="${estudiante.id}"><td class="text-center align-middle">${index + 1}</td><td class="align-middle">${estudiante.nombre_completo}</td>`;
+                bodyHtml += `<tr data-estudiante-id="${estudiante.id}"><td class="text-center align-middle">${index + 1}</td><td class="align-middle fw-bold">${estudiante.nombre_completo}</td>`;
                 for (const tipo of ['ser', 'saber', 'hacer']) {
                     for (let i = 0; i < maxNotas[tipo]; i++) {
                         const nota = estudiante.notas[tipo]?.[i]?.valor || '';
-                        bodyHtml += `<td><input type="text" class="form-control form-control-sm input-nota" data-tipo="${tipo}" value="${nota}" inputmode="decimal"></td>`;
+                        bodyHtml += `<td><input type="text" class="form-control form-control-sm text-center input-nota" data-tipo="${tipo}" value="${nota}" inputmode="decimal"></td>`;
                     }
                     bodyHtml += `<td class="text-center align-middle fw-bold prom-celda" data-tipo="${tipo}">0.0</td>`;
                 }
-                bodyHtml += `<td class="text-center align-middle fw-bolder def-celda">0.0</td>
+                bodyHtml += `<td class="text-center align-middle fw-bolder def-celda fs-6">0.0</td>
                              <td class="align-middle">
                                <div class="input-group input-group-sm">
-                                 <input type="number" class="form-control input-inasistencia" min="0" value="${estudiante.inasistencias || 0}">
+                                 <input type="number" class="form-control text-center input-inasistencia" min="0" value="${estudiante.inasistencias || 0}">
                                  <button class="btn btn-outline-secondary sync-inasistencias" type="button" title="Sincronizar faltas automáticas">
                                    <i class="fas fa-sync-alt"></i>
                                  </button>
@@ -210,13 +235,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 claseDesempeno = 'desempeno-default';
             }
         } else {
-            if (notaFinal < 3.0) claseDesempeno = 'nota-roja';
-            else if (notaFinal < 4.0) claseDesempeno = 'nota-amarilla';
-            else if (notaFinal < 4.6) claseDesempeno = 'nota-verde';
-            else claseDesempeno = 'nota-azul';
+            if (notaFinal < 3.0) claseDesempeno = 'text-danger';
+            else if (notaFinal < 4.0) claseDesempeno = 'text-warning text-dark';
+            else if (notaFinal < 4.6) claseDesempeno = 'text-success';
+            else claseDesempeno = 'text-primary';
         }
 
-        defCelda.className = 'text-center align-middle fw-bolder def-celda';
+        defCelda.className = 'text-center align-middle fw-bolder def-celda fs-6';
         if(claseDesempeno) {
             defCelda.classList.add(claseDesempeno);
         }
@@ -224,26 +249,26 @@ document.addEventListener('DOMContentLoaded', function () {
     
     function actualizarStatus(estado) {
         if (!statusIndicator) return;
-        statusIndicator.className = 'status-indicator';
+        statusIndicator.className = 'status-indicator badge ms-3 fs-6 p-2';
         const periodoCerrado = document.querySelector('.card-footer .text-warning');
         switch (estado) {
             case 'pending':
-                statusIndicator.classList.add('status-pending');
-                statusIndicator.title = 'Cambios sin guardar';
+                statusIndicator.classList.add('bg-warning', 'text-dark');
+                statusIndicator.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i>Cambios sin guardar';
                 hayCambiosSinGuardar = true;
                 if (guardarTodoBtn && !periodoCerrado && tablaCalificaciones.dataset.hayIndicadores === 'true') {
                     guardarTodoBtn.disabled = false;
                 }
                 break;
             case 'saved':
-                statusIndicator.classList.add('status-saved');
-                statusIndicator.title = 'Cambios guardados';
+                statusIndicator.classList.add('bg-success');
+                statusIndicator.innerHTML = '<i class="fas fa-check-circle me-1"></i>Cambios guardados';
                 hayCambiosSinGuardar = false;
                 if (guardarTodoBtn) guardarTodoBtn.disabled = true;
                 break;
             case 'error':
-                statusIndicator.classList.add('status-error');
-                statusIndicator.title = 'Error al guardar';
+                statusIndicator.classList.add('bg-danger');
+                statusIndicator.innerHTML = '<i class="fas fa-times-circle me-1"></i>Error al guardar';
                 hayCambiosSinGuardar = true;
                 if (guardarTodoBtn && !periodoCerrado) guardarTodoBtn.disabled = false;
                 break;
@@ -304,7 +329,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const colIndex = thNota.dataset.colIndex;
             const descSpan = thNota.querySelector('.col-desc');
             const descActual = descripcionesColumnas[tipo][colIndex] || '';
-            const nuevaDesc = prompt(`Descripción para la columna ${thNota.querySelector('.col-title').textContent}:`, descActual);
+            const nuevaDesc = prompt(`Escriba el nombre o descripción para esta columna (ej: "Examen Final"):`, descActual);
             if (nuevaDesc !== null) {
                 descripcionesColumnas[tipo][colIndex] = nuevaDesc.trim();
                 descSpan.textContent = nuevaDesc.trim();
@@ -329,11 +354,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     inasistenciaInput.value = data.inasistencias_auto;
                     actualizarStatus('pending');
                 } else {
-                    alert('Error al sincronizar: ' + data.message);
+                    mostrarNotificacion('Error al sincronizar: ' + data.message, true);
                 }
             } catch (error) {
                 console.error('Error en fetch de inasistencias:', error);
-                alert('No se pudo conectar con el servidor para obtener las inasistencias.');
+                mostrarNotificacion('No se pudo conectar con el servidor para obtener las inasistencias.', true);
             } finally {
                 icon.classList.remove('fa-spin');
                 btnSync.disabled = false;
@@ -343,9 +368,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     guardarTodoBtn?.addEventListener('click', async function() {
         this.disabled = true;
-        this.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
+        this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Guardando...';
         
-        // Asegurarse de que toda la tabla esté sincronizada antes de guardar
+        // Asegurarse de que toda la tabla esté sincronizada en memoria antes de enviar
         sincronizarDatosDesdeDOM();
         
         const payload = {
@@ -393,12 +418,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 body: JSON.stringify(payload)
             });
             const result = await response.json();
+            
             if (!response.ok) throw new Error(result.message || 'Error del servidor');
+            
             actualizarStatus('saved');
-            alert('¡Guardado con éxito!');
+            mostrarNotificacion('Todas las calificaciones fueron guardadas exitosamente.', false);
         } catch (error) {
             console.error('Error al guardar:', error);
-            alert('Error al guardar: ' + error.message);
+            mostrarNotificacion('Error al guardar: ' + error.message, true);
             actualizarStatus('error');
         } finally {
             this.disabled = false;

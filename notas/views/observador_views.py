@@ -99,13 +99,11 @@ def crear_registro_observador_vista(request, estudiante_id):
             nuevo_registro.estudiante = estudiante
             nuevo_registro.docente_reporta = docente
             
-            # Limpieza lógica: si no es de comportamiento, omitimos el subtipo
             if nuevo_registro.tipo != 'COMPORTAMENTAL':
                 nuevo_registro.subtipo = None
                 
             nuevo_registro.save()
             
-            # Notificación al estudiante
             try:
                 url_destino = reverse('notas:mi_observador')
             except:
@@ -122,8 +120,6 @@ def crear_registro_observador_vista(request, estudiante_id):
             messages.success(request, f"Observación para {estudiante.user.get_full_name()} guardada correctamente.")
             return redirect('notas:vista_detalle_observador', estudiante_id=estudiante.id)
         else:
-            # CORRECCIÓN CLAVE: Enviamos cada error directamente a la alerta superior (mensajes de Django)
-            # Esto hará que aparezca el mismo cartel de error que viste en tu imagen para depurar al instante.
             for field, errors in form.errors.items():
                 for error in errors:
                     messages.error(request, f"Error en '{field.capitalize()}': {error}")
@@ -137,6 +133,75 @@ def crear_registro_observador_vista(request, estudiante_id):
         'page_title': f"Nueva Observación para {estudiante.user.get_full_name()}"
     }
     return render(request, 'notas/observador/crear_registro.html', context)
+
+# -------------------------------------------------------------
+# NUEVAS VISTAS: EDITAR Y ELIMINAR REGISTROS
+# -------------------------------------------------------------
+
+@login_required
+@user_passes_test(es_docente_o_superuser)
+def editar_registro_observador_vista(request, registro_id):
+    if not request.colegio:
+        return HttpResponseNotFound("<h1>Colegio no configurado</h1>")
+        
+    registro = get_object_or_404(RegistroObservador, id=registro_id, colegio=request.colegio)
+    estudiante = registro.estudiante
+    
+    # Validar que sea el creador de la nota o un administrador
+    es_autor = registro.docente_reporta and registro.docente_reporta.user == request.user
+    if not (es_autor or request.user.is_superuser):
+        messages.error(request, "No tienes permiso para editar esta observación. Solo el autor puede hacerlo.")
+        return redirect('notas:vista_detalle_observador', estudiante_id=estudiante.id)
+
+    if request.method == 'POST':
+        form = RegistroObservadorForm(request.POST, instance=registro)
+        if form.is_valid():
+            registro_actualizado = form.save(commit=False)
+            if registro_actualizado.tipo != 'COMPORTAMENTAL':
+                registro_actualizado.subtipo = None
+            registro_actualizado.save()
+            
+            messages.success(request, "Observación actualizada correctamente.")
+            return redirect('notas:vista_detalle_observador', estudiante_id=estudiante.id)
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"Error en '{field.capitalize()}': {error}")
+    else:
+        form = RegistroObservadorForm(instance=registro)
+
+    context = {
+        'colegio': request.colegio,
+        'form': form,
+        'estudiante': estudiante,
+        'registro': registro,
+        'page_title': f"Editar Observación de {estudiante.user.get_full_name()}"
+    }
+    return render(request, 'notas/observador/editar_registro.html', context)
+
+@login_required
+@user_passes_test(es_docente_o_superuser)
+def eliminar_registro_observador_vista(request, registro_id):
+    if not request.colegio:
+        return HttpResponseNotFound("<h1>Colegio no configurado</h1>")
+        
+    registro = get_object_or_404(RegistroObservador, id=registro_id, colegio=request.colegio)
+    estudiante = registro.estudiante
+    
+    es_autor = registro.docente_reporta and registro.docente_reporta.user == request.user
+    if not (es_autor or request.user.is_superuser):
+        messages.error(request, "No tienes permiso para eliminar esta observación.")
+        return redirect('notas:vista_detalle_observador', estudiante_id=estudiante.id)
+
+    if request.method == 'POST':
+        registro.delete()
+        messages.success(request, "La observación ha sido eliminada del historial.")
+        
+    return redirect('notas:vista_detalle_observador', estudiante_id=estudiante.id)
+
+# -------------------------------------------------------------
+# FIN NUEVAS VISTAS
+# -------------------------------------------------------------
 
 @login_required
 @user_passes_test(es_docente_o_superuser)

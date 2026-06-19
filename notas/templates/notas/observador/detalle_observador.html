@@ -132,7 +132,6 @@
             <div class="tab-pane fade" id="historial" role="tabpanel" aria-labelledby="historial-tab">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h4 class="mb-0">Historial de Anotaciones</h4>
-                    {# El botón ha sido movido a la cabecera #}
                 </div>
                 {% for registro in registros %}
                     <div class="registro-item {{ registro.tipo }}">
@@ -141,9 +140,33 @@
                                 <strong class="text-primary">{{ registro.get_tipo_display }}</strong>
                                 {% if registro.subtipo %}<span class="badge bg-secondary">{{ registro.get_subtipo_display }}</span>{% endif %}
                             </div>
-                            <div class="registro-meta">
+                            <div class="registro-meta d-flex align-items-center gap-3">
                                 <span><strong>Fecha:</strong> {{ registro.fecha_suceso|date:"d/m/Y" }}</span>
-                                <span class="ms-3"><strong>Reporta:</strong> {{ registro.docente_reporta.user.get_full_name }}</span>
+                                <span><strong>Reporta:</strong> {{ registro.docente_reporta.user.get_full_name }}</span>
+                                
+                                {# --- BOTONES DE EDITAR Y ELIMINAR --- #}
+                                {% if request.user.is_superuser or request.user == registro.docente_reporta.user %}
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-light border-0 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                                        <li>
+                                            <a class="dropdown-item text-primary" href="{% url 'notas:editar_registro_observador' registro.id %}">
+                                                <i class="fas fa-edit me-2"></i>Editar
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <form action="{% url 'notas:eliminar_registro_observador' registro.id %}" method="POST" class="d-inline" onsubmit="return confirm('¿Estás seguro de que deseas eliminar esta anotación? Esta acción no se puede deshacer.');">
+                                                {% csrf_token %}
+                                                <button type="submit" class="dropdown-item text-danger">
+                                                    <i class="fas fa-trash-alt me-2"></i>Eliminar
+                                                </button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
+                                {% endif %}
                             </div>
                         </div>
                         <p>{{ registro.descripcion|linebreaksbr }}</p>

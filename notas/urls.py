@@ -172,6 +172,8 @@ urlpatterns = [
     path('observador/crear/<int:estudiante_id>/', observador_views.crear_registro_observador_vista, name='crear_registro_observador'),
     path('observador/ficha/<int:estudiante_id>/editar/', observador_views.editar_ficha_vista, name='editar_ficha'),
     path('observador/pdf/<int:estudiante_id>/', observador_views.generar_observador_pdf_vista, name='generar_observador_pdf'),
+    path('observador/registro/<int:registro_id>/editar/', observador_views.editar_registro_observador_vista, name='editar_registro_observador'),
+    path('observador/registro/<int:registro_id>/eliminar/', observador_views.eliminar_registro_observador_vista, name='eliminar_registro_observador'),
 
     # --- Rutas para Carnets y Certificados ---
     path('carnet/generar/<int:estudiante_id>/', carnet_views.generar_carnet_estudiante, name='generar_carnet_estudiante'),
