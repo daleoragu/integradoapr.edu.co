@@ -120,7 +120,8 @@ class AdminEditarEstudianteForm(forms.ModelForm):
             'grupo_sanguineo': forms.Select(attrs={'class': 'form-select'}),
             'foto': forms.ClearableFileInput(attrs={'class': 'form-control'}),
             'lugar_nacimiento': forms.TextInput(attrs={'class': 'form-control'}),
-            'fecha_nacimiento': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            # 👇 CORRECCIÓN APLICADA AQUÍ 👇
+            'fecha_nacimiento': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}),
             'eps': forms.TextInput(attrs={'class': 'form-control'}),
             'enfermedades_alergias': forms.Textarea(attrs={'rows': 2, 'class': 'form-control'}),
             'nombre_padre': forms.TextInput(attrs={'class': 'form-control'}),

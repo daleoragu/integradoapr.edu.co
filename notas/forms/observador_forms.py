@@ -13,7 +13,8 @@ class FichaEstudianteForm(forms.ModelForm):
         model = FichaEstudiante
         exclude = ['estudiante']
         widgets = {
-            'fecha_nacimiento': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            # 👇 CORRECCIÓN APLICADA AQUÍ 👇
+            'fecha_nacimiento': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}),
             'lugar_nacimiento': forms.TextInput(attrs={'class': 'form-control'}),
             'foto': forms.ClearableFileInput(attrs={'class': 'form-control'}),
             'eps': forms.TextInput(attrs={'class': 'form-control'}),
