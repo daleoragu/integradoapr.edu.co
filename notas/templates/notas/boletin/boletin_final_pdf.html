@@ -100,7 +100,7 @@
             <tbody>
             {% for area in boletin.areas %}
                 
-                {% if area.materias|length > 1 %}
+                <!-- SIEMPRE DIBUJAR LA FILA DEL ÁREA -->
                 <tr class="{{ area.estado_color_css_class }}">
                     <td class="area-nombre">{{ area.nombre }}</td>
                     <td colspan="{{ nombres_periodos|length }}" class="area-nombre" style="text-align: center; font-weight: bold;">{{ area.desempeno_area }}</td>
@@ -108,18 +108,15 @@
                         {{ area.nota_final_area|coma_decimal|default_if_none:"-" }}
                     </td>
                 </tr>
-                {% endif %}
                 
                 {% for materia in area.materias %}
                 <tr>
                     <td class="materia-nombre" style="padding-left: 15px;">
-                        {% if area.materias|length == 1 %}
-                            <strong>{{ area.nombre }}</strong>
-                        {% else %}
-                            {{ materia.nombre }}
+                        {% if area.materias|length > 1 %}
+                            {{ materia.nombre }}<br>
                         {% endif %}
                         {% if materia.docente %}
-                            <br><small><strong>Docente:</strong> {{ materia.docente.user.get_full_name }}</small>
+                            <small><strong>Docente:</strong> {{ materia.docente.user.get_full_name }}</small>
                         {% endif %}
                     </td>
                     {% for p_nombre in nombres_periodos %}
