@@ -12,8 +12,6 @@
         .boletin { page-break-after: always; }
         .boletin:last-child { page-break-after: auto; }
         .encabezado { text-align: center; margin-bottom: 10px; }
-        .encabezado-tabla { width: 100%; border-collapse: collapse; border: 1px solid #000; }
-        .encabezado-tabla td { vertical-align: middle; text-align: center; padding: 5px; border: 1px solid #000; }
         .escudo {max-width: 100px;  max-height: {{ colegio.alto_logos_pdf|default:65 }}px; height: auto; width: auto;}
         .info-institucion { font-size: 1.2em; font-weight: bold; }
         .info-institucion p { margin: 1px 0; }
@@ -54,13 +52,16 @@
 {% for boletin in boletines %}
     <div class="boletin">
         <header class="encabezado">
-            {% include "notas/fragmentos/encabezado_pdf.html" %}
+            {% with es_boletin=True foto_estudiante_url=boletin.foto_estudiante_url %}
+                {% include "notas/fragmentos/encabezado_pdf.html" %}
+            {% endwith %}
             <h3 style="text-align: center; margin: 10px 0;">INFORME FINAL DE CALIFICACIONES AÑO {{ ano_lectivo }}</h3>
         </header>
         
         <table style="width: 100%; margin-bottom: 10px; border-collapse: collapse;">
             <tr>
-                {% if colegio.mostrar_foto_estudiante_boletin %}
+                <!-- Si hay logo derecho, la foto se dibuja aquí abajo. Si no, se dibujó en el encabezado. -->
+                {% if colegio.mostrar_foto_estudiante_boletin and colegio.logo_derecho %}
                 <td style="width: 80px; text-align: center; vertical-align: middle; padding-right: 10px; border: none;">
                     {% if boletin.foto_estudiante_url %}
                         <img src="{{ boletin.foto_estudiante_url }}" style="width: 70px; height: 90px; object-fit: cover; border: 1px solid #ccc;">
@@ -113,9 +114,10 @@
                 <tr>
                     <td class="materia-nombre" style="padding-left: 15px;">
                         {% if area.materias|length == 1 %}
-                            <strong>{{ area.nombre }}</strong><br>
+                            <strong>{{ area.nombre }}</strong>
+                        {% else %}
+                            {{ materia.nombre }}
                         {% endif %}
-                        {{ materia.nombre }}
                         {% if materia.docente %}
                             <br><small><strong>Docente:</strong> {{ materia.docente.user.get_full_name }}</small>
                         {% endif %}
