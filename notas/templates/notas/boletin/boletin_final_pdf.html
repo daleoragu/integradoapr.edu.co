@@ -80,7 +80,23 @@
                         <tr>
                             <td><strong>Dirección:</strong> {{ colegio.direccion|default:'N/A' }}</td>
                             <td><strong>Año:</strong> {{ ano_lectivo }}</td>
-                            <td><strong>Prom. Final:</strong> {{ boletin.promedio_general_final|coma_decimal }} &nbsp;&nbsp; <strong>Puesto:</strong> {{ boletin.puesto_final }}</td>
+                            
+                            <!-- APLICACIÓN SEGURA DE "NA" PARA INCLUSIÓN -->
+                            <td colspan="2">
+                                <strong>Prom. Final:</strong> 
+                                {% if boletin.estudiante.es_inclusion %}
+                                    NA
+                                {% else %}
+                                    {{ boletin.promedio_general_final|coma_decimal }}
+                                {% endif %}
+                                &nbsp;&nbsp; 
+                                <strong>Puesto:</strong> 
+                                {% if boletin.estudiante.es_inclusion %}
+                                    NA
+                                {% else %}
+                                    {{ boletin.puesto_final }}
+                                {% endif %}
+                            </td>
                         </tr>
                     </table>
                 </td>

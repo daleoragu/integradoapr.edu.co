@@ -84,8 +84,22 @@
                         </tr>
                         <tr>
                             <td><strong>Periodo:</strong> {{ periodo.get_nombre_display }} - {{ periodo.ano_lectivo }}</td>
-                            <td><strong>Prom. Periodo:</strong> {{ boletin.promedio_general|coma_decimal }}</td>
-                            <td><strong>Puesto:</strong> {{ boletin.puesto }}</td>
+                            
+                            <!-- APLICACIÓN SEGURA DE "NA" PARA INCLUSIÓN (sin romper filtros) -->
+                            <td><strong>Prom. Periodo:</strong> 
+                                {% if boletin.estudiante.es_inclusion %}
+                                    NA
+                                {% else %}
+                                    {{ boletin.promedio_general|coma_decimal }}
+                                {% endif %}
+                            </td>
+                            <td><strong>Puesto:</strong> 
+                                {% if boletin.estudiante.es_inclusion %}
+                                    NA
+                                {% else %}
+                                    {{ boletin.puesto }}
+                                {% endif %}
+                            </td>
                         </tr>
                     </table>
                 </td>
