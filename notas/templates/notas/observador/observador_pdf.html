@@ -162,8 +162,8 @@
             </td>
             <td class="ficha-foto-cell">
                 <div class="ficha-foto-box">
-                    {% if ficha.foto %}
-                        <img src="{{ ficha.foto.path }}">
+                    {% if foto_url %}
+                        <img src="{{ foto_url }}">
                     {% else %}
                         FOTO
                     {% endif %}

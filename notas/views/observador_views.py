@@ -134,9 +134,6 @@ def crear_registro_observador_vista(request, estudiante_id):
     }
     return render(request, 'notas/observador/crear_registro.html', context)
 
-# -------------------------------------------------------------
-# NUEVAS VISTAS: EDITAR Y ELIMINAR REGISTROS
-# -------------------------------------------------------------
 
 @login_required
 @user_passes_test(es_docente_o_superuser)
@@ -199,9 +196,6 @@ def eliminar_registro_observador_vista(request, registro_id):
         
     return redirect('notas:vista_detalle_observador', estudiante_id=estudiante.id)
 
-# -------------------------------------------------------------
-# FIN NUEVAS VISTAS
-# -------------------------------------------------------------
 
 @login_required
 @user_passes_test(es_docente_o_superuser)
@@ -245,10 +239,14 @@ def generar_observador_pdf_vista(request, estudiante_id):
     ficha, _ = FichaEstudiante.objects.get_or_create(estudiante=estudiante)
     registros = RegistroObservador.objects.filter(estudiante=estudiante, colegio=request.colegio)
 
+    # Creamos la URL absoluta para que WeasyPrint pueda ver y exportar la foto en el PDF
+    foto_url = request.build_absolute_uri(ficha.foto.url) if ficha.foto and ficha.foto.name else None
+
     context = {
         'colegio': request.colegio,
         'estudiante': estudiante,
         'ficha': ficha,
+        'foto_url': foto_url,
         'registros': registros,
     }
     
