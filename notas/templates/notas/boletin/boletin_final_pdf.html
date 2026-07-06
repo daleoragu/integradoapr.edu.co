@@ -98,6 +98,8 @@
             </thead>
             <tbody>
             {% for area in boletin.areas %}
+                
+                {% if area.materias|length > 1 %}
                 <tr class="{{ area.estado_color_css_class }}">
                     <td class="area-nombre">{{ area.nombre }}</td>
                     <td colspan="{{ nombres_periodos|length }}" class="area-nombre" style="text-align: center; font-weight: bold;">{{ area.desempeno_area }}</td>
@@ -105,9 +107,14 @@
                         {{ area.nota_final_area|coma_decimal|default_if_none:"-" }}
                     </td>
                 </tr>
+                {% endif %}
+                
                 {% for materia in area.materias %}
                 <tr>
                     <td class="materia-nombre" style="padding-left: 15px;">
+                        {% if area.materias|length == 1 %}
+                            <strong>{{ area.nombre }}</strong><br>
+                        {% endif %}
                         {{ materia.nombre }}
                         {% if materia.docente %}
                             <br><small><strong>Docente:</strong> {{ materia.docente.user.get_full_name }}</small>
@@ -159,42 +166,51 @@
                         {% else %}
                             Rendimiento general bajo en el área.
                         {% endif %}
-                        {% if not forloop.last %}<br>{' '}{% endif %}
+                        {% if not forloop.last %}<br>{% endif %}
                     {% endfor %}
                 </p>
             </div>
         {% endif %}
         
         <!-- TABLA DE FIRMAS HOMOLOGADAS -->
+        {% with director_nombre=curso.director_grado.user.get_full_name|upper rector_nombre=colegio.nombre_rector|upper %}
         <table class="pie-pagina-tabla">
             <tr>
-                <td style="width: {% if colegio.mostrar_firma_rector_boletin %}50%{% else %}100%{% endif %};">
-                    <div class="contenedor-firma"></div>
-                    <div class="linea-firma"></div>
-                    <p style="margin: 0; text-transform: uppercase;">{{ curso.director_grado.user.get_full_name|default_if_none:"NOMBRE DEL DIRECTOR" }}</p>
-                    <p style="margin: 0;"><strong>Director(a) de Grupo</strong></p>
-                </td>
-                
-                {% if colegio.mostrar_firma_rector_boletin %}
-                <td style="width: 50%;">
-                    <div class="contenedor-firma">
-                        {% if colegio.firma_rector %}
-                            <img src="{{ colegio.firma_rector.url }}" class="img-firma">
-                        {% endif %}
-                    </div>
-                    <div class="linea-firma"></div>
-                    <p style="margin: 0; text-transform: uppercase;">
-                        {% if colegio.nombre_rector %}
-                            {{ colegio.nombre_rector }}
-                        {% else %}
-                            NOMBRE DEL RECTOR(A)
-                        {% endif %}
-                    </p>
-                    <p style="margin: 0;"><strong>Rector(a)</strong></p>
-                </td>
+                {% if director_nombre == rector_nombre and colegio.mostrar_firma_rector_boletin %}
+                    <td style="width: 100%;">
+                        <div class="contenedor-firma">
+                            {% if colegio.firma_rector %}
+                                <img src="{{ colegio.firma_rector.url }}" class="img-firma">
+                            {% endif %}
+                        </div>
+                        <div class="linea-firma" style="width: 40%;"></div>
+                        <p style="margin: 0; text-transform: uppercase;">{{ director_nombre }}</p>
+                        <p style="margin: 0;"><strong>Rector(a) y Director(a) de Grupo</strong></p>
+                    </td>
+                {% else %}
+                    <td style="width: {% if colegio.mostrar_firma_rector_boletin %}50%{% else %}100%{% endif %};">
+                        <div class="contenedor-firma"></div>
+                        <div class="linea-firma"></div>
+                        <p style="margin: 0; text-transform: uppercase;">{{ director_nombre|default_if_none:"NOMBRE DEL DIRECTOR" }}</p>
+                        <p style="margin: 0;"><strong>Director(a) de Grupo</strong></p>
+                    </td>
+                    
+                    {% if colegio.mostrar_firma_rector_boletin %}
+                    <td style="width: 50%;">
+                        <div class="contenedor-firma">
+                            {% if colegio.firma_rector %}
+                                <img src="{{ colegio.firma_rector.url }}" class="img-firma">
+                            {% endif %}
+                        </div>
+                        <div class="linea-firma"></div>
+                        <p style="margin: 0; text-transform: uppercase;">{{ rector_nombre|default_if_none:"NOMBRE DEL RECTOR(A)" }}</p>
+                        <p style="margin: 0;"><strong>Rector(a)</strong></p>
+                    </td>
+                    {% endif %}
                 {% endif %}
             </tr>
         </table>
+        {% endwith %}
     </div>
 {% endfor %}
 </body>
