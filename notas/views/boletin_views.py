@@ -152,7 +152,7 @@ def generar_boletin_vista(request):
             pdf_filename = f'boletines_{curso.nombre}_{periodo.get_nombre_display()}.pdf'
             context = { "boletines": boletines_data, "curso": curso, "periodo": periodo, "colegio": request.colegio }
 
-    # --- INICIO: CORRECCIÓN PARA EVITAR EL KEYERROR, AGREGAR FOTO E INCLUSIÓN ---
+    # --- INICIO: CORRECCIÓN PARA EVITAR EL KEYERROR Y AGREGAR FOTO ---
     for boletin in boletines_data:
         # Se verifica si la llave 'estudiante' existe antes de usarla.
         estudiante_obj = boletin.get('estudiante')
@@ -165,23 +165,15 @@ def generar_boletin_vista(request):
             ficha = FichaEstudiante.objects.get(estudiante=estudiante_obj)
             boletin['identificacion'] = ficha.numero_documento or estudiante_obj.user.username
             
-            # Construimos la URL ABSOLUTA para que WeasyPrint pueda renderizar la imagen
+            # Comprobación de si existe una foto para anexar la url
             if ficha.foto and ficha.foto.name:
-                boletin['foto_estudiante_url'] = request.build_absolute_uri(ficha.foto.url)
+                boletin['foto_estudiante_url'] = ficha.foto.url
             else:
                 boletin['foto_estudiante_url'] = None
                 
         except FichaEstudiante.DoesNotExist:
             boletin['identificacion'] = estudiante_obj.user.username
             boletin['foto_estudiante_url'] = None
-            
-        # LÓGICA ESTUDIANTES DE INCLUSIÓN:
-        if getattr(estudiante_obj, 'es_inclusion', False):
-            boletin['puesto'] = 'NA'
-            boletin['puesto_final'] = 'NA'
-            boletin['promedio_general'] = 'NA'
-            boletin['promedio_general_final'] = 'NA'
-            
     # --- FIN: CORRECCIÓN ---
 
     html_string = render_to_string(template_path, context)
