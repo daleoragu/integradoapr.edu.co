@@ -65,43 +65,79 @@
         
         <table style="width: 100%; margin-bottom: 10px; border-collapse: collapse;">
             <tr>
-                <td style="vertical-align: top; padding: 0; border: none; width: 85%;">
-                    <table class="info-estudiante">
-                        <tr>
-                            <td style="width: 60%;"><strong>Estudiante:</strong> {{ boletin.estudiante.user.last_name|upper }} {{ boletin.estudiante.user.first_name|upper }}</td>
-                            <td style="width: 40%;"><strong>Identificación:</strong> {{ boletin.identificacion|default:boletin.estudiante.user.username }}</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Grupo:</strong> {{ curso.nombre }}</td>
-                            <td><strong>Periodo:</strong> {{ periodo.get_nombre_display }} - {{ periodo.ano_lectivo }}</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Prom. Periodo:</strong> 
-                                {% if boletin.estudiante.es_inclusion %}
-                                    NA
-                                {% else %}
-                                    {{ boletin.promedio_general|coma_decimal }}
-                                {% endif %}
-                            </td>
-                            <td><strong>Puesto:</strong> 
-                                {% if boletin.estudiante.es_inclusion %}
-                                    NA
-                                {% else %}
-                                    {{ boletin.puesto }}
-                                {% endif %}
-                            </td>
-                        </tr>
-                    </table>
-                </td>
-                
-                {% if colegio.mostrar_foto_estudiante_boletin %}
-                <td style="width: 15%; text-align: right; vertical-align: middle; padding-left: 10px; border: none;">
-                    {% if boletin.foto_estudiante_url %}
-                        <img src="{{ boletin.foto_estudiante_url }}" style="width: 70px; height: 90px; object-fit: cover; border: 1px solid #ccc;" alt="Foto Estudiante">
-                    {% else %}
-                        <div style="width: 70px; height: 90px; border: 1px dashed #ccc; display: inline-block; line-height: 90px; color: #999; text-align: center; font-size: 10px;">Sin foto</div>
-                    {% endif %}
-                </td>
+                {% if colegio.mostrar_foto_estudiante_boletin and colegio.logo_derecho %}
+                    <td style="vertical-align: top; padding: 0; border: none; width: 85%;">
+                        <table class="info-estudiante">
+                            <tr>
+                                <td style="width: 55%;"><strong>Estudiante:</strong> {{ boletin.estudiante.user.last_name|upper }} {{ boletin.estudiante.user.first_name|upper }}</td>
+                                <td style="width: 45%;"><strong>Identificación:</strong> {{ boletin.identificacion|default:boletin.estudiante.user.username }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Grupo:</strong> {{ curso.nombre }}</td>
+                                <td><strong>Director(a):</strong> {{ curso.director_grado.user.get_full_name|upper|default:"NO ASIGNADO" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Edad:</strong> {{ boletin.edad }}</td>
+                                <td><strong>Acudiente:</strong> {{ boletin.acudiente|title }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Periodo:</strong> {{ periodo.get_nombre_display }}</td>
+                                <td><strong>Año Lectivo:</strong> {{ periodo.ano_lectivo }}</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <strong>Prom. Periodo:</strong> 
+                                    {% if boletin.estudiante.es_inclusion %}
+                                        NA
+                                    {% else %}
+                                        {{ boletin.promedio_general|coma_decimal }}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <strong>Puesto:</strong> 
+                                    {% if boletin.estudiante.es_inclusion %}
+                                        NA
+                                    {% else %}
+                                        {{ boletin.puesto }}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                    <td style="width: 15%; text-align: right; vertical-align: middle; padding-left: 10px; border: none;">
+                        {% if boletin.foto_estudiante_url %}
+                            <img src="{{ boletin.foto_estudiante_url }}" style="width: 70px; height: 90px; object-fit: cover; border: 1px solid #ccc;">
+                        {% else %}
+                            <div style="width: 70px; height: 90px; border: 1px dashed #ccc; display: inline-block; line-height: 90px; color: #999; text-align: center;">Sin foto</div>
+                        {% endif %}
+                    </td>
+                {% else %}
+                    <td style="vertical-align: top; padding: 0; border: none; width: 100%;">
+                        <table class="info-estudiante">
+                            <tr>
+                                <td style="width: 40%;"><strong>Estudiante:</strong> {{ boletin.estudiante.user.last_name|upper }} {{ boletin.estudiante.user.first_name|upper }}</td>
+                                <td style="width: 30%;"><strong>Identificación:</strong> {{ boletin.identificacion|default:boletin.estudiante.user.username }}</td>
+                                <td style="width: 30%;"><strong>Grupo:</strong> {{ curso.nombre }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Periodo:</strong> {{ periodo.get_nombre_display }} - {{ periodo.ano_lectivo }}</td>
+                                <td><strong>Prom. Periodo:</strong> 
+                                    {% if boletin.estudiante.es_inclusion %}
+                                        NA
+                                    {% else %}
+                                        {{ boletin.promedio_general|coma_decimal }}
+                                    {% endif %}
+                                </td>
+                                <td><strong>Puesto:</strong> 
+                                    {% if boletin.estudiante.es_inclusion %}
+                                        NA
+                                    {% else %}
+                                        {{ boletin.puesto }}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
                 {% endif %}
             </tr>
         </table>
