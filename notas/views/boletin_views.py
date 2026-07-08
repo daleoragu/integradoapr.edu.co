@@ -5,6 +5,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.template.loader import render_to_string
 import datetime
+from pathlib import Path
+import os
 
 try:
     from weasyprint import HTML
@@ -152,21 +154,33 @@ def generar_boletin_vista(request):
             pdf_filename = f'boletines_{curso.nombre}_{periodo.get_nombre_display()}.pdf'
             context = { "boletines": boletines_data, "curso": curso, "periodo": periodo, "colegio": request.colegio }
 
-    # --- INICIO: CORRECCIÓN PARA EVITAR EL KEYERROR Y AGREGAR FOTO ---
+    # --- INICIO: CORRECCIÓN FOTO E IDENTIFICACIÓN SEGURA ---
     for boletin in boletines_data:
-        # Se verifica si la llave 'estudiante' existe antes de usarla.
         estudiante_obj = boletin.get('estudiante')
         if not estudiante_obj:
             boletin['identificacion'] = "Estudiante no encontrado"
             boletin['foto_estudiante_url'] = None
+            boletin['edad'] = "No registrada"
+            boletin['acudiente'] = "No registrado"
             continue
 
         try:
             ficha = FichaEstudiante.objects.get(estudiante=estudiante_obj)
             boletin['identificacion'] = ficha.numero_documento or estudiante_obj.user.username
             
-            # Comprobación de si existe una foto para anexar la url
-            if ficha.foto and ficha.foto.name:
+            # Cálculo de Edad
+            if ficha.fecha_nacimiento:
+                today = datetime.date.today()
+                edad = today.year - ficha.fecha_nacimiento.year - ((today.month, today.day) < (ficha.fecha_nacimiento.month, ficha.fecha_nacimiento.day))
+                boletin['edad'] = f"{edad} años"
+            else:
+                boletin['edad'] = "No registrada"
+                
+            # Nombre de Acudiente
+            boletin['acudiente'] = ficha.nombre_acudiente or "No registrado"
+            
+            # Usamos .url para que WeasyPrint maneje la ruta de forma nativa sin bloqueos (deadlock)
+            if ficha.foto and hasattr(ficha.foto, 'url'):
                 boletin['foto_estudiante_url'] = ficha.foto.url
             else:
                 boletin['foto_estudiante_url'] = None
@@ -174,9 +188,12 @@ def generar_boletin_vista(request):
         except FichaEstudiante.DoesNotExist:
             boletin['identificacion'] = estudiante_obj.user.username
             boletin['foto_estudiante_url'] = None
+            boletin['edad'] = "No registrada"
+            boletin['acudiente'] = "No registrado"
     # --- FIN: CORRECCIÓN ---
 
     html_string = render_to_string(template_path, context)
+    # El base_url se encarga de procesar los ".url" de forma segura
     pdf_file = HTML(string=html_string, base_url=request.build_absolute_uri()).write_pdf()
 
     response = HttpResponse(pdf_file, content_type='application/pdf')
