@@ -276,6 +276,7 @@
                 });
             }
 
+            // Función para reiniciar los botones tras editar
             function cancelarEdicionUI() {
                 const btn = document.getElementById('btnAgregarItemInclusion');
                 const btnCancelar = document.getElementById('btnCancelarEdicion');
@@ -349,7 +350,7 @@
                     const text = input.value.trim();
                     const btnAgregar = document.getElementById('btnAgregarItemInclusion');
                     
-                    // Auto-guardar lo que quedó escrito
+                    // Auto-guardar lo que quedó escrito si no se presionó Agregar/Editar antes
                     if (text) {
                         window._incData[id].lista_obs = window._incData[id].lista_obs || [];
                         if (btnAgregar.hasAttribute('data-edit-index')) {
@@ -394,7 +395,7 @@
                             // Está editando
                             const idx = parseInt(btn.getAttribute('data-edit-index'));
                             window._incData[id].lista_obs[idx] = text;
-                            cancelarEdicionUI();
+                            cancelarEdicionUI(); // Resetea el botón
                         } else {
                             // Está agregando nuevo
                             window._incData[id].lista_obs.push(text);
@@ -422,11 +423,13 @@
                     input.value = text;
                     input.focus();
 
+                    // Convertir el botón "Agregar" en "Guardar Edición"
                     const btnAgregar = document.getElementById('btnAgregarItemInclusion');
                     btnAgregar.setAttribute('data-edit-index', index);
                     btnAgregar.innerHTML = '<i class="fas fa-save"></i> Guardar Edición';
                     btnAgregar.classList.replace('btn-info', 'btn-success');
                     
+                    // Mostrar botón "Cancelar"
                     document.getElementById('btnCancelarEdicion').classList.remove('d-none');
                 }
                 
