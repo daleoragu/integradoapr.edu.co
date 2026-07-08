@@ -60,37 +60,25 @@
         
         <table style="width: 100%; margin-bottom: 10px; border-collapse: collapse;">
             <tr>
-                <!-- Si hay logo derecho, la foto se dibuja aquí abajo. Si no, se dibujó en el encabezado. -->
-                {% if colegio.mostrar_foto_estudiante_boletin and colegio.logo_derecho %}
-                <td style="width: 80px; text-align: center; vertical-align: middle; padding-right: 10px; border: none;">
-                    {% if boletin.foto_estudiante_url %}
-                        <img src="{{ boletin.foto_estudiante_url }}" style="width: 70px; height: 90px; object-fit: cover; border: 1px solid #ccc;">
-                    {% else %}
-                        <div style="width: 70px; height: 90px; border: 1px dashed #ccc; display: inline-block; line-height: 90px; color: #999;">Sin foto</div>
-                    {% endif %}
-                </td>
-                {% endif %}
-                <td style="vertical-align: top; padding: 0; border: none;">
+                <td style="vertical-align: top; padding: 0; border: none; width: 85%;">
                     <table class="info-estudiante">
                         <tr>
-                            <td><strong>Estudiante:</strong> {{ boletin.estudiante.user.last_name|upper }} {{ boletin.estudiante.user.first_name|upper }}</td>
-                            <td><strong>Identificación:</strong> {{ boletin.identificacion|default:boletin.estudiante.user.username }}</td>
-                            <td><strong>Grupo:</strong> {{ curso.nombre }}</td>
+                            <td style="width: 60%;"><strong>Estudiante:</strong> {{ boletin.estudiante.user.last_name|upper }} {{ boletin.estudiante.user.first_name|upper }}</td>
+                            <td style="width: 40%;"><strong>Identificación:</strong> {{ boletin.identificacion|default:boletin.estudiante.user.username }}</td>
                         </tr>
                         <tr>
-                            <td><strong>Dirección:</strong> {{ colegio.direccion|default:'N/A' }}</td>
+                            <td><strong>Grupo:</strong> {{ curso.nombre }}</td>
                             <td><strong>Año:</strong> {{ ano_lectivo }}</td>
-                            
-                            <!-- APLICACIÓN SEGURA DE "NA" PARA INCLUSIÓN -->
-                            <td colspan="2">
-                                <strong>Prom. Final:</strong> 
+                        </tr>
+                        <tr>
+                            <td><strong>Prom. Final:</strong> 
                                 {% if boletin.estudiante.es_inclusion %}
                                     NA
                                 {% else %}
                                     {{ boletin.promedio_general_final|coma_decimal }}
                                 {% endif %}
-                                &nbsp;&nbsp; 
-                                <strong>Puesto:</strong> 
+                            </td>
+                            <td><strong>Puesto:</strong> 
                                 {% if boletin.estudiante.es_inclusion %}
                                     NA
                                 {% else %}
@@ -100,6 +88,16 @@
                         </tr>
                     </table>
                 </td>
+                
+                {% if colegio.mostrar_foto_estudiante_boletin %}
+                <td style="width: 15%; text-align: right; vertical-align: middle; padding-left: 10px; border: none;">
+                    {% if boletin.foto_estudiante_url %}
+                        <img src="{{ boletin.foto_estudiante_url }}" style="width: 70px; height: 90px; object-fit: cover; border: 1px solid #ccc;" alt="Foto Estudiante">
+                    {% else %}
+                        <div style="width: 70px; height: 90px; border: 1px dashed #ccc; display: inline-block; line-height: 90px; color: #999; text-align: center; font-size: 10px;">Sin foto</div>
+                    {% endif %}
+                </td>
+                {% endif %}
             </tr>
         </table>
 
