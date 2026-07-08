@@ -58,18 +58,20 @@ def get_datos_boletin_curso(colegio, curso, periodo, estudiante_especifico=None)
         colegio=colegio, ano_lectivo=periodo.ano_lectivo, fecha_inicio__lte=periodo.fecha_inicio
     ).order_by('fecha_inicio')
 
+    # CORRECCIÓN DE OPTIMIZACIÓN: Traemos TODAS las calificaciones relevantes en lugar de solo valores.
+    # Necesitamos el objeto Calificación completo (o al menos `observacion_inclusion`)
     calificaciones_acumuladas = Calificacion.objects.filter(
         colegio=colegio, estudiante__in=estudiantes, materia_id__in=materias_del_curso_ids,
         periodo__in=periodos_transcurridos, tipo_nota__in=['PROM_PERIODO', 'NIVELACION']
-    ).values('estudiante_id', 'materia_id', 'periodo_id', 'valor_nota', 'tipo_nota')
+    )
 
     calificaciones_pivot_acum = defaultdict(lambda: defaultdict(dict))
     for cal in calificaciones_acumuladas:
-        key = (cal['estudiante_id'], cal['materia_id'], cal['periodo_id'])
-        if cal['tipo_nota'] == 'PROM_PERIODO':
-            calificaciones_pivot_acum[key]['prom'] = cal['valor_nota']
-        elif cal['tipo_nota'] == 'NIVELACION':
-            calificaciones_pivot_acum[key]['niv'] = cal['valor_nota']
+        key = (cal.estudiante_id, cal.materia_id, cal.periodo_id)
+        if cal.tipo_nota == 'PROM_PERIODO':
+            calificaciones_pivot_acum[key]['prom'] = cal.valor_nota
+        elif cal.tipo_nota == 'NIVELACION':
+            calificaciones_pivot_acum[key]['niv'] = cal.valor_nota
     
     datos_completos_estudiantes = []
     UMBRAL_APROBACION = Decimal('3.0')
@@ -100,11 +102,13 @@ def get_datos_boletin_curso(colegio, curso, periodo, estudiante_especifico=None)
                 notas_materia_periodo = Calificacion.objects.filter(estudiante=estudiante, materia=materia, periodo=periodo, colegio=colegio)
                 definitiva_obj = notas_materia_periodo.filter(tipo_nota='PROM_PERIODO').first()
                 definitiva_valor_periodo = definitiva_obj.valor_nota if definitiva_obj else None
+                
+                # EXTRAYENDO LA OBSERVACIÓN DE INCLUSIÓN
+                observacion_inclusion_actual = definitiva_obj.observacion_inclusion if definitiva_obj else ""
 
                 if definitiva_valor_periodo is not None and definitiva_valor_periodo < UMBRAL_APROBACION:
                     materias_reprobadas_en_area.append(materia.nombre)
 
-                promedia_boletin = getattr(materia, 'promedia_en_boletin', True)
                 peso = ponderaciones_map.get((area.id, materia.id))
                 
                 # SÓLO PONDERA SI ESTÁ MARCADA PARA PROMEDIAR
@@ -134,10 +138,12 @@ def get_datos_boletin_curso(colegio, curso, periodo, estudiante_especifico=None)
                     'nombre': materia.nombre, 'ih': asignacion.intensidad_horaria_semanal, 'docente': asignacion.docente,
                     'ser': notas_materia_periodo.filter(tipo_nota='SER').first(), 'sab': notas_materia_periodo.filter(tipo_nota='SABER').first(),
                     'hac': notas_materia_periodo.filter(tipo_nota='HACER').first(), 'def': definitiva_valor_periodo,
-                    'def_acumulada': definitiva_acumulada, # Nuevo campo
+                    'def_acumulada': definitiva_acumulada,
                     'v_n': valoracion_cualitativa, 'inasistencias': inasistencias,
                     'logros': IndicadorLogroPeriodo.objects.filter(asignacion=asignacion, periodo=periodo, colegio=colegio),
-                    'promedia': promedia_boletin
+                    'promedia': promedia_boletin,
+                    # LA VARIABLE CLAVE QUE LE FALTABA AL BOLETÍN:
+                    'observacion_inclusion': observacion_inclusion_actual
                 }
                 datos_area['materias'].append(datos_materia)
 
@@ -223,16 +229,18 @@ def get_datos_boletin_final(colegio, curso, ano_lectivo, estudiante_especifico=N
     calificaciones = Calificacion.objects.filter(
         colegio=colegio, estudiante__in=estudiantes, materia_id__in=materias_del_curso_ids,
         periodo__in=periodos_del_ano, tipo_nota__in=['PROM_PERIODO', 'NIVELACION']
-    ).values('estudiante_id', 'materia_id', 'periodo_id', 'valor_nota', 'tipo_nota')
+    )
 
     calificaciones_pivot = defaultdict(lambda: defaultdict(dict))
     for cal in calificaciones:
-        key = (cal['estudiante_id'], cal['materia_id'])
-        period_key = cal['periodo_id']
-        if cal['tipo_nota'] == 'PROM_PERIODO':
-            calificaciones_pivot[key][period_key]['prom'] = cal['valor_nota']
-        elif cal['tipo_nota'] == 'NIVELACION':
-            calificaciones_pivot[key][period_key]['niv'] = cal['valor_nota']
+        key = (cal.estudiante_id, cal.materia_id)
+        period_key = cal.periodo_id
+        if cal.tipo_nota == 'PROM_PERIODO':
+            calificaciones_pivot[key][period_key]['prom'] = cal.valor_nota
+            # Guardamos la observación de inclusión del último periodo reportado
+            calificaciones_pivot[key]['ultima_observacion_inclusion'] = cal.observacion_inclusion
+        elif cal.tipo_nota == 'NIVELACION':
+            calificaciones_pivot[key][period_key]['niv'] = cal.valor_nota
 
     boletines_finales = []
     for estudiante in estudiantes:
@@ -263,9 +271,13 @@ def get_datos_boletin_final(colegio, curso, ano_lectivo, estudiante_especifico=N
                 notas_periodos_display = {}
                 notas_para_calculo_orig = []
                 notas_para_calculo_rec = []
+                
+                # Obtenemos la observación consolidada de la materia
+                materia_cal_data = calificaciones_pivot.get((estudiante.id, materia_id), {})
+                observacion_final_materia = materia_cal_data.get('ultima_observacion_inclusion', "")
 
                 for p in periodos_del_ano:
-                    cal_data = calificaciones_pivot.get((estudiante.id, materia_id), {}).get(p.id, {})
+                    cal_data = materia_cal_data.get(p.id, {})
                     nota_orig = cal_data.get('prom')
                     nota_rec = cal_data.get('niv')
                     
@@ -316,7 +328,9 @@ def get_datos_boletin_final(colegio, curso, ano_lectivo, estudiante_especifico=N
                     'definitiva_original': definitiva_materia_orig,
                     'definitiva_recuperada': definitiva_materia_rec if definitiva_materia_rec != definitiva_materia_orig else None,
                     'valoracion': valoracion,
-                    'promedia': promedia_boletin
+                    'promedia': promedia_boletin,
+                    # Variable clave para el boletín final
+                    'observacion_inclusion': observacion_final_materia
                 })
 
             if suma_pesos_area > 0:
