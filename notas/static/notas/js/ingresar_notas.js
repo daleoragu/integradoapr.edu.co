@@ -1,7 +1,9 @@
 /**
  * Script for handling the grade entry page with a spreadsheet style.
+ * @version 12.2 - Bug corregido: Las notas nuevas ya no se borran al guardar. Alertas nativas reemplazadas.
  */
 document.addEventListener('DOMContentLoaded', function () {
+    // --- DOM ELEMENTS AND INITIAL DATA ---
     const container = document.querySelector('.container-notas');
     if (!container) return;
 
@@ -12,6 +14,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const urlInasistenciasEl = document.getElementById('url-get-inasistencias');
     const asignacionDetailsEl = document.getElementById('asignacion-details');
     
+    // --- INICIO: LEER DATOS DE LA ESCALA DE VALORACIÓN ---
     const escalaDataEl = document.getElementById('escala-valoracion-json');
     let escalaValoracion = [];
     if (escalaDataEl) {
@@ -21,8 +24,12 @@ document.addEventListener('DOMContentLoaded', function () {
             console.error("Error parsing escala de valoración JSON:", e);
         }
     }
+    // --- FIN: LEER DATOS ---
 
-    if (!tablaCalificaciones || !estudiantesDataEl || !urlInasistenciasEl || !asignacionDetailsEl) return;
+    if (!tablaCalificaciones || !estudiantesDataEl || !urlInasistenciasEl || !asignacionDetailsEl) {
+        console.error("Faltan elementos HTML esenciales para la inicialización del script.");
+        return;
+    }
 
     const asignacionData = {
         id: container.dataset.asignacionId,
@@ -43,6 +50,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let hayCambiosSinGuardar = false;
     let descripcionesColumnas = { ser: {}, saber: {}, hacer: {} };
 
+    // Helper para reemplazar los alert() nativos
     function mostrarNotificacion(mensaje, esError = false) {
         const div = document.createElement('div');
         div.className = `alert ${esError ? 'alert-danger' : 'alert-success'} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3 shadow-lg`;
@@ -55,25 +63,41 @@ document.addEventListener('DOMContentLoaded', function () {
         setTimeout(() => { if (div.parentNode) div.parentNode.removeChild(div); }, 4500);
     }
 
+    // --- NUEVA FUNCIÓN: Guarda en memoria lo que el usuario ha escrito antes de redibujar ---
     function sincronizarDatosDesdeDOM() {
         if (!tablaCalificaciones) return;
         
         tablaCalificaciones.querySelectorAll('tbody tr[data-estudiante-id]').forEach(fila => {
             const estId = fila.dataset.estudianteId;
+            // Buscamos el estudiante en nuestro array en memoria
             const estudiante = estudiantesData.find(e => e.id.toString() === estId.toString());
             
             if (estudiante) {
+                // Guardar inasistencias en memoria
                 const inasistInput = fila.querySelector('.input-inasistencia');
-                if (inasistInput) estudiante.inasistencias = inasistInput.value;
+                if (inasistInput) {
+                    estudiante.inasistencias = inasistInput.value;
+                }
 
+                // Guardar notas digitadas en memoria
                 for (const tipo of ['ser', 'saber', 'hacer']) {
                     const inputs = fila.querySelectorAll(`.input-nota[data-tipo="${tipo}"]`);
-                    if (!estudiante.notas[tipo]) estudiante.notas[tipo] = [];
+                    
+                    // CORRECCIÓN 1: Asegurarnos de que el array del componente exista
+                    if (!estudiante.notas[tipo]) {
+                        estudiante.notas[tipo] = [];
+                    }
                     
                     inputs.forEach((input, index) => {
-                        if (!estudiante.notas[tipo][index]) estudiante.notas[tipo][index] = { valor: '', descripcion: '' };
+                        // CORRECCIÓN 2: Si el profesor añadió una columna, creamos el espacio en memoria
+                        if (!estudiante.notas[tipo][index]) {
+                            estudiante.notas[tipo][index] = { valor: '', descripcion: '' };
+                        }
+                        // Ahora guardamos con total seguridad el valor digitado
                         estudiante.notas[tipo][index].valor = input.value;
                     });
+                    
+                    // CORRECCIÓN 3: Si el profesor eliminó una columna con el botón "-", recortamos la memoria
                     estudiante.notas[tipo].length = inputs.length;
                 }
             }
@@ -197,6 +221,7 @@ document.addEventListener('DOMContentLoaded', function () {
         
         defCelda.textContent = definitiva.toFixed(1);
         
+        // Lógica de color dinámica
         const notaFinal = parseFloat(defCelda.textContent);
         let claseDesempeno = '';
 
@@ -217,7 +242,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         defCelda.className = 'text-center align-middle fw-bolder def-celda fs-6';
-        if(claseDesempeno) defCelda.classList.add(claseDesempeno);
+        if(claseDesempeno) {
+            defCelda.classList.add(claseDesempeno);
+        }
     }
     
     function actualizarStatus(estado) {
@@ -248,9 +275,12 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // --- EVENT HANDLERS ---
     tablaCalificaciones.addEventListener('input', e => {
         if (e.target.classList.contains('input-nota') || e.target.classList.contains('input-inasistencia')) {
-            if (e.target.classList.contains('input-nota')) actualizarTodosLosPromedios(e.target.closest('tr'));
+            if (e.target.classList.contains('input-nota')) {
+                actualizarTodosLosPromedios(e.target.closest('tr'));
+            }
             actualizarStatus('pending');
         }
     });
@@ -258,7 +288,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const panelPonderacion = document.getElementById('panel-ponderacion');
     if (panelPonderacion) {
         panelPonderacion.addEventListener('input', () => {
-             tablaCalificaciones.querySelectorAll('tbody tr[data-estudiante-id]').forEach(fila => actualizarDefinitiva(fila));
+             tablaCalificaciones.querySelectorAll('tbody tr[data-estudiante-id]').forEach(fila => {
+                actualizarDefinitiva(fila);
+            });
             actualizarStatus('pending');
         });
     }
@@ -270,7 +302,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const btnSync = e.target.closest('.sync-inasistencias');
 
         if (btnAdd) {
-            sincronizarDatosDesdeDOM();
+            sincronizarDatosDesdeDOM(); // <-- GUARDAR TEMPORALMENTE LO QUE SE HA ESCRITO
             const tipo = btnAdd.dataset.tipo;
             if (estudiantesData.length > 0) {
                 estudiantesData.forEach(est => {
@@ -282,7 +314,7 @@ document.addEventListener('DOMContentLoaded', function () {
             actualizarStatus('pending');
         }
         if (btnRemove) {
-            sincronizarDatosDesdeDOM();
+            sincronizarDatosDesdeDOM(); // <-- GUARDAR TEMPORALMENTE LO QUE SE HA ESCRITO
             const tipo = btnRemove.dataset.tipo;
             estudiantesData.forEach(est => {
                 if (est.notas[tipo]?.length > 1) est.notas[tipo].pop();
@@ -325,6 +357,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     mostrarNotificacion('Error al sincronizar: ' + data.message, true);
                 }
             } catch (error) {
+                console.error('Error en fetch de inasistencias:', error);
                 mostrarNotificacion('No se pudo conectar con el servidor para obtener las inasistencias.', true);
             } finally {
                 icon.classList.remove('fa-spin');
@@ -337,6 +370,7 @@ document.addEventListener('DOMContentLoaded', function () {
         this.disabled = true;
         this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Guardando...';
         
+        // Asegurarse de que toda la tabla esté sincronizada en memoria antes de enviar
         sincronizarDatosDesdeDOM();
         
         const payload = {
@@ -355,13 +389,12 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
+        // Ahora usamos los datos ya recolectados en memoria en vez de iterar el DOM de nuevo
         estudiantesData.forEach(est => {
             const datosEst = {
                 id: est.id.toString(),
                 notas: { ser: [], saber: [], hacer: [] },
-                inasistencias: est.inasistencias || "0",
-                // LA INYECCIÓN ABSOLUTA: Jalar lo que hay en memoria de Inclusión
-                observacion_inclusion: (window._incData && window._incData[est.id]) ? window._incData[est.id].obs || "" : ""
+                inasistencias: est.inasistencias || "0"
             };
             
             for (const tipo of ['ser', 'saber', 'hacer']) {
@@ -389,7 +422,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!response.ok) throw new Error(result.message || 'Error del servidor');
             
             actualizarStatus('saved');
-            mostrarNotificacion('Todas las calificaciones y PIAR fueron guardados exitosamente.', false);
+            mostrarNotificacion('Todas las calificaciones fueron guardadas exitosamente.', false);
         } catch (error) {
             console.error('Error al guardar:', error);
             mostrarNotificacion('Error al guardar: ' + error.message, true);
@@ -400,9 +433,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    // --- INITIALIZATION ---
     renderizarTabla();
     actualizarStatus('saved');
 });
-```eof
-
-Con estos dos archivos actualizados (el HTML y tu JS externo), la variable `observacion_inclusion` se va a adherir como pegamento al paquete JSON que recibe Django. ¡Pruébalo y me cuentas, esta vez no se escapará!
