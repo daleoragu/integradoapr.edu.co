@@ -1,5 +1,6 @@
 {% comment %}
   Plantilla rediseñada para la tabla de calificaciones.
+  Añadida lógica para ocultar columnas de notas cuyo porcentaje asignado sea 0%.
 {% endcomment %}
 
 {% if asignacion_seleccionada and periodo_seleccionado %}
@@ -104,6 +105,7 @@
                         <h5>Indicadores de Logro / Desempeños PIAR para <strong id="inc-modal-name"></strong></h5>
                         <p class="text-muted small">Los cambios realizados aquí se aplicarán cuando presione "Guardar Cambios" en la tabla principal de notas.</p>
                         
+                        <!-- Formulario de ingreso idéntico al general -->
                         <div class="card shadow-sm my-3 border-info">
                             <div class="card-body bg-light">
                                 <textarea id="inc-modal-nuevo-text" class="form-control" rows="2" placeholder="Escriba aquí un nuevo indicador PIAR y presione 'Agregar Indicador'..." required></textarea>
@@ -133,12 +135,112 @@
         </div>
     </div>
 
-    <!-- EL SCRIPT SE CARGA DE UN ARCHIVO EXTERNO PARA EVITAR CONFLICTOS -->
-    <script src="{% static 'js/ingresar_notas.js' %}"></script>
-    
     <script>
-    // INICIALIZADOR LOCAL SOLO PARA EL MODAL DE INCLUSIÓN
     document.addEventListener('DOMContentLoaded', function() {
+        
+        // --- 0. LÓGICA DE MATERIAS DINÁMICAS Y ETIQUETAS ---
+        const configJsonEl = document.getElementById('config-materia-json');
+        let configMat = {};
+        if (configJsonEl && configJsonEl.textContent.trim()) {
+            configMat = JSON.parse(configJsonEl.textContent);
+            
+            const badgePromedia = document.getElementById('badge-promedia');
+            if(badgePromedia) {
+                if(configMat.promedia) {
+                    badgePromedia.textContent = "✔ Suma al Promedio";
+                    badgePromedia.className = "badge bg-success ms-2";
+                } else {
+                    badgePromedia.textContent = "✖ Informativa";
+                    badgePromedia.className = "badge bg-warning text-dark ms-2";
+                }
+            }
+
+            const lblSerIn = document.getElementById('lbl-ser-input');
+            if (lblSerIn && configMat.lbl_ser) lblSerIn.textContent = configMat.lbl_ser.toUpperCase() + ' (%):';
+            const lblSaberIn = document.getElementById('lbl-saber-input');
+            if (lblSaberIn && configMat.lbl_saber) lblSaberIn.textContent = configMat.lbl_saber.toUpperCase() + ' (%):';
+            const lblHacerIn = document.getElementById('lbl-hacer-input');
+            if (lblHacerIn && configMat.lbl_hacer) lblHacerIn.textContent = configMat.lbl_hacer.toUpperCase() + ' (%):';
+        }
+
+        const asigDetails = document.getElementById('asignacion-details');
+        const pSer = asigDetails ? parseFloat(asigDetails.dataset.pSer) || 0 : 33;
+        const pSaber = asigDetails ? parseFloat(asigDetails.dataset.pSaber) || 0 : 33;
+        const pHacer = asigDetails ? parseFloat(asigDetails.dataset.pHacer) || 0 : 34;
+
+        function hideColumn(table, colIndex) {
+            const ths = table.querySelectorAll('th');
+            if(ths[colIndex]) ths[colIndex].style.display = 'none';
+            const rows = table.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                const tds = row.querySelectorAll('td');
+                if(tds[colIndex]) tds[colIndex].style.display = 'none';
+            });
+        }
+
+        const timerEtiquetas = setInterval(() => {
+            const table = document.getElementById('tabla-calificaciones');
+            if(!table) return;
+            const theads = table.querySelectorAll('th');
+            if (theads.length > 0) {
+                theads.forEach((th, index) => {
+                    let txt = th.textContent.trim().toUpperCase();
+                    if (txt === 'SER' || txt.includes('SER ')) {
+                        if (configMat.lbl_ser) th.innerHTML = th.innerHTML.replace(/SER/i, configMat.lbl_ser.toUpperCase());
+                        if (pSer === 0) hideColumn(table, index);
+                    }
+                    if (txt === 'SABER' || txt.includes('SABER ')) {
+                        if (configMat.lbl_saber) th.innerHTML = th.innerHTML.replace(/SABER/i, configMat.lbl_saber.toUpperCase());
+                        if (pSaber === 0) hideColumn(table, index);
+                    }
+                    if (txt === 'HACER' || txt.includes('HACER ')) {
+                        if (configMat.lbl_hacer) th.innerHTML = th.innerHTML.replace(/HACER/i, configMat.lbl_hacer.toUpperCase());
+                        if (pHacer === 0) hideColumn(table, index);
+                    }
+                });
+            }
+        }, 300);
+
+        setTimeout(() => clearInterval(timerEtiquetas), 6000);
+
+        // --- 1. Lógica Ponderación Original ---
+        const panelPonderacion = document.getElementById('panel-ponderacion');
+        if (panelPonderacion) {
+            const inputs = panelPonderacion.querySelectorAll('.porcentaje-input');
+            const sumaDiv = document.getElementById('suma-porcentajes');
+            const errorDiv = document.getElementById('error-porcentajes');
+            const guardarBtn = document.getElementById('guardarTodoBtn');
+            let porcentajesModificados = false;
+
+            function validarSuma() {
+                let suma = 0;
+                inputs.forEach(input => { suma += parseInt(input.value, 10) || 0; });
+                sumaDiv.textContent = suma + '%';
+                
+                if (suma === 100 || suma === 0) {
+                    sumaDiv.classList.remove('text-danger', 'bg-warning-subtle');
+                    sumaDiv.classList.add('text-success', 'bg-success-subtle');
+                    errorDiv.style.display = 'none';
+                    if(guardarBtn && porcentajesModificados) guardarBtn.disabled = false;
+                } else {
+                    sumaDiv.classList.add('text-danger', 'bg-warning-subtle');
+                    sumaDiv.classList.remove('text-success', 'bg-success-subtle');
+                    errorDiv.style.display = 'block';
+                    if(guardarBtn) guardarBtn.disabled = true;
+                }
+            }
+
+            inputs.forEach(input => {
+                input.addEventListener('input', () => {
+                    porcentajesModificados = true;
+                    validarSuma();
+                });
+            });
+
+            validarSuma();
+        }
+
+        // --- 2. LÓGICA DE INCLUSIÓN MEJORADA ---
         try {
             const incEl = document.getElementById('inclusion-data-json');
             const estEl = document.getElementById('estudiantes-data-json');
@@ -148,6 +250,7 @@
             const estData = JSON.parse(estEl.textContent);
             let yaInsertado = false;
 
+            // Función para renderizar la lista con botones de editar y eliminar
             function renderListaInclusion(id) {
                 const listaUl = document.getElementById('inc-modal-lista');
                 if(!listaUl) return;
@@ -173,6 +276,7 @@
                 });
             }
 
+            // Función para reiniciar los botones tras editar
             function cancelarEdicionUI() {
                 const btn = document.getElementById('btnAgregarItemInclusion');
                 const btnCancelar = document.getElementById('btnCancelarEdicion');
@@ -237,6 +341,7 @@
 
             document.addEventListener('click', function(e) {
                 
+                // Botón "Listo para Guardar"
                 if (e.target && e.target.id === 'btnGuardarInclusion') {
                     const id = document.getElementById('inc-modal-id').value;
                     if (!id) return;
@@ -245,6 +350,7 @@
                     const text = input.value.trim();
                     const btnAgregar = document.getElementById('btnAgregarItemInclusion');
                     
+                    // Auto-guardar lo que quedó escrito si no se presionó Agregar/Editar antes
                     if (text) {
                         window._incData[id].lista_obs = window._incData[id].lista_obs || [];
                         if (btnAgregar.hasAttribute('data-edit-index')) {
@@ -274,6 +380,7 @@
                     if (mod) mod.hide();
                 }
                 
+                // Botón "Agregar Indicador" o "Guardar Edición"
                 if (e.target && (e.target.id === 'btnAgregarItemInclusion' || e.target.closest('#btnAgregarItemInclusion'))) {
                     const id = document.getElementById('inc-modal-id').value;
                     if (!id) return;
@@ -285,10 +392,12 @@
                         window._incData[id].lista_obs = window._incData[id].lista_obs || [];
                         
                         if (btn.hasAttribute('data-edit-index')) {
+                            // Está editando
                             const idx = parseInt(btn.getAttribute('data-edit-index'));
                             window._incData[id].lista_obs[idx] = text;
-                            cancelarEdicionUI();
+                            cancelarEdicionUI(); // Resetea el botón
                         } else {
+                            // Está agregando nuevo
                             window._incData[id].lista_obs.push(text);
                             input.value = '';
                         }
@@ -298,10 +407,12 @@
                     }
                 }
 
+                // Botón Cancelar Edición
                 if (e.target && e.target.id === 'btnCancelarEdicion') {
                     cancelarEdicionUI();
                 }
 
+                // Botón Lápiz (Editar de la lista)
                 const btnEditar = e.target.closest('.btn-editar-inc');
                 if (btnEditar) {
                     const id = document.getElementById('inc-modal-id').value;
@@ -312,14 +423,17 @@
                     input.value = text;
                     input.focus();
 
+                    // Convertir el botón "Agregar" en "Guardar Edición"
                     const btnAgregar = document.getElementById('btnAgregarItemInclusion');
                     btnAgregar.setAttribute('data-edit-index', index);
                     btnAgregar.innerHTML = '<i class="fas fa-save"></i> Guardar Edición';
                     btnAgregar.classList.replace('btn-info', 'btn-success');
                     
+                    // Mostrar botón "Cancelar"
                     document.getElementById('btnCancelarEdicion').classList.remove('d-none');
                 }
                 
+                // Botón Papelera (Eliminar de la lista)
                 const btnEliminar = e.target.closest('.btn-eliminar-inc');
                 if (btnEliminar) {
                     if (confirm("¿Está seguro de que desea eliminar este indicador PIAR?")) {
@@ -328,6 +442,7 @@
                         window._incData[id].lista_obs.splice(index, 1);
                         window._incData[id].obs = window._incData[id].lista_obs.join('\n');
                         
+                        // Si borró el que justo estaba editando, cancelamos la edición
                         const btnAgregar = document.getElementById('btnAgregarItemInclusion');
                         if (btnAgregar.hasAttribute('data-edit-index')) {
                             cancelarEdicionUI();
@@ -337,6 +452,52 @@
                     }
                 }
             });
+
+            // Interceptores para inyectar al Backend
+            const origFetch = window.fetch;
+            window.fetch = async function(...args) {
+                try {
+                    let [resource, config] = args;
+                    if (config && config.method && config.method.toUpperCase() === 'POST' && typeof config.body === 'string') {
+                        let parsed = JSON.parse(config.body);
+                        let arrayAActualizar = parsed.estudiantes || parsed.notas || parsed.calificaciones;
+                        
+                        if (arrayAActualizar && Array.isArray(arrayAActualizar)) {
+                            arrayAActualizar.forEach(est => {
+                                let targetId = est.id || est.estudiante_id || est.estudiante;
+                                if (targetId && window._incData[targetId]) {
+                                    est.observacion_inclusion = window._incData[targetId].obs || "";
+                                }
+                            });
+                            config.body = JSON.stringify(parsed);
+                            args[1] = config;
+                        }
+                    }
+                } catch(e) {}
+                return origFetch.apply(this, args);
+            };
+
+            if (window.jQuery) {
+                window.jQuery.ajaxPrefilter(function(options, originalOptions, jqXHR) {
+                    if (options.type && options.type.toUpperCase() === 'POST' && typeof options.data === 'string') {
+                        try {
+                            let parsed = JSON.parse(options.data);
+                            let arrayAActualizar = parsed.estudiantes || parsed.notas || parsed.calificaciones;
+                            
+                            if (arrayAActualizar && Array.isArray(arrayAActualizar)) {
+                                arrayAActualizar.forEach(est => {
+                                    let targetId = est.id || est.estudiante_id || est.estudiante;
+                                    if (targetId && window._incData[targetId]) {
+                                        est.observacion_inclusion = window._incData[targetId].obs || "";
+                                    }
+                                });
+                                options.data = JSON.stringify(parsed);
+                            }
+                        } catch(e) {}
+                    }
+                });
+            }
+
         } catch(e) {
             console.error("Módulo de inclusión de fondo:", e);
         }
