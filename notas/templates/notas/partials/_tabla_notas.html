@@ -92,40 +92,44 @@
          data-p-hacer="{{ asignacion_seleccionada.hacer_calc|floatformat:0 }}">
     </div>
 
-    <!-- MODAL DE INCLUSIÓN -->
+    <!-- MODAL DE INCLUSIÓN MEJORADO (DISEÑO IDÉNTICO AL INDICADOR GENERAL) -->
     <div class="modal fade" id="modalInclusion" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header bg-info text-white">
-                    <h5 class="modal-title"><i class="fas fa-universal-access me-2"></i>Indicadores de Inclusión</h5>
+                    <h5 class="modal-title"><i class="fas fa-universal-access me-2"></i>Gestión de Indicadores PIAR</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <p>Gestione los indicadores o desempeños especiales para: <strong id="inc-modal-name"></strong></p>
-                    
-                    <div class="mb-3">
-                        <ul class="list-group" id="inc-modal-lista">
+                <div class="modal-body pb-0">
+                    <div class="indicadores-container">
+                        <h5>Indicadores de Logro / Desempeños PIAR para <strong id="inc-modal-name"></strong></h5>
+                        <p class="text-muted small">Los cambios realizados aquí se aplicarán cuando presione "Guardar Cambios" en la tabla principal de notas.</p>
+                        
+                        <!-- Formulario de ingreso idéntico al general -->
+                        <div class="card shadow-sm my-3 border-info">
+                            <div class="card-body bg-light">
+                                <textarea id="inc-modal-nuevo-text" class="form-control" rows="2" placeholder="Escriba aquí un nuevo indicador PIAR y presione 'Agregar Indicador'..." required></textarea>
+                                <div class="text-end mt-2">
+                                    <button class="btn btn-secondary d-none me-2" type="button" id="btnCancelarEdicion">
+                                        Cancelar Edición
+                                    </button>
+                                    <button class="btn btn-info text-white" type="button" id="btnAgregarItemInclusion">
+                                        <i class="fas fa-plus"></i> Agregar Indicador
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h6 class="mt-4">Indicadores Actuales del Estudiante:</h6>
+                        <ul class="list-group mb-3" id="inc-modal-lista">
                             <!-- La lista dinámica se renderiza aquí -->
                         </ul>
                     </div>
-                    
-                    <div class="card bg-light">
-                        <div class="card-body">
-                            <label for="inc-modal-nuevo-text" class="form-label fw-bold">Agregar nuevo indicador:</label>
-                            <div class="input-group">
-                                <textarea id="inc-modal-nuevo-text" class="form-control" rows="2" placeholder="Ej: El estudiante logró identificar las sumas con apoyo visual..."></textarea>
-                                <button class="btn btn-info text-white" type="button" id="btnAgregarItemInclusion">
-                                    <i class="fas fa-plus"></i> Agregar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    
                     <input type="hidden" id="inc-modal-id">
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                    <button type="button" class="btn btn-primary" id="btnGuardarInclusion">Guardar y Aplicar</button>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar Panel</button>
+                    <button type="button" class="btn btn-primary" id="btnGuardarInclusion">Listo (Volver a la tabla)</button>
                 </div>
             </div>
         </div>
@@ -140,7 +144,6 @@
         if (configJsonEl && configJsonEl.textContent.trim()) {
             configMat = JSON.parse(configJsonEl.textContent);
             
-            // Etiqueta Promedia Visual
             const badgePromedia = document.getElementById('badge-promedia');
             if(badgePromedia) {
                 if(configMat.promedia) {
@@ -152,7 +155,6 @@
                 }
             }
 
-            // Renombrar labels de inputs manuales
             const lblSerIn = document.getElementById('lbl-ser-input');
             if (lblSerIn && configMat.lbl_ser) lblSerIn.textContent = configMat.lbl_ser.toUpperCase() + ' (%):';
             const lblSaberIn = document.getElementById('lbl-saber-input');
@@ -166,7 +168,6 @@
         const pSaber = asigDetails ? parseFloat(asigDetails.dataset.pSaber) || 0 : 33;
         const pHacer = asigDetails ? parseFloat(asigDetails.dataset.pHacer) || 0 : 34;
 
-        // Función para ocultar columnas físicas de la tabla (y cabeceras)
         function hideColumn(table, colIndex) {
             const ths = table.querySelectorAll('th');
             if(ths[colIndex]) ths[colIndex].style.display = 'none';
@@ -177,7 +178,6 @@
             });
         }
 
-        // Interceptor constante para renombrar u ocultar columnas al momento en que tu script dibuja la tabla
         const timerEtiquetas = setInterval(() => {
             const table = document.getElementById('tabla-calificaciones');
             if(!table) return;
@@ -185,18 +185,14 @@
             if (theads.length > 0) {
                 theads.forEach((th, index) => {
                     let txt = th.textContent.trim().toUpperCase();
-
-                    // Aplicar Ser o desaparecerlo
                     if (txt === 'SER' || txt.includes('SER ')) {
                         if (configMat.lbl_ser) th.innerHTML = th.innerHTML.replace(/SER/i, configMat.lbl_ser.toUpperCase());
                         if (pSer === 0) hideColumn(table, index);
                     }
-                    // Aplicar Saber o desaparecerlo
                     if (txt === 'SABER' || txt.includes('SABER ')) {
                         if (configMat.lbl_saber) th.innerHTML = th.innerHTML.replace(/SABER/i, configMat.lbl_saber.toUpperCase());
                         if (pSaber === 0) hideColumn(table, index);
                     }
-                    // Aplicar Hacer o desaparecerlo
                     if (txt === 'HACER' || txt.includes('HACER ')) {
                         if (configMat.lbl_hacer) th.innerHTML = th.innerHTML.replace(/HACER/i, configMat.lbl_hacer.toUpperCase());
                         if (pHacer === 0) hideColumn(table, index);
@@ -225,8 +221,6 @@
                     sumaDiv.classList.remove('text-danger', 'bg-warning-subtle');
                     sumaDiv.classList.add('text-success', 'bg-success-subtle');
                     errorDiv.style.display = 'none';
-                    // CORRECCIÓN: Solo habilitamos guardar si el usuario hizo un cambio real 
-                    // en los porcentajes, evitando así encender el botón en la carga inicial de la página
                     if(guardarBtn && porcentajesModificados) guardarBtn.disabled = false;
                 } else {
                     sumaDiv.classList.add('text-danger', 'bg-warning-subtle');
@@ -243,11 +237,10 @@
                 });
             });
 
-            // Llamada inicial
             validarSuma();
         }
 
-        // --- 2. LÓGICA DE INCLUSIÓN INVISIBLE ---
+        // --- 2. LÓGICA DE INCLUSIÓN MEJORADA ---
         try {
             const incEl = document.getElementById('inclusion-data-json');
             const estEl = document.getElementById('estudiantes-data-json');
@@ -257,7 +250,7 @@
             const estData = JSON.parse(estEl.textContent);
             let yaInsertado = false;
 
-            // Función para renderizar la lista múltiple de inclusión
+            // Función para renderizar la lista con botones de editar y eliminar
             function renderListaInclusion(id) {
                 const listaUl = document.getElementById('inc-modal-lista');
                 if(!listaUl) return;
@@ -265,7 +258,7 @@
                 const lista = window._incData[id].lista_obs || [];
                 
                 if (lista.length === 0) {
-                    listaUl.innerHTML = '<li class="list-group-item text-muted text-center fst-italic">No hay indicadores especiales. Agregue uno usando el campo de abajo.</li>';
+                    listaUl.innerHTML = '<li class="list-group-item text-muted text-center fst-italic">Aún no hay indicadores PIAR definidos para este estudiante.</li>';
                     return;
                 }
                 
@@ -274,10 +267,23 @@
                     li.className = 'list-group-item d-flex justify-content-between align-items-center text-wrap text-break';
                     li.innerHTML = `
                         <span style="flex: 1; padding-right: 15px;">• ${item}</span>
-                        <button type="button" class="btn btn-sm btn-outline-danger btn-eliminar-inc" data-index="${index}" title="Eliminar este indicador"><i class="fas fa-trash-alt"></i></button>
+                        <div class="d-flex text-nowrap">
+                            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1 me-1 btn-editar-inc" data-index="${index}" title="Editar este indicador"><i class="fas fa-pencil-alt"></i></button>
+                            <button type="button" class="btn btn-sm btn-outline-danger py-0 px-1 btn-eliminar-inc" data-index="${index}" title="Eliminar este indicador"><i class="fas fa-trash-alt"></i></button>
+                        </div>
                     `;
                     listaUl.appendChild(li);
                 });
+            }
+
+            function cancelarEdicionUI() {
+                const btn = document.getElementById('btnAgregarItemInclusion');
+                const btnCancelar = document.getElementById('btnCancelarEdicion');
+                btn.removeAttribute('data-edit-index');
+                btn.innerHTML = '<i class="fas fa-plus"></i> Agregar Indicador';
+                btn.classList.replace('btn-success', 'btn-info');
+                document.getElementById('inc-modal-nuevo-text').value = '';
+                btnCancelar.classList.add('d-none');
             }
 
             const timer = setInterval(() => {
@@ -308,7 +314,7 @@
                                 const btnClass = incInfo.obs ? 'btn-info text-white' : 'btn-outline-info';
                                 const btn = document.createElement('button');
                                 btn.className = `btn btn-sm ${btnClass} ms-2 btn-inc-modal float-end`;
-                                btn.title = "Indicador de Inclusión";
+                                btn.title = "Indicadores de Inclusión (PIAR)";
                                 btn.innerHTML = '<i class="fas fa-universal-access"></i>';
                                 btn.dataset.id = est.id;
 
@@ -321,7 +327,7 @@
                                     const rawObs = window._incData[est.id].obs || "";
                                     window._incData[est.id].lista_obs = rawObs.split('\n').map(s => s.trim()).filter(s => s !== "");
                                     
-                                    document.getElementById('inc-modal-nuevo-text').value = "";
+                                    cancelarEdicionUI();
                                     renderListaInclusion(est.id);
                                     
                                     new bootstrap.Modal(document.getElementById('modalInclusion')).show();
@@ -333,22 +339,30 @@
             }, 300);
 
             document.addEventListener('click', function(e) {
+                
+                // Botón "Listo para Guardar"
                 if (e.target && e.target.id === 'btnGuardarInclusion') {
                     const id = document.getElementById('inc-modal-id').value;
                     if (!id) return;
 
-                    // Si escribió algo y olvidó darle a "Agregar", lo agregamos automáticamente
                     const input = document.getElementById('inc-modal-nuevo-text');
                     const text = input.value.trim();
+                    const btnAgregar = document.getElementById('btnAgregarItemInclusion');
+                    
+                    // Auto-guardar lo que quedó escrito
                     if (text) {
                         window._incData[id].lista_obs = window._incData[id].lista_obs || [];
-                        window._incData[id].lista_obs.push(text);
+                        if (btnAgregar.hasAttribute('data-edit-index')) {
+                            const idx = parseInt(btnAgregar.getAttribute('data-edit-index'));
+                            window._incData[id].lista_obs[idx] = text;
+                        } else {
+                            window._incData[id].lista_obs.push(text);
+                        }
                         window._incData[id].obs = window._incData[id].lista_obs.join('\n');
                         input.value = '';
                     }
 
                     const consolidatedText = window._incData[id].obs || "";
-
                     const btn = document.querySelector(`.btn-inc-modal[data-id="${id}"]`);
                     if (btn) btn.className = consolidatedText.trim() ? 'btn btn-sm btn-info text-white ms-2 btn-inc-modal float-end' : 'btn btn-sm btn-outline-info ms-2 btn-inc-modal float-end';
 
@@ -365,42 +379,92 @@
                     if (mod) mod.hide();
                 }
                 
-                // Evento para "Agregar" un indicador a la lista
+                // Botón "Agregar Indicador" o "Guardar Edición"
                 if (e.target && (e.target.id === 'btnAgregarItemInclusion' || e.target.closest('#btnAgregarItemInclusion'))) {
                     const id = document.getElementById('inc-modal-id').value;
                     if (!id) return;
                     const input = document.getElementById('inc-modal-nuevo-text');
                     const text = input.value.trim();
+                    const btn = document.getElementById('btnAgregarItemInclusion');
+                    
                     if (text) {
                         window._incData[id].lista_obs = window._incData[id].lista_obs || [];
-                        window._incData[id].lista_obs.push(text);
+                        
+                        if (btn.hasAttribute('data-edit-index')) {
+                            // Está editando
+                            const idx = parseInt(btn.getAttribute('data-edit-index'));
+                            window._incData[id].lista_obs[idx] = text;
+                            cancelarEdicionUI();
+                        } else {
+                            // Está agregando nuevo
+                            window._incData[id].lista_obs.push(text);
+                            input.value = '';
+                        }
+                        
                         window._incData[id].obs = window._incData[id].lista_obs.join('\n');
-                        input.value = '';
                         renderListaInclusion(id);
                     }
                 }
+
+                // Botón Cancelar Edición
+                if (e.target && e.target.id === 'btnCancelarEdicion') {
+                    cancelarEdicionUI();
+                }
+
+                // Botón Lápiz (Editar de la lista)
+                const btnEditar = e.target.closest('.btn-editar-inc');
+                if (btnEditar) {
+                    const id = document.getElementById('inc-modal-id').value;
+                    const index = parseInt(btnEditar.getAttribute('data-index'));
+                    const text = window._incData[id].lista_obs[index];
+
+                    const input = document.getElementById('inc-modal-nuevo-text');
+                    input.value = text;
+                    input.focus();
+
+                    const btnAgregar = document.getElementById('btnAgregarItemInclusion');
+                    btnAgregar.setAttribute('data-edit-index', index);
+                    btnAgregar.innerHTML = '<i class="fas fa-save"></i> Guardar Edición';
+                    btnAgregar.classList.replace('btn-info', 'btn-success');
+                    
+                    document.getElementById('btnCancelarEdicion').classList.remove('d-none');
+                }
                 
-                // Evento para "Eliminar" un indicador de la lista
+                // Botón Papelera (Eliminar de la lista)
                 const btnEliminar = e.target.closest('.btn-eliminar-inc');
                 if (btnEliminar) {
-                    const id = document.getElementById('inc-modal-id').value;
-                    const index = parseInt(btnEliminar.getAttribute('data-index'));
-                    window._incData[id].lista_obs.splice(index, 1);
-                    window._incData[id].obs = window._incData[id].lista_obs.join('\n');
-                    renderListaInclusion(id);
+                    if (confirm("¿Está seguro de que desea eliminar este indicador PIAR?")) {
+                        const id = document.getElementById('inc-modal-id').value;
+                        const index = parseInt(btnEliminar.getAttribute('data-index'));
+                        window._incData[id].lista_obs.splice(index, 1);
+                        window._incData[id].obs = window._incData[id].lista_obs.join('\n');
+                        
+                        // Si borró el que justo estaba editando, cancelamos la edición
+                        const btnAgregar = document.getElementById('btnAgregarItemInclusion');
+                        if (btnAgregar.hasAttribute('data-edit-index')) {
+                            cancelarEdicionUI();
+                        }
+                        
+                        renderListaInclusion(id);
+                    }
                 }
             });
 
+            // Interceptores para inyectar al Backend
             const origFetch = window.fetch;
             window.fetch = async function(...args) {
                 try {
                     let [resource, config] = args;
-                    let url = typeof resource === 'string' ? resource : (resource instanceof Request ? resource.url : '');
-                    if (config && config.method && config.method.toUpperCase() === 'POST' && typeof config.body === 'string' && url.includes(window.location.pathname)) {
+                    if (config && config.method && config.method.toUpperCase() === 'POST' && typeof config.body === 'string') {
                         let parsed = JSON.parse(config.body);
-                        if (parsed.estudiantes) {
-                            parsed.estudiantes.forEach(est => {
-                                if (window._incData[est.id]) est.observacion_inclusion = window._incData[est.id].obs;
+                        let arrayAActualizar = parsed.estudiantes || parsed.notas || parsed.calificaciones;
+                        
+                        if (arrayAActualizar && Array.isArray(arrayAActualizar)) {
+                            arrayAActualizar.forEach(est => {
+                                let targetId = est.id || est.estudiante_id || est.estudiante;
+                                if (targetId && window._incData[targetId]) {
+                                    est.observacion_inclusion = window._incData[targetId].obs || "";
+                                }
                             });
                             config.body = JSON.stringify(parsed);
                             args[1] = config;
@@ -412,12 +476,17 @@
 
             if (window.jQuery) {
                 window.jQuery.ajaxPrefilter(function(options, originalOptions, jqXHR) {
-                    if (options.type && options.type.toUpperCase() === 'POST' && typeof options.data === 'string' && options.url && options.url.includes(window.location.pathname)) {
+                    if (options.type && options.type.toUpperCase() === 'POST' && typeof options.data === 'string') {
                         try {
                             let parsed = JSON.parse(options.data);
-                            if (parsed.estudiantes) {
-                                parsed.estudiantes.forEach(e => {
-                                    if (window._incData[e.id]) e.observacion_inclusion = window._incData[e.id].obs;
+                            let arrayAActualizar = parsed.estudiantes || parsed.notas || parsed.calificaciones;
+                            
+                            if (arrayAActualizar && Array.isArray(arrayAActualizar)) {
+                                arrayAActualizar.forEach(est => {
+                                    let targetId = est.id || est.estudiante_id || est.estudiante;
+                                    if (targetId && window._incData[targetId]) {
+                                        est.observacion_inclusion = window._incData[targetId].obs || "";
+                                    }
                                 });
                                 options.data = JSON.stringify(parsed);
                             }
