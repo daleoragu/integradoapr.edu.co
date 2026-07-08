@@ -103,9 +103,13 @@ class IngresoNotasView(LoginRequiredMixin, View):
                 data['inasistencias'] = inasistencia_manual.cantidad
                 estudiantes_data.append(data)
 
+                # CORRECCIÓN DE CÁRGA: Asegura que se empaquete la información correctamente
+                # para que JavaScript reciba la observación existente y arme la lista múltiple
+                es_inclu = getattr(estudiante, 'es_inclusion', False)
                 inclusion_data[str(estudiante.id)] = {
-                    'es_inclusion': getattr(estudiante, 'es_inclusion', False),
-                    'obs': obs_inc
+                    'es_inclusion': es_inclu,
+                    'obs': obs_inc if obs_inc else "",
+                    'lista_obs': [s.strip() for s in (obs_inc or "").split('\n') if s.strip()]
                 }
             
             indicadores = IndicadorLogroPeriodo.objects.filter(asignacion=asignacion_seleccionada, periodo=periodo_seleccionado, colegio=request.colegio).order_by('id')
@@ -196,7 +200,10 @@ class IngresoNotasView(LoginRequiredMixin, View):
                     'docente': asignacion.docente
                 }
 
-                if 'observacion_inclusion' in est_data and hasattr(Calificacion, 'observacion_inclusion'):
+                # CORRECCIÓN DE GUARDADO: Antes revisaba si existía 'observacion_inclusion', pero el script 
+                # frontend de la tabla de notas lo inyectaba a veces solo si no estaba vacío. Ahora forzamos 
+                # a que siempre guarde lo que mande el frontend (incluso si lo borraron y mandaron vacío).
+                if 'observacion_inclusion' in est_data:
                     defaults_dict['observacion_inclusion'] = est_data['observacion_inclusion']
 
                 Calificacion.objects.update_or_create(
