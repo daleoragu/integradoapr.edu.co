@@ -150,11 +150,13 @@
                 
                 {% if boletin.estudiante.es_inclusion and materia.observacion_inclusion %}
                     <!-- Indicador Especial de Inclusión -->
+                    {% for obs in materia.observacion_inclusion %}
                     <tr class="logro-descriptivo-row">
                         <td colspan="9">
-                            • {{ materia.observacion_inclusion|linebreaksbr }}
+                            • {{ obs }}
                         </td>
                     </tr>
+                    {% endfor %}
                 {% else %}
                     <!-- Indicadores Normales -->
                     {% for logro in materia.logros %}

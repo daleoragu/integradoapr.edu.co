@@ -148,11 +148,13 @@
                 
                 <!-- LÓGICA DE INCLUSIÓN PARA BOLETÍN FINAL -->
                 {% if boletin.estudiante.es_inclusion and materia.observacion_inclusion %}
-                <tr>
-                    <td colspan="{{ nombres_periodos|length|add:'2' }}" style="text-align: left; font-size: 0.95em; padding-left: 20px; border-top: none;">
-                        • {{ materia.observacion_inclusion|linebreaksbr }}
-                    </td>
-                </tr>
+                    {% for obs in materia.observacion_inclusion %}
+                    <tr>
+                        <td colspan="{{ nombres_periodos|length|add:'2' }}" style="text-align: left; font-size: 0.95em; padding-left: 20px; border-top: none;">
+                            • {{ obs }}
+                        </td>
+                    </tr>
+                    {% endfor %}
                 {% endif %}
 
                 {% endfor %}

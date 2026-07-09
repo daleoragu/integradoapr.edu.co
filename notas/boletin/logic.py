@@ -99,8 +99,9 @@ def get_datos_boletin_curso(colegio, curso, periodo, estudiante_especifico=None)
                 definitiva_obj = notas_materia_periodo.filter(tipo_nota='PROM_PERIODO').first()
                 definitiva_valor_periodo = definitiva_obj.valor_nota if definitiva_obj else None
                 
-                # EXTRAYENDO LA OBSERVACIÓN DE INCLUSIÓN
+                # EXTRAYENDO LA OBSERVACIÓN DE INCLUSIÓN Y CONVIRTIENDOLA EN LISTA
                 observacion_inclusion_actual = definitiva_obj.observacion_inclusion if definitiva_obj else ""
+                lista_obs_inclusion = [obs.strip() for obs in observacion_inclusion_actual.split('\n') if obs.strip()]
 
                 if definitiva_valor_periodo is not None and definitiva_valor_periodo < UMBRAL_APROBACION:
                     materias_reprobadas_en_area.append(materia.nombre)
@@ -139,7 +140,7 @@ def get_datos_boletin_curso(colegio, curso, periodo, estudiante_especifico=None)
                     'logros': IndicadorLogroPeriodo.objects.filter(asignacion=asignacion, periodo=periodo, colegio=colegio),
                     'promedia': promedia_boletin,
                     # LA VARIABLE CLAVE QUE LE FALTABA AL BOLETÍN:
-                    'observacion_inclusion': observacion_inclusion_actual
+                    'observacion_inclusion': lista_obs_inclusion
                 }
                 datos_area['materias'].append(datos_materia)
 
@@ -272,6 +273,7 @@ def get_datos_boletin_final(colegio, curso, ano_lectivo, estudiante_especifico=N
                 # Obtenemos la observación consolidada de la materia
                 materia_cal_data = calificaciones_pivot.get((estudiante.id, materia_id), {})
                 observacion_final_materia = materia_cal_data.get('ultima_observacion_inclusion', "")
+                lista_obs_inclusion_final = [obs.strip() for obs in observacion_final_materia.split('\n') if obs.strip()]
 
                 for p in periodos_del_ano:
                     cal_data = materia_cal_data.get(p.id, {})
@@ -327,7 +329,7 @@ def get_datos_boletin_final(colegio, curso, ano_lectivo, estudiante_especifico=N
                     'valoracion': valoracion,
                     'promedia': promedia_boletin,
                     # Variable clave para el boletín final
-                    'observacion_inclusion': observacion_final_materia
+                    'observacion_inclusion': lista_obs_inclusion_final
                 })
 
             if suma_pesos_area > 0:
