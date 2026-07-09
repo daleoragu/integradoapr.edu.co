@@ -58,8 +58,7 @@ def get_datos_boletin_curso(colegio, curso, periodo, estudiante_especifico=None)
         colegio=colegio, ano_lectivo=periodo.ano_lectivo, fecha_inicio__lte=periodo.fecha_inicio
     ).order_by('fecha_inicio')
 
-    # CORRECCIÓN DE OPTIMIZACIÓN: Traemos TODAS las calificaciones relevantes en lugar de solo valores.
-    # Necesitamos el objeto Calificación completo (o al menos `observacion_inclusion`)
+    # Traemos las calificaciones completas para obtener el valor_nota y la observacion_inclusion
     calificaciones_acumuladas = Calificacion.objects.filter(
         colegio=colegio, estudiante__in=estudiantes, materia_id__in=materias_del_curso_ids,
         periodo__in=periodos_transcurridos, tipo_nota__in=['PROM_PERIODO', 'NIVELACION']
@@ -94,9 +93,6 @@ def get_datos_boletin_curso(colegio, curso, periodo, estudiante_especifico=None)
                 if not asignacion: continue
 
                 promedia_boletin = getattr(materia, 'promedia_en_boletin', True)
-                lbl_ser = getattr(materia, 'etiqueta_ser', 'Ser')
-                lbl_saber = getattr(materia, 'etiqueta_saber', 'Saber')
-                lbl_hacer = getattr(materia, 'etiqueta_hacer', 'Hacer')
 
                 # Lógica para el periodo actual
                 notas_materia_periodo = Calificacion.objects.filter(estudiante=estudiante, materia=materia, periodo=periodo, colegio=colegio)
@@ -237,8 +233,9 @@ def get_datos_boletin_final(colegio, curso, ano_lectivo, estudiante_especifico=N
         period_key = cal.periodo_id
         if cal.tipo_nota == 'PROM_PERIODO':
             calificaciones_pivot[key][period_key]['prom'] = cal.valor_nota
-            # Guardamos la observación de inclusión del último periodo reportado
-            calificaciones_pivot[key]['ultima_observacion_inclusion'] = cal.observacion_inclusion
+            # Guardamos la observación de inclusión del último periodo que sí tenga un texto válido
+            if getattr(cal, 'observacion_inclusion', None):
+                calificaciones_pivot[key]['ultima_observacion_inclusion'] = cal.observacion_inclusion
         elif cal.tipo_nota == 'NIVELACION':
             calificaciones_pivot[key][period_key]['niv'] = cal.valor_nota
 

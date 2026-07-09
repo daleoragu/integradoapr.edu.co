@@ -145,6 +145,16 @@
                         {% endif %}
                     </td>
                 </tr>
+                
+                <!-- LÓGICA DE INCLUSIÓN PARA BOLETÍN FINAL -->
+                {% if boletin.estudiante.es_inclusion and materia.observacion_inclusion %}
+                <tr>
+                    <td colspan="{{ nombres_periodos|length|add:'2' }}" style="padding-left: 25px; text-align: left; font-size: 0.9em; font-weight: bold; font-style: italic; color: #0056b3; border-top: none;">
+                        • {{ materia.observacion_inclusion|linebreaksbr }}
+                    </td>
+                </tr>
+                {% endif %}
+
                 {% endfor %}
             {% endfor %}
             </tbody>
