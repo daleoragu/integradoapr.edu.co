@@ -1,6 +1,6 @@
 /**
  * Script for handling the grade entry page with a spreadsheet style.
- * @version 12.2 - Bug corregido: Las notas nuevas ya no se borran al guardar. Alertas nativas reemplazadas.
+ * @version 12.4 - Sincronización robusta con Modal PIAR y window._incData
  */
 document.addEventListener('DOMContentLoaded', function () {
     // --- DOM ELEMENTS AND INITIAL DATA ---
@@ -24,6 +24,17 @@ document.addEventListener('DOMContentLoaded', function () {
             console.error("Error parsing escala de valoración JSON:", e);
         }
     }
+
+    // --- INICIO: LEER DATOS DE INCLUSIÓN ---
+    const inclusionDataEl = document.getElementById('inclusion-data-json');
+    let inclusionData = {};
+    if (inclusionDataEl) {
+        try {
+            inclusionData = JSON.parse(inclusionDataEl.textContent.trim() || '{}');
+        } catch (e) {
+            console.error("Error parsing inclusion JSON:", e);
+        }
+    }
     // --- FIN: LEER DATOS ---
 
     if (!tablaCalificaciones || !estudiantesDataEl || !urlInasistenciasEl || !asignacionDetailsEl) {
@@ -42,6 +53,14 @@ document.addEventListener('DOMContentLoaded', function () {
     let estudiantesData = [];
     try {
         estudiantesData = JSON.parse(estudiantesDataEl.textContent.trim() || '[]');
+        
+        // Fusionar los datos de inclusión en el array principal de estudiantes al inicio
+        estudiantesData.forEach(est => {
+            if (inclusionData[est.id]) {
+                est.es_inclusion = inclusionData[est.id].es_inclusion;
+                est.observacion_inclusion = inclusionData[est.id].obs || "";
+            }
+        });
     } catch (e) {
         console.error("Error parsing student JSON:", e);
         return;
@@ -63,13 +82,11 @@ document.addEventListener('DOMContentLoaded', function () {
         setTimeout(() => { if (div.parentNode) div.parentNode.removeChild(div); }, 4500);
     }
 
-    // --- NUEVA FUNCIÓN: Guarda en memoria lo que el usuario ha escrito antes de redibujar ---
     function sincronizarDatosDesdeDOM() {
         if (!tablaCalificaciones) return;
         
         tablaCalificaciones.querySelectorAll('tbody tr[data-estudiante-id]').forEach(fila => {
             const estId = fila.dataset.estudianteId;
-            // Buscamos el estudiante en nuestro array en memoria
             const estudiante = estudiantesData.find(e => e.id.toString() === estId.toString());
             
             if (estudiante) {
@@ -79,25 +96,27 @@ document.addEventListener('DOMContentLoaded', function () {
                     estudiante.inasistencias = inasistInput.value;
                 }
 
+                // Intentar leer el input oculto de inclusión si existe en la fila (como respaldo)
+                const inputInclusion = fila.querySelector('.input-observacion-inclusion');
+                if (inputInclusion) {
+                    estudiante.observacion_inclusion = inputInclusion.value;
+                }
+
                 // Guardar notas digitadas en memoria
                 for (const tipo of ['ser', 'saber', 'hacer']) {
                     const inputs = fila.querySelectorAll(`.input-nota[data-tipo="${tipo}"]`);
                     
-                    // CORRECCIÓN 1: Asegurarnos de que el array del componente exista
                     if (!estudiante.notas[tipo]) {
                         estudiante.notas[tipo] = [];
                     }
                     
                     inputs.forEach((input, index) => {
-                        // CORRECCIÓN 2: Si el profesor añadió una columna, creamos el espacio en memoria
                         if (!estudiante.notas[tipo][index]) {
                             estudiante.notas[tipo][index] = { valor: '', descripcion: '' };
                         }
-                        // Ahora guardamos con total seguridad el valor digitado
                         estudiante.notas[tipo][index].valor = input.value;
                     });
                     
-                    // CORRECCIÓN 3: Si el profesor eliminó una columna con el botón "-", recortamos la memoria
                     estudiante.notas[tipo].length = inputs.length;
                 }
             }
@@ -149,7 +168,15 @@ document.addEventListener('DOMContentLoaded', function () {
             bodyHtml += `<tr><td colspan="${colspan}" class="text-center text-muted py-4">No hay estudiantes en este curso.</td></tr>`;
         } else {
             estudiantesData.forEach((estudiante, index) => {
-                bodyHtml += `<tr data-estudiante-id="${estudiante.id}"><td class="text-center align-middle">${index + 1}</td><td class="align-middle fw-bold">${estudiante.nombre_completo}</td>`;
+                // Marcador visual para estudiante de inclusión PIAR
+                const badgeInclusion = estudiante.es_inclusion ? ' <span class="badge bg-info text-dark ms-1" title="Estudiante de Inclusión (PIAR)"><i class="fas fa-universal-access"></i></span>' : '';
+                
+                bodyHtml += `<tr data-estudiante-id="${estudiante.id}">
+                                <td class="text-center align-middle">${index + 1}</td>
+                                <td class="align-middle fw-bold">
+                                    ${estudiante.nombre_completo}${badgeInclusion}
+                                    <input type="hidden" class="input-observacion-inclusion" value="${estudiante.observacion_inclusion || ''}">
+                                </td>`;
                 for (const tipo of ['ser', 'saber', 'hacer']) {
                     for (let i = 0; i < maxNotas[tipo]; i++) {
                         const nota = estudiante.notas[tipo]?.[i]?.valor || '';
@@ -221,7 +248,6 @@ document.addEventListener('DOMContentLoaded', function () {
         
         defCelda.textContent = definitiva.toFixed(1);
         
-        // Lógica de color dinámica
         const notaFinal = parseFloat(defCelda.textContent);
         let claseDesempeno = '';
 
@@ -247,7 +273,8 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
     
-    function actualizarStatus(estado) {
+    // Exportar actualizarStatus globalmente para que el Modal PIAR lo pueda usar
+    window.actualizarStatus = function(estado) {
         if (!statusIndicator) return;
         statusIndicator.className = 'status-indicator badge ms-3 fs-6 p-2';
         const periodoCerrado = document.querySelector('.card-footer .text-warning');
@@ -273,15 +300,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (guardarTodoBtn && !periodoCerrado) guardarTodoBtn.disabled = false;
                 break;
         }
-    }
+    };
 
-    // --- EVENT HANDLERS ---
     tablaCalificaciones.addEventListener('input', e => {
-        if (e.target.classList.contains('input-nota') || e.target.classList.contains('input-inasistencia')) {
+        if (e.target.classList.contains('input-nota') || e.target.classList.contains('input-inasistencia') || e.target.classList.contains('input-observacion-inclusion')) {
             if (e.target.classList.contains('input-nota')) {
                 actualizarTodosLosPromedios(e.target.closest('tr'));
             }
-            actualizarStatus('pending');
+            window.actualizarStatus('pending');
         }
     });
 
@@ -291,7 +317,7 @@ document.addEventListener('DOMContentLoaded', function () {
              tablaCalificaciones.querySelectorAll('tbody tr[data-estudiante-id]').forEach(fila => {
                 actualizarDefinitiva(fila);
             });
-            actualizarStatus('pending');
+            window.actualizarStatus('pending');
         });
     }
     
@@ -302,7 +328,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const btnSync = e.target.closest('.sync-inasistencias');
 
         if (btnAdd) {
-            sincronizarDatosDesdeDOM(); // <-- GUARDAR TEMPORALMENTE LO QUE SE HA ESCRITO
+            sincronizarDatosDesdeDOM();
             const tipo = btnAdd.dataset.tipo;
             if (estudiantesData.length > 0) {
                 estudiantesData.forEach(est => {
@@ -311,10 +337,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
             }
             renderizarTabla();
-            actualizarStatus('pending');
+            window.actualizarStatus('pending');
         }
         if (btnRemove) {
-            sincronizarDatosDesdeDOM(); // <-- GUARDAR TEMPORALMENTE LO QUE SE HA ESCRITO
+            sincronizarDatosDesdeDOM();
             const tipo = btnRemove.dataset.tipo;
             estudiantesData.forEach(est => {
                 if (est.notas[tipo]?.length > 1) est.notas[tipo].pop();
@@ -322,7 +348,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const lastIndex = Object.keys(descripcionesColumnas[tipo]).length - 1;
             if (lastIndex >= 0) delete descripcionesColumnas[tipo][lastIndex];
             renderizarTabla();
-            actualizarStatus('pending');
+            window.actualizarStatus('pending');
         }
         if (thNota) {
             const tipo = thNota.dataset.tipo;
@@ -333,7 +359,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (nuevaDesc !== null) {
                 descripcionesColumnas[tipo][colIndex] = nuevaDesc.trim();
                 descSpan.textContent = nuevaDesc.trim();
-                actualizarStatus('pending');
+                window.actualizarStatus('pending');
             }
         }
         if (btnSync) {
@@ -352,7 +378,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 const data = await response.json();
                 if (data.status === 'success') {
                     inasistenciaInput.value = data.inasistencias_auto;
-                    actualizarStatus('pending');
+                    window.actualizarStatus('pending');
                 } else {
                     mostrarNotificacion('Error al sincronizar: ' + data.message, true);
                 }
@@ -370,7 +396,7 @@ document.addEventListener('DOMContentLoaded', function () {
         this.disabled = true;
         this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Guardando...';
         
-        // Asegurarse de que toda la tabla esté sincronizada en memoria antes de enviar
+        // Sincronizar todos los inputs visibles de la tabla
         sincronizarDatosDesdeDOM();
         
         const payload = {
@@ -389,12 +415,19 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        // Ahora usamos los datos ya recolectados en memoria en vez de iterar el DOM de nuevo
         estudiantesData.forEach(est => {
+            // CORRECCIÓN CLAVE: Buscar forzosamente en `window._incData`
+            // ya que el modal de PIAR almacena los cambios recientes allí.
+            let obsFinal = est.observacion_inclusion || "";
+            if (window._incData && window._incData[est.id]) {
+                obsFinal = window._incData[est.id].obs || "";
+            }
+
             const datosEst = {
                 id: est.id.toString(),
                 notas: { ser: [], saber: [], hacer: [] },
-                inasistencias: est.inasistencias || "0"
+                inasistencias: est.inasistencias || "0",
+                observacion_inclusion: obsFinal // Enviamos el indicador PIAR actualizado
             };
             
             for (const tipo of ['ser', 'saber', 'hacer']) {
@@ -421,12 +454,12 @@ document.addEventListener('DOMContentLoaded', function () {
             
             if (!response.ok) throw new Error(result.message || 'Error del servidor');
             
-            actualizarStatus('saved');
-            mostrarNotificacion('Todas las calificaciones fueron guardadas exitosamente.', false);
+            window.actualizarStatus('saved');
+            mostrarNotificacion('Todas las calificaciones y observaciones PIAR fueron guardadas exitosamente.', false);
         } catch (error) {
             console.error('Error al guardar:', error);
             mostrarNotificacion('Error al guardar: ' + error.message, true);
-            actualizarStatus('error');
+            window.actualizarStatus('error');
         } finally {
             this.disabled = false;
             this.innerHTML = '<i class="fas fa-save me-2"></i>Guardar Cambios';
@@ -435,5 +468,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // --- INITIALIZATION ---
     renderizarTabla();
-    actualizarStatus('saved');
+    window.actualizarStatus('saved');
+    
+    // Exponer el array de estudiantes a nivel global (útil para debuggear)
+    window.estudiantesData = estudiantesData;
 });
